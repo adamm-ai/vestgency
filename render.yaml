@@ -1,0 +1,61 @@
+# Render Blueprint for Vestate AI
+# This deploys both the frontend and backend on Render
+
+services:
+  # Backend API
+  - type: web
+    name: vestate-api
+    env: node
+    region: fra
+    plan: free
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: ADMIN_EMAIL
+        value: admin@vestate.ai
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vestate-db
+          property: connectionString
+
+  # Frontend Static Site
+  - type: web
+    name: vestate-frontend
+    env: static
+    region: fra
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_APP_NAME
+        value: Vestate AI
+
+# PostgreSQL Database
+databases:
+  - name: vestate-db
+    plan: free
+    region: fra
+    databaseName: vestate
+    user: vestate_user

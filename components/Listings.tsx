@@ -1,0 +1,662 @@
+import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { SectionId, Property, ListingCategory, PropertyFilters, SearchResult } from '../types';
+import { getProperties, getFilterOptions, preloadData } from '../services/propertyService';
+import { ragSearch, RAGSearchResponse, preloadRAGService } from '../services/ragSearchService';
+import {
+  Bed, Bath, Maximize, Heart, MapPin, Sparkles,
+  Search, ChevronLeft, ChevronRight, Home,
+  Building2, Briefcase, Store, Grid3X3, Loader2, Brain, Zap
+} from 'lucide-react';
+import PropertyModal from './PropertyModal';
+import IntelligentSearch from './IntelligentSearch';
+
+// ============================================================================
+// HOOKS
+// ============================================================================
+
+/**
+ * Debounce hook for search input
+ */
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+/**
+ * Intersection Observer hook for lazy loading
+ */
+function useInView(ref: React.RefObject<Element>, options?: IntersectionObserverInit) {
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setIsInView(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '100px', ...options });
+
+    observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref, options]);
+
+  return isInView;
+}
+
+// ============================================================================
+// OPTIMIZED IMAGE COMPONENT
+// ============================================================================
+
+interface LazyImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  fallback?: string;
+}
+
+const LazyImage = memo(({ src, alt, className, fallback }: LazyImageProps) => {
+  const imgRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(imgRef);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  const fallbackSrc = fallback || 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=800';
+  const imageSrc = error ? fallbackSrc : src;
+
+  return (
+    <div ref={imgRef} className={`relative overflow-hidden ${className}`}>
+      {/* Placeholder */}
+      {!loaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 animate-pulse" />
+      )}
+
+      {/* Actual image - only load when in view */}
+      {isInView && (
+        <img
+          src={imageSrc}
+          alt={alt}
+          className={`w-full h-full object-cover transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          onLoad={() => setLoaded(true)}
+          onError={() => setError(true)}
+          loading="lazy"
+          decoding="async"
+        />
+      )}
+    </div>
+  );
+});
+
+LazyImage.displayName = 'LazyImage';
+
+// ============================================================================
+// OPTIMIZED PROPERTY CARD
+// ============================================================================
+
+interface ListingCardProps {
+  property: Property;
+  onView: (property: Property) => void;
+}
+
+const ListingCard = memo(({ property, onView }: ListingCardProps) => {
+  const [isLiked, setIsLiked] = useState(false);
+
+  const handleClick = useCallback(() => {
+    onView(property);
+  }, [onView, property]);
+
+  const handleLike = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsLiked(prev => !prev);
+  }, []);
+
+  return (
+    <div
+      className="relative rounded-2xl overflow-hidden h-full flex flex-col bg-white dark:bg-[#0c0c0f] border border-black/[0.04] dark:border-white/[0.06] group hover:border-brand-gold/30 transition-all duration-300 shadow-lg dark:shadow-2xl dark:shadow-black/40 cursor-pointer"
+      onClick={handleClick}
+    >
+      {/* Image Area */}
+      <div className="relative h-56 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+
+        <LazyImage
+          src={property.image}
+          alt={property.name}
+          className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+        />
+
+        {/* Tags */}
+        <div className="absolute top-3 left-3 z-20 flex gap-2">
+          <span className="px-2.5 py-1 rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-sm border border-white/20 text-brand-charcoal dark:text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
+            {property.type}
+          </span>
+          <span className={`px-2.5 py-1 rounded-full backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider shadow-lg ${
+            property.category === 'RENT' ? 'bg-emerald-500/90' : 'bg-blue-500/90'
+          }`}>
+            {property.category === 'RENT' ? 'Location' : 'Vente'}
+          </span>
+        </div>
+
+        {/* Smart Tags */}
+        {property.smartTags && property.smartTags.length > 0 && (
+          <div className="absolute top-3 right-3 z-20 flex flex-col gap-1">
+            {property.smartTags.slice(0, 2).map((tag, i) => (
+              <span key={i} className="px-2 py-0.5 rounded-full bg-brand-gold/90 text-black text-[9px] font-bold uppercase flex items-center gap-1">
+                <Sparkles size={8} />
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Like Button */}
+        {!property.smartTags?.length && (
+          <button
+            onClick={handleLike}
+            className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-200 ${
+              isLiked ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+            }`}
+          >
+            <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
+          </button>
+        )}
+
+        {/* Price & Location */}
+        <div className="absolute bottom-3 left-3 right-3 z-20">
+          <div className="flex items-end justify-between">
+            <div className="flex items-center gap-1 text-white/80 text-[11px] font-medium">
+              <MapPin size={10} className="text-brand-gold" />
+              <span className="truncate max-w-[120px]">{property.location}</span>
+            </div>
+            <span className="text-lg font-display font-bold text-white drop-shadow-lg">
+              {property.price}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4 flex-1 flex flex-col">
+        <h3 className="text-sm font-semibold text-brand-charcoal dark:text-white mb-1.5 leading-tight line-clamp-2 group-hover:text-brand-gold transition-colors">
+          {property.name}
+        </h3>
+
+        {/* Features */}
+        {property.features.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {property.features.slice(0, 3).map((feature, i) => (
+              <span key={i} className="px-2 py-0.5 rounded bg-brand-gold/10 text-brand-gold text-[9px] font-semibold uppercase">
+                {feature}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Stats */}
+        <div className="flex items-center gap-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06] mt-auto text-gray-500 dark:text-gray-400">
+          {property.beds && property.beds > 0 && (
+            <div className="flex items-center gap-1">
+              <Bed size={12} className="text-brand-gold/70" />
+              <span className="text-[10px] font-semibold">{property.beds}</span>
+            </div>
+          )}
+          {property.baths && property.baths > 0 && (
+            <div className="flex items-center gap-1">
+              <Bath size={12} className="text-brand-gold/70" />
+              <span className="text-[10px] font-semibold">{property.baths}</span>
+            </div>
+          )}
+          {property.area && (
+            <div className="flex items-center gap-1">
+              <Maximize size={12} className="text-brand-gold/70" />
+              <span className="text-[10px] font-semibold">{property.area}</span>
+            </div>
+          )}
+          <span className="ml-auto text-[9px] text-gray-400">{property.id}</span>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+ListingCard.displayName = 'ListingCard';
+
+// ============================================================================
+// TYPE FILTER BUTTONS
+// ============================================================================
+
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  'Tous': <Grid3X3 size={14} />,
+  'Appartement': <Building2 size={14} />,
+  'Villa': <Home size={14} />,
+  'Bureau': <Briefcase size={14} />,
+  'Magasin': <Store size={14} />
+};
+
+const PROPERTY_TYPES = ['Tous', 'Appartement', 'Villa', 'Bureau', 'Magasin', 'Terrain'];
+
+interface TypeFilterProps {
+  activeType: string;
+  onTypeChange: (type: string) => void;
+}
+
+const TypeFilter = memo(({ activeType, onTypeChange }: TypeFilterProps) => (
+  <div className="flex gap-2 overflow-x-auto pb-6 no-scrollbar">
+    {PROPERTY_TYPES.map((type) => (
+      <button
+        key={type}
+        onClick={() => onTypeChange(type)}
+        className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 ${
+          activeType === type
+            ? 'bg-brand-gold text-black border-brand-gold font-bold'
+            : 'border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] text-brand-charcoal/70 dark:text-white/60 hover:border-brand-gold/50'
+        }`}
+      >
+        {TYPE_ICONS[type] || <Home size={14} />}
+        {type}
+      </button>
+    ))}
+  </div>
+));
+
+TypeFilter.displayName = 'TypeFilter';
+
+// ============================================================================
+// PAGINATION
+// ============================================================================
+
+interface PaginationProps {
+  page: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+const Pagination = memo(({ page, totalPages, onPageChange }: PaginationProps) => {
+  const pages = useMemo(() => {
+    const result = [];
+    const maxVisible = 5;
+
+    let start = Math.max(1, page - 2);
+    let end = Math.min(totalPages, start + maxVisible - 1);
+
+    if (end - start < maxVisible - 1) {
+      start = Math.max(1, end - maxVisible + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      result.push(i);
+    }
+
+    return result;
+  }, [page, totalPages]);
+
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="flex items-center justify-center gap-2 mt-10">
+      <button
+        onClick={() => onPageChange(Math.max(1, page - 1))}
+        disabled={page === 1}
+        className="p-2 rounded-lg border border-black/10 dark:border-white/10 disabled:opacity-30 hover:border-brand-gold transition-colors"
+      >
+        <ChevronLeft size={20} />
+      </button>
+
+      <div className="flex items-center gap-1">
+        {pages.map(pageNum => (
+          <button
+            key={pageNum}
+            onClick={() => onPageChange(pageNum)}
+            className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+              page === pageNum
+                ? 'bg-brand-gold text-black'
+                : 'hover:bg-black/5 dark:hover:bg-white/5'
+            }`}
+          >
+            {pageNum}
+          </button>
+        ))}
+      </div>
+
+      <button
+        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+        disabled={page === totalPages}
+        className="p-2 rounded-lg border border-black/10 dark:border-white/10 disabled:opacity-30 hover:border-brand-gold transition-colors"
+      >
+        <ChevronRight size={20} />
+      </button>
+
+      <span className="ml-4 text-sm text-gray-500">
+        Page {page} sur {totalPages}
+      </span>
+    </div>
+  );
+});
+
+Pagination.displayName = 'Pagination';
+
+// ============================================================================
+// MAIN LISTINGS COMPONENT
+// ============================================================================
+
+const Listings: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<ListingCategory>('SALE');
+  const [activeType, setActiveType] = useState<string>('Tous');
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+
+  // RAG Search state
+  const [ragResults, setRagResults] = useState<RAGSearchResponse | null>(null);
+  const [isRAGSearch, setIsRAGSearch] = useState(false);
+  const [searchExplanation, setSearchExplanation] = useState<string>('');
+
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  // Debounced search for performance
+  const debouncedSearch = useDebounce(searchQuery, 300);
+
+  // Preload data on mount
+  useEffect(() => {
+    preloadData();
+    preloadRAGService();
+  }, []);
+
+  // Load properties
+  const loadProperties = useCallback(async () => {
+    setLoading(true);
+    try {
+      const filters: PropertyFilters = {
+        category: activeTab,
+        page,
+        limit: 12,
+        search: debouncedSearch || undefined
+      };
+
+      if (activeType !== 'Tous') {
+        filters.type = activeType;
+      }
+
+      const response = await getProperties(filters);
+
+      if (response.success) {
+        setProperties(response.data);
+        setTotalPages(response.pagination.totalPages);
+        setTotal(response.pagination.total);
+      }
+    } catch (error) {
+      console.error('Error loading properties:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, activeType, page, debouncedSearch]);
+
+  useEffect(() => {
+    loadProperties();
+  }, [loadProperties]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, activeType, debouncedSearch]);
+
+  // Handlers
+  const handleTabChange = useCallback((tab: ListingCategory) => {
+    setActiveTab(tab);
+  }, []);
+
+  const handleTypeChange = useCallback((type: string) => {
+    setActiveType(type);
+  }, []);
+
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+    // Scroll to listings section
+    document.getElementById(SectionId.LISTINGS)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
+  const handleViewProperty = useCallback((property: Property) => {
+    setSelectedProperty(property);
+  }, []);
+
+  const handleCloseModal = useCallback(() => {
+    setSelectedProperty(null);
+  }, []);
+
+  // Handle intelligent RAG search
+  const handleIntelligentSearch = useCallback(async (query: string, ragResponse?: RAGSearchResponse) => {
+    setSearchQuery(query);
+    setPage(1);
+
+    if (ragResponse && ragResponse.results.length > 0) {
+      // Use RAG results
+      setIsRAGSearch(true);
+      setRagResults(ragResponse);
+      setProperties(ragResponse.results as Property[]);
+      setTotal(ragResponse.total_results);
+      setTotalPages(Math.ceil(ragResponse.total_results / 12));
+      setSearchExplanation(ragResponse.explanation || '');
+      setLoading(false);
+    } else {
+      // Fall back to regular search
+      setIsRAGSearch(false);
+      setRagResults(null);
+      setSearchExplanation('');
+      loadProperties();
+    }
+  }, []);
+
+  // Handle quick select from suggestions
+  const handleQuickSelect = useCallback((result: SearchResult) => {
+    // Find full property and show modal
+    const fullProperty = properties.find(p => p.id === result.id);
+    if (fullProperty) {
+      setSelectedProperty(fullProperty);
+    }
+  }, [properties]);
+
+  // Clear RAG search
+  const clearRAGSearch = useCallback(() => {
+    setIsRAGSearch(false);
+    setRagResults(null);
+    setSearchExplanation('');
+    setSearchQuery('');
+    loadProperties();
+  }, []);
+
+  return (
+    <section id={SectionId.LISTINGS} className="py-20 relative bg-[#FAFAF9] dark:bg-[#050608] overflow-hidden transition-colors duration-300">
+      {/* Background - Static, no animations */}
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-brand-gold/5 rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="container mx-auto px-4 md:px-6 relative z-10">
+        {/* Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 gap-6">
+          <div>
+            <span className="text-brand-gold text-xs font-bold uppercase tracking-[0.3em] mb-3 block">
+              {total} Annonces
+            </span>
+            <h2 className="text-3xl md:text-5xl font-display text-brand-charcoal dark:text-white mb-2">
+              Nos <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-cyan-400 italic font-serif">Biens</span>
+            </h2>
+            <p className="text-brand-charcoal/50 dark:text-white/50 text-sm md:text-base font-light max-w-md">
+              Découvrez notre sélection de {activeTab === 'SALE' ? 'biens à vendre' : 'locations'} à Casablanca
+            </p>
+          </div>
+
+          {/* Category Tabs */}
+          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
+            <div className="p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] flex relative backdrop-blur-sm">
+              <div
+                className={`absolute top-1 bottom-1 bg-gradient-to-r from-brand-gold to-cyan-400 rounded-lg shadow-lg transition-all duration-300 ${
+                  activeTab === 'SALE' ? 'left-1 w-[calc(50%-4px)]' : 'left-[50%] w-[calc(50%-4px)]'
+                }`}
+              />
+              <button
+                onClick={() => handleTabChange('SALE')}
+                className={`relative z-10 px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  activeTab === 'SALE' ? 'text-black' : 'text-gray-500 dark:text-white/60'
+                }`}
+              >
+                Vente
+              </button>
+              <button
+                onClick={() => handleTabChange('RENT')}
+                className={`relative z-10 px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  activeTab === 'RENT' ? 'text-black' : 'text-gray-500 dark:text-white/60'
+                }`}
+              >
+                Location
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Intelligent Search Bar */}
+        <div className="mb-8">
+          <IntelligentSearch
+            onSearch={handleIntelligentSearch}
+            onQuickSelect={handleQuickSelect}
+            category={activeTab}
+            placeholder="Recherche IA: 'villa 4 chambres anfa avec piscine'..."
+            className="max-w-2xl mx-auto lg:mx-0"
+          />
+        </div>
+
+        {/* RAG Search Status */}
+        <AnimatePresence>
+          {isRAGSearch && ragResults && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-gold/10 via-cyan-400/5 to-transparent border border-brand-gold/20"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-gold to-cyan-400 flex items-center justify-center flex-shrink-0">
+                    <Brain size={20} className="text-black" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-bold text-brand-charcoal dark:text-white">
+                        Recherche IA
+                      </span>
+                      {ragResults.intent && (
+                        <span className="px-2 py-0.5 rounded-full bg-brand-gold/20 text-brand-gold text-[10px] font-bold uppercase">
+                          {ragResults.intent}
+                        </span>
+                      )}
+                      {ragResults.confidence && (
+                        <span className="text-[10px] text-gray-500">
+                          {Math.round(ragResults.confidence * 100)}% confiance
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-brand-charcoal/60 dark:text-white/60">
+                      {searchExplanation || `${ragResults.total_results} résultats trouvés pour "${searchQuery}"`}
+                    </p>
+                    {ragResults.filters_detected && Object.keys(ragResults.filters_detected).length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {Object.entries(ragResults.filters_detected).map(([key, value]) => (
+                          <span key={key} className="px-2 py-0.5 rounded-full bg-white/50 dark:bg-white/10 text-[10px] text-brand-charcoal dark:text-white">
+                            {key}: {String(value)}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={clearRAGSearch}
+                  className="px-3 py-1.5 rounded-lg bg-white/50 dark:bg-white/10 text-xs font-medium text-brand-charcoal dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
+                >
+                  Effacer
+                </button>
+              </div>
+              {ragResults.suggestions && ragResults.suggestions.length > 0 && (
+                <div className="mt-3 pt-3 border-t border-brand-gold/10">
+                  <span className="text-[10px] text-gray-500 uppercase tracking-wider">Suggestions:</span>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {ragResults.suggestions.map((suggestion, i) => (
+                      <button
+                        key={i}
+                        onClick={() => handleIntelligentSearch(suggestion)}
+                        className="px-2 py-1 rounded-full bg-white/50 dark:bg-white/10 text-xs text-brand-charcoal dark:text-white hover:bg-brand-gold/20 transition-colors flex items-center gap-1"
+                      >
+                        <Zap size={10} className="text-brand-gold" />
+                        {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Type Filters */}
+        <TypeFilter activeType={activeType} onTypeChange={handleTypeChange} />
+
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 size={40} className="animate-spin text-brand-gold" />
+          </div>
+        ) : (
+          <>
+            {/* Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+              {properties.map((property) => (
+                <ListingCard
+                  key={property.id}
+                  property={property}
+                  onView={handleViewProperty}
+                />
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {properties.length === 0 && (
+              <div className="text-center py-20">
+                <p className="text-gray-500 dark:text-gray-400">Aucun bien trouvé</p>
+              </div>
+            )}
+
+            {/* Pagination */}
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
+          </>
+        )}
+      </div>
+
+      {/* Property Modal */}
+      <AnimatePresence>
+        {selectedProperty && (
+          <PropertyModal
+            property={selectedProperty}
+            onClose={handleCloseModal}
+          />
+        )}
+      </AnimatePresence>
+    </section>
+  );
+};
+
+export default Listings;

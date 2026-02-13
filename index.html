@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth overflow-x-hidden">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#D4AF37" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>Nourreska | Immobilier de Prestige au Maroc</title>
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Outfit:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                terracotta: '#A0522D',
+                sand: '#E6DCC3',
+                olive: '#556B2F',
+                charcoal: '#0A0A0C', // Nearly black
+                gold: '#0ABAB5', // Tiffany Blue
+                tiffany: '#0ABAB5', // Tiffany Blue primary
+                'tiffany-light': '#81D8D0', // Lighter Tiffany
+                'tiffany-dark': '#088F8F', // Darker Tiffany
+                cream: '#F2F0E9', // Warmer, richer cream
+                void: '#050608', // True black base
+                glass: 'rgba(255, 255, 255, 0.05)',
+              }
+            },
+            fontFamily: {
+              serif: ['"Playfair Display"', 'serif'],
+              sans: ['"Outfit"', 'sans-serif'], 
+              display: ['"Cinzel"', 'serif'],
+            },
+            boxShadow: {
+              'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+              'neon-gold': '0 0 15px rgba(10, 186, 181, 0.15)',
+              'glow': '0 0 40px -10px rgba(255,255,255,0.1)',
+            },
+            backgroundImage: {
+              'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+              'glass-gradient': 'linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%)',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #050608;
+        color: #F2F0E9;
+        overflow-x: hidden;
+      }
+      
+      /* Light mode overrides */
+      html:not(.dark) body {
+        background-color: #FAFAF9;
+        color: #0A0A0C;
+      }
+
+      /* Refined Ambient Orbs - Slower, more subtle */
+      .orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(120px);
+        z-index: -1;
+        opacity: 0.25; /* Reduced opacity for better text contrast */
+        animation: float-orb 30s infinite ease-in-out;
+        pointer-events: none;
+      }
+      .orb-1 { top: -20%; left: -10%; width: 60vw; height: 60vw; background: #2c3e50; animation-delay: 0s; }
+      .orb-2 { bottom: -20%; right: -10%; width: 50vw; height: 50vw; background: #3d2b1f; animation-delay: -10s; }
+      .orb-3 { top: 30%; left: 30%; width: 40vw; height: 40vw; background: #000000; animation-delay: -15s; }
+
+      @keyframes float-orb {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        50% { transform: translate(30px, -30px) scale(1.05); }
+      }
+
+      /* High-Definition Noise */
+      body::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 9999;
+        mix-blend-mode: overlay;
+      }
+
+      /* Premium Glass Effect */
+      .liquid-glass {
+        background: rgba(255, 255, 255, 0.02);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+      
+      .liquid-glass-high {
+        background: rgba(15, 20, 25, 0.6);
+        backdrop-filter: blur(40px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+      }
+
+      /* Smooth Scrollbar */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #050608; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.15); 
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: rgba(10, 186, 181, 0.5); 
+      }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@^19.2.4",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+        "react/": "https://esm.sh/react@^19.2.4/",
+        "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+        "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
+        "framer-motion": "https://esm.sh/framer-motion@^12.29.2"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="antialiased overflow-x-hidden selection:bg-brand-gold selection:text-black">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+  <script>
+    // Register Service Worker for PWA support
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then((registration) => {
+            console.log('[PWA] Service Worker registered:', registration.scope);
+          })
+          .catch((error) => {
+            console.log('[PWA] Service Worker registration failed:', error);
+          });
+      });
+    }
+  </script>
+</body>
+</html>
