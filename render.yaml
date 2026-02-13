@@ -1,16 +1,19 @@
 # Render Blueprint for Vestate AI
-# This deploys both the frontend and backend on Render
+# ================================
+# Deploy: Dashboard -> New -> Blueprint -> Connect repo
 
 services:
-  # Backend API
+  # ============================================
+  # Backend API (Node.js + Express + Prisma)
+  # ============================================
   - type: web
     name: vestate-api
-    env: node
-    region: fra
+    runtime: node
+    region: frankfurt
     plan: free
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma migrate deploy && npm start
+    startCommand: npx prisma db push && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -22,17 +25,24 @@ services:
       - key: ADMIN_EMAIL
         value: admin@vestate.ai
       - key: ADMIN_PASSWORD
-        sync: false
+        value: VestateAdmin2024!
       - key: DATABASE_URL
         fromDatabase:
           name: vestate-db
           property: connectionString
+      - key: FRONTEND_URL
+        fromService:
+          name: vestate-frontend
+          type: web
+          property: host
 
-  # Frontend Static Site
+  # ============================================
+  # Frontend (React + Vite Static Site)
+  # ============================================
   - type: web
     name: vestate-frontend
-    env: static
-    region: fra
+    runtime: static
+    region: frankfurt
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     headers:
@@ -47,15 +57,21 @@ services:
         source: /*
         destination: /index.html
     envVars:
-      - key: VITE_API_URL
-        sync: false
       - key: VITE_APP_NAME
         value: Vestate AI
+      - key: VITE_API_URL
+        fromService:
+          name: vestate-api
+          type: web
+          property: hostport
 
+# ============================================
 # PostgreSQL Database
+# ============================================
 databases:
   - name: vestate-db
     plan: free
-    region: fra
+    region: frankfurt
     databaseName: vestate
     user: vestate_user
+    ipAllowList: []
