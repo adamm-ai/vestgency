@@ -63,20 +63,20 @@ app.use((req, res) => {
 
 // Start server
 const startServer = async () => {
-  try {
-    // Connect to database
-    await prisma.$connect();
-    console.log('[Database] Connected to PostgreSQL');
+  // Start listening first (so health check passes)
+  app.listen(PORT, async () => {
+    console.log(`[Server] Vestate API running on port ${PORT}`);
+    console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
 
-    // Start listening
-    app.listen(PORT, () => {
-      console.log(`[Server] Vestate API running on port ${PORT}`);
-      console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-  } catch (error) {
-    console.error('[Server] Failed to start:', error);
-    process.exit(1);
-  }
+    // Then connect to database
+    try {
+      await prisma.$connect();
+      console.log('[Database] Connected to PostgreSQL');
+    } catch (error) {
+      console.error('[Database] Connection failed:', error);
+      console.log('[Database] Will retry on first request...');
+    }
+  });
 };
 
 // Graceful shutdown
