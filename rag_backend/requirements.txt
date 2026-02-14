@@ -17,12 +17,11 @@ langchain-community==0.3.0
 langgraph==0.2.0
 
 # Vector Store & Embeddings
-faiss-cpu==1.8.0
-sentence-transformers==3.0.0
+faiss-cpu>=1.8.0
+sentence-transformers>=3.0.0
 
-# ML & NLP - CPU only for Render (lighter)
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.2.0+cpu
+# ML & NLP
+torch>=2.0.0
 transformers>=4.40.0
 numpy>=1.24.0
 scikit-learn>=1.3.0
