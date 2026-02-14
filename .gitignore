@@ -22,7 +22,10 @@ rag_backend/.env
 # Python cache
 __pycache__/
 *.pyc
-*.pkl
+
+# Keep FAISS index for deployment
+!rag_backend/faiss_index/
+!rag_backend/faiss_index/*
 
 # Keep examples
 !.env.example
