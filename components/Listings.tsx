@@ -114,7 +114,7 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
   // Get all images (use images array if available, fallback to single image)
   const allImages = useMemo(() => {
     if (property.images && property.images.length > 0) {
-      return property.images.slice(0, 10); // Limit to 10 images for performance
+      return property.images; // All images from database
     }
     return [property.image];
   }, [property.images, property.image]);
@@ -210,22 +210,48 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
           </>
         )}
 
-        {/* Dot Indicators (only show if multiple images) */}
+        {/* Dot Indicators (only show if multiple images, max 7 visible) */}
         {allImages.length > 1 && (
-          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
-            {allImages.slice(0, 5).map((_, index) => (
-              <button
-                key={index}
-                onClick={(e) => handleDotClick(e, index)}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                  index === currentImageIndex
-                    ? 'bg-white w-4'
-                    : 'bg-white/50 hover:bg-white/70'
-                }`}
-              />
-            ))}
-            {allImages.length > 5 && (
-              <span className="text-white/70 text-[9px] ml-1">+{allImages.length - 5}</span>
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 flex gap-1 items-center">
+            {allImages.length <= 7 ? (
+              // Show all dots if 7 or fewer images
+              allImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={(e) => handleDotClick(e, index)}
+                  className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                    index === currentImageIndex
+                      ? 'bg-white w-3'
+                      : 'bg-white/50 hover:bg-white/70'
+                  }`}
+                />
+              ))
+            ) : (
+              // Show sliding window of dots for many images
+              <>
+                {currentImageIndex > 0 && (
+                  <span className="text-white/50 text-[8px]">‹</span>
+                )}
+                {Array.from({ length: Math.min(5, allImages.length) }, (_, i) => {
+                  // Calculate which indices to show (sliding window)
+                  let startIdx = Math.max(0, Math.min(currentImageIndex - 2, allImages.length - 5));
+                  let idx = startIdx + i;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={(e) => handleDotClick(e, idx)}
+                      className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                        idx === currentImageIndex
+                          ? 'bg-white w-3'
+                          : 'bg-white/50 hover:bg-white/70'
+                      }`}
+                    />
+                  );
+                })}
+                {currentImageIndex < allImages.length - 1 && (
+                  <span className="text-white/50 text-[8px]">›</span>
+                )}
+              </>
             )}
           </div>
         )}
