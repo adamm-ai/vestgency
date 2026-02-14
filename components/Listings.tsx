@@ -108,6 +108,16 @@ interface ListingCardProps {
 
 const ListingCard = memo(({ property, onView }: ListingCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Get all images (use images array if available, fallback to single image)
+  const allImages = useMemo(() => {
+    if (property.images && property.images.length > 0) {
+      return property.images.slice(0, 10); // Limit to 10 images for performance
+    }
+    return [property.image];
+  }, [property.images, property.image]);
 
   const handleClick = useCallback(() => {
     onView(property);
@@ -118,20 +128,114 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
     setIsLiked(prev => !prev);
   }, []);
 
+  const handlePrevImage = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => (prev === 0 ? allImages.length - 1 : prev - 1));
+  }, [allImages.length]);
+
+  const handleNextImage = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex(prev => (prev === allImages.length - 1 ? 0 : prev + 1));
+  }, [allImages.length]);
+
+  const handleDotClick = useCallback((e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    setCurrentImageIndex(index);
+  }, []);
+
+  // Handle horizontal scroll/swipe
+  const handleScroll = useCallback(() => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const scrollLeft = container.scrollLeft;
+      const imageWidth = container.offsetWidth;
+      const newIndex = Math.round(scrollLeft / imageWidth);
+      if (newIndex !== currentImageIndex && newIndex >= 0 && newIndex < allImages.length) {
+        setCurrentImageIndex(newIndex);
+      }
+    }
+  }, [currentImageIndex, allImages.length]);
+
+  // Scroll to current image when index changes (for arrow navigation)
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      const imageWidth = container.offsetWidth;
+      container.scrollTo({ left: currentImageIndex * imageWidth, behavior: 'smooth' });
+    }
+  }, [currentImageIndex]);
+
   return (
     <div
       className="relative rounded-2xl overflow-hidden h-full flex flex-col bg-white dark:bg-[#0c0c0f] border border-black/[0.04] dark:border-white/[0.06] group hover:border-brand-gold/30 transition-all duration-300 shadow-lg dark:shadow-2xl dark:shadow-black/40 cursor-pointer"
       onClick={handleClick}
     >
-      {/* Image Area */}
+      {/* Image Carousel Area */}
       <div className="relative h-56 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 pointer-events-none" />
 
-        <LazyImage
-          src={property.image}
-          alt={property.name}
-          className="w-full h-full group-hover:scale-105 transition-transform duration-500"
-        />
+        {/* Scrollable Image Container */}
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {allImages.map((img, index) => (
+            <div key={index} className="flex-shrink-0 w-full h-full snap-center">
+              <LazyImage
+                src={img}
+                alt={`${property.name} - Photo ${index + 1}`}
+                className="w-full h-full group-hover:scale-105 transition-transform duration-500"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Navigation Arrows (only show if multiple images) */}
+        {allImages.length > 1 && (
+          <>
+            <button
+              onClick={handlePrevImage}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <button
+              onClick={handleNextImage}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </>
+        )}
+
+        {/* Dot Indicators (only show if multiple images) */}
+        {allImages.length > 1 && (
+          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+            {allImages.slice(0, 5).map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => handleDotClick(e, index)}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                  index === currentImageIndex
+                    ? 'bg-white w-4'
+                    : 'bg-white/50 hover:bg-white/70'
+                }`}
+              />
+            ))}
+            {allImages.length > 5 && (
+              <span className="text-white/70 text-[9px] ml-1">+{allImages.length - 5}</span>
+            )}
+          </div>
+        )}
+
+        {/* Image Counter */}
+        {allImages.length > 1 && (
+          <div className="absolute top-12 right-3 z-20 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-medium">
+            {currentImageIndex + 1}/{allImages.length}
+          </div>
+        )}
 
         {/* Tags */}
         <div className="absolute top-3 left-3 z-20 flex gap-2">

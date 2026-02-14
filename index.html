@@ -118,14 +118,23 @@
         width: 6px;
       }
       ::-webkit-scrollbar-track {
-        background: #050608; 
+        background: #050608;
       }
       ::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.15); 
+        background: rgba(255,255,255,0.15);
         border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: rgba(10, 186, 181, 0.5); 
+        background: rgba(10, 186, 181, 0.5);
+      }
+
+      /* Hide scrollbar for image carousels */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
     </style>
     <script type="importmap">
