@@ -1,14 +1,18 @@
 """
-FastAPI Server LITE
-===================
-Lightweight API server for property search without ML dependencies.
-Uses keyword-based search - works on Render free tier (512MB RAM).
+FastAPI Production Server
+=========================
+Production-ready API server that loads pre-computed FAISS index.
+Uses OpenAI embeddings for query encoding - no PyTorch needed!
+
+Memory: ~100MB (vs 1GB+ with Sentence Transformers)
 """
 
 import logging
 import time
 import json
 import os
+import pickle
+import numpy as np
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
@@ -19,6 +23,7 @@ from fastapi.responses import ORJSONResponse
 from pydantic import BaseModel, Field
 from sse_starlette.sse import EventSourceResponse
 from dotenv import load_dotenv
+import openai
 
 # Load environment variables
 load_dotenv()
@@ -35,17 +40,24 @@ SERVER_HOST = "0.0.0.0"
 SERVER_PORT = int(os.getenv("PORT", 8001))
 CORS_ORIGINS = ["*"]
 
-# Data path
+# Paths
 BASE_DIR = Path(__file__).parent
-LOCAL_DATA = BASE_DIR / "data" / "properties.json"
-PARENT_DATA = BASE_DIR.parent / "data" / "properties.json"
-PROPERTIES_PATH = LOCAL_DATA if LOCAL_DATA.exists() else PARENT_DATA
+INDEX_DIR = BASE_DIR / "faiss_index"
+EMBEDDINGS_CACHE = BASE_DIR / "embeddings_cache.pkl"
+
+# OpenAI config
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_DIMENSION = 384  # We'll truncate OpenAI embeddings to match
 
 # ============================================================================
 # GLOBAL STATE
 # ============================================================================
 
+faiss_index = None
 properties: List[Dict[str, Any]] = []
+embeddings_cache: Optional[np.ndarray] = None
+property_ids: List[str] = []
+openai_client = None
 is_ready = False
 
 # ============================================================================
@@ -55,14 +67,16 @@ is_ready = False
 class SearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=500)
     top_k: int = Field(default=12, ge=1, le=50)
-    mode: str = Field(default="keyword")
+    mode: str = Field(default="semantic")
     filters: Optional[Dict[str, Any]] = None
+
 
 class QuickSearchResponse(BaseModel):
     success: bool
     query: str
     results: List[Dict[str, Any]]
     processing_time_ms: float
+
 
 class HealthResponse(BaseModel):
     status: str
@@ -72,12 +86,124 @@ class HealthResponse(BaseModel):
     embedding_model: str
     chatbot_ready: bool
 
+
+# ============================================================================
+# EMBEDDING FUNCTIONS
+# ============================================================================
+
+def get_query_embedding_openai(query: str) -> np.ndarray:
+    """Get embedding for query using OpenAI API."""
+    global openai_client
+
+    if not openai_client:
+        raise ValueError("OpenAI client not initialized")
+
+    response = openai_client.embeddings.create(
+        model=OPENAI_EMBEDDING_MODEL,
+        input=query,
+        dimensions=EMBEDDING_DIMENSION  # OpenAI supports dimension reduction
+    )
+
+    embedding = np.array(response.data[0].embedding, dtype=np.float32)
+
+    # Normalize for cosine similarity
+    norm = np.linalg.norm(embedding)
+    if norm > 0:
+        embedding = embedding / norm
+
+    return embedding
+
+
+def get_query_embedding_fallback(query: str) -> np.ndarray:
+    """Fallback: Create simple TF-IDF-like embedding."""
+    # This is a very basic fallback - won't be as good as real embeddings
+    # but allows the system to work without OpenAI API
+    import hashlib
+
+    # Create deterministic pseudo-embedding from query terms
+    terms = query.lower().split()
+    embedding = np.zeros(EMBEDDING_DIMENSION, dtype=np.float32)
+
+    for term in terms:
+        # Hash each term to get reproducible vector positions
+        hash_val = int(hashlib.md5(term.encode()).hexdigest(), 16)
+        positions = [(hash_val >> i) % EMBEDDING_DIMENSION for i in range(0, 128, 8)]
+        for pos in positions:
+            embedding[pos] += 1.0
+
+    # Normalize
+    norm = np.linalg.norm(embedding)
+    if norm > 0:
+        embedding = embedding / norm
+
+    return embedding
+
+
 # ============================================================================
 # SEARCH FUNCTIONS
 # ============================================================================
 
+def semantic_search(query: str, top_k: int = 12) -> List[Dict[str, Any]]:
+    """Perform semantic search using FAISS."""
+    global faiss_index, properties, openai_client
+
+    if faiss_index is None or not properties:
+        return []
+
+    try:
+        # Get query embedding
+        if openai_client:
+            query_embedding = get_query_embedding_openai(query)
+        else:
+            logger.warning("OpenAI not available, using fallback embedding")
+            query_embedding = get_query_embedding_fallback(query)
+
+        # Reshape for FAISS
+        query_embedding = query_embedding.reshape(1, -1)
+
+        # Search FAISS index
+        scores, indices = faiss_index.search(query_embedding, min(top_k * 2, len(properties)))
+
+        # Build results
+        results = []
+        for score, idx in zip(scores[0], indices[0]):
+            if idx < 0 or idx >= len(properties):
+                continue
+
+            prop = properties[idx]
+            result = {
+                "id": prop.get("id"),
+                "name": prop.get("name"),
+                "type": prop.get("type"),
+                "category": prop.get("category"),
+                "location": prop.get("location"),
+                "city": prop.get("city", ""),
+                "price": prop.get("price"),
+                "priceNumeric": prop.get("priceNumeric"),
+                "beds": prop.get("beds"),
+                "baths": prop.get("baths"),
+                "area": prop.get("area"),
+                "areaNumeric": prop.get("areaNumeric"),
+                "image": prop.get("image"),
+                "images": prop.get("images", []),
+                "features": prop.get("features", []),
+                "smartTags": prop.get("smartTags", []),
+                "description": prop.get("description", ""),
+                "url": prop.get("url", ""),
+                "_score": float(score)
+            }
+            results.append(result)
+
+        return results[:top_k]
+
+    except Exception as e:
+        logger.error(f"Semantic search error: {e}")
+        # Fallback to keyword search
+        return keyword_search(query, top_k)
+
+
 def keyword_search(query: str, limit: int = 12) -> List[Dict[str, Any]]:
-    """Simple keyword-based search."""
+    """Fallback keyword-based search."""
     if not properties:
         return []
 
@@ -89,7 +215,6 @@ def keyword_search(query: str, limit: int = 12) -> List[Dict[str, Any]]:
     for prop in properties:
         score = 0.0
 
-        # Searchable fields
         name = prop.get("name", "").lower()
         location = prop.get("location", "").lower()
         prop_type = prop.get("type", "").lower()
@@ -102,8 +227,6 @@ def keyword_search(query: str, limit: int = 12) -> List[Dict[str, Any]]:
             score += 10
         if query_lower in location:
             score += 8
-        if query_lower in prop_type:
-            score += 6
 
         # Term matches
         for term in query_terms:
@@ -133,10 +256,8 @@ def keyword_search(query: str, limit: int = 12) -> List[Dict[str, Any]]:
         if score > 0:
             scored_results.append((prop, score))
 
-    # Sort by score
     scored_results.sort(key=lambda x: x[1], reverse=True)
 
-    # Return top results
     return [
         {
             "id": p.get("id"),
@@ -162,6 +283,7 @@ def keyword_search(query: str, limit: int = 12) -> List[Dict[str, Any]]:
         for p, score in scored_results[:limit]
     ]
 
+
 def detect_intent(query: str) -> Dict[str, Any]:
     """Detect search intent from query."""
     query_lower = query.lower()
@@ -184,47 +306,79 @@ def detect_intent(query: str) -> Dict[str, Any]:
 
     return {"intent": intent, "confidence": confidence}
 
+
 # ============================================================================
 # LIFECYCLE
 # ============================================================================
 
-def load_properties():
-    """Load properties from JSON file."""
-    global properties, is_ready
+def load_index():
+    """Load pre-computed FAISS index and metadata."""
+    global faiss_index, properties, embeddings_cache, property_ids, openai_client, is_ready
 
     try:
-        logger.info(f"Loading properties from {PROPERTIES_PATH}")
-        with open(PROPERTIES_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        if isinstance(data, dict) and "properties" in data:
-            properties = data["properties"]
+        # Initialize OpenAI client
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if openai_key:
+            openai_client = openai.OpenAI(api_key=openai_key)
+            logger.info("OpenAI client initialized")
         else:
-            properties = data
+            logger.warning("OPENAI_API_KEY not set - semantic search will use fallback")
 
-        logger.info(f"Loaded {len(properties)} properties")
+        # Load FAISS index
+        index_path = INDEX_DIR / "index.faiss"
+        if index_path.exists():
+            import faiss
+            faiss_index = faiss.read_index(str(index_path))
+            logger.info(f"Loaded FAISS index with {faiss_index.ntotal} vectors")
+        else:
+            logger.error(f"FAISS index not found at {index_path}")
+            is_ready = False
+            return
+
+        # Load metadata
+        metadata_path = INDEX_DIR / "metadata.json"
+        if metadata_path.exists():
+            with open(metadata_path, "r", encoding="utf-8") as f:
+                properties = json.load(f)
+            logger.info(f"Loaded {len(properties)} properties from metadata")
+        else:
+            logger.error(f"Metadata not found at {metadata_path}")
+            is_ready = False
+            return
+
+        # Load embeddings cache (optional, for similar property search)
+        if EMBEDDINGS_CACHE.exists():
+            with open(EMBEDDINGS_CACHE, "rb") as f:
+                cache_data = pickle.load(f)
+                embeddings_cache = cache_data.get("embeddings")
+                property_ids = cache_data.get("property_ids", [])
+            logger.info("Loaded embeddings cache")
+
         is_ready = True
+        logger.info("Server ready!")
+
     except Exception as e:
-        logger.error(f"Failed to load properties: {e}")
+        logger.error(f"Failed to load index: {e}")
         is_ready = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifecycle."""
-    logger.info("Starting RAG Lite server...")
-    load_properties()
-    logger.info(f"Server ready! {len(properties)} properties loaded.")
+    logger.info("Starting RAG Production Server...")
+    load_index()
     yield
     logger.info("Shutting down...")
+
 
 # ============================================================================
 # FASTAPI APP
 # ============================================================================
 
 app = FastAPI(
-    title="Nourreska RAG Lite API",
-    description="Lightweight property search API (keyword-based)",
-    version="2.0.0-lite",
+    title="Nourreska RAG API",
+    description="Semantic property search using pre-computed FAISS index",
+    version="2.0.0-production",
     default_response_class=ORJSONResponse,
     lifespan=lifespan
 )
@@ -237,6 +391,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # ============================================================================
 # ENDPOINTS
 # ============================================================================
@@ -246,22 +401,24 @@ async def health_check():
     """Health check endpoint."""
     return HealthResponse(
         status="healthy",
-        version="2.0.0-lite",
+        version="2.0.0-production",
         index_loaded=is_ready,
         total_properties=len(properties),
-        embedding_model="keyword-search",
-        chatbot_ready=bool(os.getenv("OPENAI_API_KEY"))
+        embedding_model="openai/text-embedding-3-small",
+        chatbot_ready=openai_client is not None
     )
+
 
 @app.post("/api/search", tags=["Search"])
 async def search(request: SearchRequest):
-    """Search properties."""
+    """Semantic search endpoint."""
     if not is_ready:
         raise HTTPException(status_code=503, detail="Service not ready")
 
     start_time = time.time()
 
-    results = keyword_search(request.query, request.top_k)
+    # Use semantic search
+    results = semantic_search(request.query, request.top_k)
     intent_info = detect_intent(request.query)
 
     processing_time = (time.time() - start_time) * 1000
@@ -279,6 +436,7 @@ async def search(request: SearchRequest):
         "processing_time_ms": round(processing_time, 2)
     }
 
+
 @app.get("/api/quick-search", response_model=QuickSearchResponse, tags=["Search"])
 async def quick_search(
     q: str = Query(..., min_length=2, max_length=200),
@@ -290,7 +448,7 @@ async def quick_search(
 
     start_time = time.time()
 
-    results = keyword_search(q, limit)
+    results = semantic_search(q, limit)
 
     processing_time = (time.time() - start_time) * 1000
 
@@ -300,6 +458,7 @@ async def quick_search(
         results=results,
         processing_time_ms=round(processing_time, 2)
     )
+
 
 @app.get("/api/property/{property_id}", tags=["Properties"])
 async def get_property(property_id: str):
@@ -312,6 +471,7 @@ async def get_property(property_id: str):
             return {"success": True, "data": prop}
 
     raise HTTPException(status_code=404, detail="Property not found")
+
 
 @app.get("/api/stats", tags=["Properties"])
 async def get_stats():
@@ -334,16 +494,15 @@ async def get_stats():
         "by_type": sorted(type_counts.items(), key=lambda x: x[1], reverse=True)
     }
 
+
 # ============================================================================
-# CHATBOT ENDPOINT (OpenAI)
+# CHATBOT ENDPOINT
 # ============================================================================
 
 @app.post("/api/chat", tags=["Chatbot"])
 async def chat(message: str = "", conversation_id: str = "default", stream: bool = False):
-    """Simple chatbot using OpenAI."""
-    openai_key = os.getenv("OPENAI_API_KEY")
-
-    if not openai_key:
+    """Chatbot using OpenAI."""
+    if not openai_client:
         return {
             "success": False,
             "response": "Chatbot non disponible. Clé OpenAI manquante.",
@@ -351,11 +510,8 @@ async def chat(message: str = "", conversation_id: str = "default", stream: bool
         }
 
     try:
-        import openai
-        client = openai.OpenAI(api_key=openai_key)
-
         # Search for relevant properties
-        relevant = keyword_search(message, 5)
+        relevant = semantic_search(message, 5)
         context = json.dumps(relevant, ensure_ascii=False) if relevant else "Aucun bien trouvé."
 
         system_prompt = f"""Tu es NOUR, l'assistante immobilière d'élite de Nourreska.
@@ -365,7 +521,7 @@ Voici les biens pertinents pour la requête du client:
 
 Réponds de manière professionnelle et aide le client à trouver le bien idéal."""
 
-        response = client.chat.completions.create(
+        response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -387,15 +543,17 @@ Réponds de manière professionnelle et aide le client à trouver le bien idéal
             "conversation_id": conversation_id
         }
 
+
 @app.get("/api/chat/status", tags=["Chatbot"])
 async def chat_status():
     """Get chatbot status."""
     return {
-        "ready": bool(os.getenv("OPENAI_API_KEY")),
+        "ready": openai_client is not None,
         "agent_name": "NOUR",
         "capabilities": ["property_search", "property_details"],
         "model": "gpt-4o-mini"
     }
+
 
 # ============================================================================
 # MAIN
