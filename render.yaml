@@ -12,7 +12,7 @@ services:
     region: frankfurt
     plan: free
     rootDir: rag_backend
-    buildCommand: pip install -r requirements.txt && cp -r ../data ./data
+    buildCommand: pip install --no-cache-dir -r requirements.txt && cp -r ../data ./data
     startCommand: python server.py
     healthCheckPath: /health
     envVars:
