@@ -14,7 +14,11 @@ from typing import Literal
 
 BASE_DIR = Path(__file__).parent
 PROJECT_DIR = BASE_DIR.parent
-DATA_DIR = PROJECT_DIR / "data"
+
+# Check if running in Render (data copied to rag_backend/data) or locally (../data)
+LOCAL_DATA_DIR = BASE_DIR / "data"
+PARENT_DATA_DIR = PROJECT_DIR / "data"
+DATA_DIR = LOCAL_DATA_DIR if LOCAL_DATA_DIR.exists() else PARENT_DATA_DIR
 PROPERTIES_JSON = DATA_DIR / "properties.json"
 FAISS_INDEX_PATH = BASE_DIR / "faiss_index"
 EMBEDDINGS_CACHE = BASE_DIR / "embeddings_cache.pkl"
@@ -79,7 +83,7 @@ INTENT_CONFIDENCE_THRESHOLD = 0.7
 # ============================================================================
 
 SERVER_HOST = "0.0.0.0"
-SERVER_PORT = 8001
+SERVER_PORT = int(os.getenv("PORT", 8001))  # Render uses PORT env var
 CORS_ORIGINS = [
     "http://localhost:8000",
     "http://localhost:5173",

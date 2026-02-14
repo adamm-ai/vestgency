@@ -4,6 +4,24 @@
 
 services:
   # ============================================
+  # RAG Backend (Python + FastAPI + FAISS)
+  # ============================================
+  - type: web
+    name: nourreska-rag
+    runtime: python
+    region: frankfurt
+    plan: free
+    rootDir: rag_backend
+    buildCommand: pip install -r requirements.txt && cp -r ../data ./data
+    startCommand: python server.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: OPENAI_API_KEY
+        sync: false
+
+  # ============================================
   # Backend API (Node.js + Express + Prisma)
   # ============================================
   - type: web
@@ -62,6 +80,11 @@ services:
       - key: VITE_API_URL
         fromService:
           name: vestate-api
+          type: web
+          property: hostport
+      - key: VITE_RAG_API_URL
+        fromService:
+          name: nourreska-rag
           type: web
           property: hostport
 
