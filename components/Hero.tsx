@@ -83,7 +83,7 @@ const Hero: React.FC = () => {
           animate="visible"
           variants={fadeInUp}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg md:text-xl text-white/60 text-center max-w-2xl mb-10 font-light"
+          className="text-lg md:text-xl text-white/70 text-center max-w-2xl mb-10 font-light"
         >
           Vente, location et gestion de biens d'exception à Casablanca et dans tout le Maroc
         </motion.p>
@@ -109,7 +109,7 @@ const Hero: React.FC = () => {
                   <input
                     type="text"
                     placeholder="Quartier, type de bien, budget..."
-                    className="w-full bg-transparent border-none outline-none text-white placeholder-white/40 text-base md:text-lg py-4"
+                    className="w-full bg-transparent border-none outline-none text-white placeholder-white/60 text-base md:text-lg py-4"
                     onFocus={scrollToListings}
                   />
                 </div>
@@ -156,7 +156,7 @@ const Hero: React.FC = () => {
               <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
                 {stat.value}
               </div>
-              <div className="text-sm text-white/50 font-medium">
+              <div className="text-sm text-white/70 font-medium">
                 {stat.label}
               </div>
             </div>

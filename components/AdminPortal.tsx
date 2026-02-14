@@ -69,10 +69,8 @@ type AdminView = 'dashboard' | 'crm' | 'properties' | 'users' | 'analytics' | 's
 // CONSTANTS
 // ============================================================================
 
-const ADMIN_CREDENTIALS = {
-  email: 'admin@vestate.ai',
-  password: 'vestate2024'
-};
+// Authentication is now handled by the backend API
+// No credentials stored in frontend code
 
 // Session configuration
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -187,7 +185,7 @@ const AdminLogin: React.FC<{ onLogin: (user: AdminUser, rememberMe: boolean) => 
     setIsLoading(true);
 
     try {
-      // Try real API first
+      // Authenticate via backend API
       const { user } = await authAPI.login(email, password);
       clearLoginAttempts();
       onLogin({
@@ -197,38 +195,23 @@ const AdminLogin: React.FC<{ onLogin: (user: AdminUser, rememberMe: boolean) => 
         lastLogin: Date.now()
       }, rememberMe);
     } catch (error: any) {
-      // Fallback to local credentials for demo/offline mode
-      const inputHash = simpleHash(password);
-      const expectedHash = simpleHash(ADMIN_CREDENTIALS.password);
+      // Increment failed attempts
+      const newAttempts: LoginAttempts = {
+        count: attempts.count + 1,
+        lastAttempt: Date.now(),
+        lockedUntil: null
+      };
 
-      if (email === ADMIN_CREDENTIALS.email && inputHash === expectedHash) {
-        // Clear login attempts on success
-        clearLoginAttempts();
-        onLogin({
-          email,
-          name: 'Admin Vestate',
-          role: 'admin',
-          lastLogin: Date.now()
-        }, rememberMe);
+      if (newAttempts.count >= MAX_LOGIN_ATTEMPTS) {
+        newAttempts.lockedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
+        setCooldownSeconds(Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000));
+        setError(`Trop de tentatives. Reessayez dans ${Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000)}s`);
       } else {
-        // Increment failed attempts
-        const newAttempts: LoginAttempts = {
-          count: attempts.count + 1,
-          lastAttempt: Date.now(),
-          lockedUntil: null
-        };
-
-        if (newAttempts.count >= MAX_LOGIN_ATTEMPTS) {
-          newAttempts.lockedUntil = Date.now() + RATE_LIMIT_COOLDOWN_MS;
-          setCooldownSeconds(Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000));
-          setError(`Trop de tentatives. Reessayez dans ${Math.ceil(RATE_LIMIT_COOLDOWN_MS / 1000)}s`);
-        } else {
-          const remaining = MAX_LOGIN_ATTEMPTS - newAttempts.count;
-          setError(error.message || `Email ou mot de passe incorrect (${remaining} tentative${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''})`);
-        }
-
-        saveLoginAttempts(newAttempts);
+        const remaining = MAX_LOGIN_ATTEMPTS - newAttempts.count;
+        setError(error.message || `Email ou mot de passe incorrect (${remaining} tentative${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''})`);
       }
+
+      saveLoginAttempts(newAttempts);
     } finally {
       setIsLoading(false);
     }

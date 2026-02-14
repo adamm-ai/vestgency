@@ -427,7 +427,7 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = memo(({
               <div className="p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <TrendingUp size={14} className="text-brand-gold" />
-                  <span className="text-xs font-semibold text-brand-charcoal/50 dark:text-white/50 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-brand-charcoal/50 dark:text-white/70 uppercase tracking-wider">
                     Recherches populaires
                   </span>
                 </div>
@@ -452,7 +452,7 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = memo(({
                 {/* Recent searches placeholder */}
                 <div className="flex items-center gap-2 mt-4 mb-2">
                   <Clock size={14} className="text-gray-400" />
-                  <span className="text-xs font-semibold text-brand-charcoal/50 dark:text-white/50 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-brand-charcoal/50 dark:text-white/70 uppercase tracking-wider">
                     Tapez pour rechercher
                   </span>
                 </div>

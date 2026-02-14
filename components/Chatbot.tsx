@@ -7,6 +7,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import DOMPurify from 'dompurify';
 import {
   X, Send, Sparkles, Loader2, Brain,
   Home, MapPin, TrendingUp, RotateCcw,
@@ -352,10 +353,12 @@ const Chatbot: React.FC = () => {
   };
 
   const formatMessage = (text: string) => {
-    return text
+    const formatted = text
       .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/\n/g, '<br/>');
+    // Sanitize HTML to prevent XSS attacks
+    return DOMPurify.sanitize(formatted, { ALLOWED_TAGS: ['strong', 'em', 'br'], ALLOWED_ATTR: ['class'] });
   };
 
   // Chat window dimensions

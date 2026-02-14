@@ -65,7 +65,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
               <h3 className="text-2xl md:text-3xl font-display text-white mb-2">
                 Restez informé des <span className="text-brand-gold">meilleures offres</span>
               </h3>
-              <p className="text-white/50 font-light">
+              <p className="text-white/70 font-light">
                 Inscrivez-vous à notre newsletter pour recevoir nos exclusivités
               </p>
             </div>
@@ -75,7 +75,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
                 <input
                   type="email"
                   placeholder="Votre adresse email"
-                  className="flex-1 lg:w-80 px-5 py-4 rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/40 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                  className="flex-1 lg:w-80 px-5 py-4 rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/60 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
                 />
                 <button
                   className="px-6 py-4 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-xl shadow-lg shadow-brand-gold/20 hover:shadow-brand-gold/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
@@ -101,10 +101,10 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
               </div>
               <div>
                 <h2 className="text-lg font-display font-bold text-brand-gold">Nourreska</h2>
-                <span className="text-white/50 text-[10px] tracking-[0.15em] uppercase">Immobilier de prestige</span>
+                <span className="text-white/70 text-[10px] tracking-[0.15em] uppercase">Immobilier de prestige</span>
               </div>
             </div>
-            <p className="text-white/50 text-sm font-light leading-relaxed mb-6">
+            <p className="text-white/70 text-sm font-light leading-relaxed mb-6">
               Votre partenaire de confiance pour tous vos projets immobiliers à Casablanca et dans tout le Maroc.
             </p>
 
@@ -185,18 +185,18 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
       <div className="border-t border-white/[0.06]">
         <div className="container mx-auto px-6 py-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-white/40">
+            <p className="text-xs text-white/60">
               &copy; {new Date().getFullYear()} Nourreska. Tous droits réservés.
             </p>
 
             <div className="flex items-center gap-6">
-              <a href="#" className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200">
+              <a href="#" className="text-xs text-white/60 hover:text-white/70 transition-colors duration-200">
                 Mentions légales
               </a>
-              <a href="#" className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200">
+              <a href="#" className="text-xs text-white/60 hover:text-white/70 transition-colors duration-200">
                 Politique de confidentialité
               </a>
-              <a href="#" className="text-xs text-white/40 hover:text-white/70 transition-colors duration-200">
+              <a href="#" className="text-xs text-white/60 hover:text-white/70 transition-colors duration-200">
                 CGV
               </a>
             </div>
@@ -204,12 +204,12 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             <div className="flex items-center gap-4">
               <button
                 onClick={onAdminClick}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/40 hover:text-brand-gold hover:border-brand-gold/30 hover:bg-brand-gold/5 transition-all duration-200 group"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-brand-gold hover:border-brand-gold/30 hover:bg-brand-gold/5 transition-all duration-200 group"
               >
                 <Shield size={14} className="group-hover:text-brand-gold transition-colors" />
                 <span className="text-xs font-medium">Admin Portal</span>
               </button>
-              <div className="flex items-center gap-2 text-xs text-white/40">
+              <div className="flex items-center gap-2 text-xs text-white/60">
                 <span>Conçu avec</span>
                 <span className="text-brand-gold font-semibold">excellence</span>
               </div>

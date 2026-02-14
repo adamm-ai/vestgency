@@ -230,7 +230,7 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
               // Show sliding window of dots for many images
               <>
                 {currentImageIndex > 0 && (
-                  <span className="text-white/50 text-[8px]">‹</span>
+                  <span className="text-white/70 text-[8px]">‹</span>
                 )}
                 {Array.from({ length: Math.min(5, allImages.length) }, (_, i) => {
                   // Calculate which indices to show (sliding window)
@@ -249,7 +249,7 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
                   );
                 })}
                 {currentImageIndex < allImages.length - 1 && (
-                  <span className="text-white/50 text-[8px]">›</span>
+                  <span className="text-white/70 text-[8px]">›</span>
                 )}
               </>
             )}
@@ -642,7 +642,7 @@ const Listings: React.FC = () => {
             <h2 className="text-3xl md:text-5xl font-display text-brand-charcoal dark:text-white mb-2">
               Nos <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-cyan-400 italic font-serif">Biens</span>
             </h2>
-            <p className="text-brand-charcoal/50 dark:text-white/50 text-sm md:text-base font-light max-w-md">
+            <p className="text-brand-charcoal/50 dark:text-white/70 text-sm md:text-base font-light max-w-md">
               Découvrez notre sélection de {activeTab === 'SALE' ? 'biens à vendre' : 'locations'} à Casablanca
             </p>
           </div>

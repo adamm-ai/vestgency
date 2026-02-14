@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { preloadData } from './services/propertyService';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Critical components loaded immediately
 import Navbar from './components/Navbar';
@@ -48,24 +49,36 @@ function App() {
       <Navbar />
       <main>
         <Hero />
-        <Suspense fallback={<SectionLoader />}>
-          <Listings />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Features />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <About />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Gallery />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Blog />
-        </Suspense>
-        <Suspense fallback={<SectionLoader />}>
-          <Contact />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Listings />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Features />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <About />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Gallery />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Blog />
+          </Suspense>
+        </ErrorBoundary>
+        <ErrorBoundary>
+          <Suspense fallback={<SectionLoader />}>
+            <Contact />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <Suspense fallback={null}>
         <Footer onAdminClick={handleOpenAdmin} />
