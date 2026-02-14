@@ -1,6 +1,7 @@
 import React, { useCallback, memo } from 'react';
 import { SectionId } from '../types';
 import { ArrowRight, Facebook, Instagram, Linkedin, Twitter, MapPin, Phone, Mail, Shield } from 'lucide-react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 const SocialLink = memo(({ icon: Icon, href, label }: { icon: React.ElementType; href: string; label: string }) => (
   <a
@@ -8,7 +9,7 @@ const SocialLink = memo(({ icon: Icon, href, label }: { icon: React.ElementType;
     className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/60 hover:text-brand-gold hover:bg-brand-gold/10 hover:border-brand-gold/20 hover:scale-110 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
     aria-label={label}
   >
-    <Icon size={18} />
+    <Icon size={18} aria-hidden="true" />
   </a>
 ));
 
@@ -19,13 +20,14 @@ interface FooterProps {
 }
 
 const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
+  const prefersReducedMotion = useReducedMotion();
 
   const scrollTo = useCallback((id: SectionId) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
     }
-  }, []);
+  }, [prefersReducedMotion]);
 
   const navigation = [
     { label: 'Accueil', id: SectionId.HOME },

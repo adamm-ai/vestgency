@@ -1,12 +1,17 @@
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, ShieldCheck, Moon, Sun, ArrowRight } from 'lucide-react';
 import { SectionId } from '../types';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const ticking = useRef(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
@@ -51,16 +56,24 @@ const Navbar: React.FC = () => {
 
   const scrollTo = useCallback((id: SectionId) => {
     setIsMobileMenuOpen(false);
+
+    // If on admin page, navigate to home first then scroll
+    if (location.pathname === '/admin') {
+      navigate('/', { state: { scrollTo: id } });
+      return;
+    }
+
     const element = document.getElementById(id);
     if (element) {
+      const scrollBehavior = prefersReducedMotion ? 'auto' : 'smooth';
       // Use setTimeout only for mobile menu close animation
       if (isMobileMenuOpen) {
-        setTimeout(() => element.scrollIntoView({ behavior: 'smooth' }), 200);
+        setTimeout(() => element.scrollIntoView({ behavior: scrollBehavior }), 200);
       } else {
-        element.scrollIntoView({ behavior: 'smooth' });
+        element.scrollIntoView({ behavior: scrollBehavior });
       }
     }
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, location.pathname, navigate, prefersReducedMotion]);
 
   const navLinks = [
     { label: 'Biens', id: SectionId.LISTINGS },
