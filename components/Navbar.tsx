@@ -75,6 +75,7 @@ const Navbar: React.FC = () => {
       <nav
         className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4 md:pt-6 pointer-events-none will-change-transform"
         style={{ transform: 'translateZ(0)' }}
+        aria-label="Navigation principale"
       >
         <div
           className={`
@@ -89,26 +90,29 @@ const Navbar: React.FC = () => {
           `}
         >
           {/* Brand */}
-          <div
-            onClick={() => scrollTo(SectionId.HOME)}
+          <a
+            href="#home"
+            onClick={(e) => { e.preventDefault(); scrollTo(SectionId.HOME); }}
             className="cursor-pointer flex items-center gap-3 group"
+            aria-label="Nourreska - Retour à l'accueil"
           >
-            <div className="relative w-11 h-11 bg-gradient-to-br from-brand-gold to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-brand-gold/20">
+            <div className="relative w-11 h-11 bg-gradient-to-br from-brand-gold to-cyan-400 rounded-xl flex items-center justify-center shadow-lg shadow-brand-gold/20" aria-hidden="true">
               <span className="font-display font-bold text-black text-xl">N</span>
             </div>
             <div className="hidden sm:flex flex-col">
               <span className="text-brand-gold font-display font-bold tracking-wide text-lg">Nourreska</span>
               <span className="text-brand-charcoal/60 dark:text-white/50 text-[9px] tracking-[0.15em] uppercase">Immobilier de prestige</span>
             </div>
-          </div>
+          </a>
 
           {/* Desktop Links */}
-          <div className="hidden lg:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1" role="menubar">
             {navLinks.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollTo(link.id)}
                 className="relative px-5 py-2.5 text-[13px] font-medium text-gray-600 dark:text-gray-300 hover:text-brand-charcoal dark:hover:text-white transition-colors duration-200 rounded-xl hover:bg-black/5 dark:hover:bg-white/5"
+                role="menuitem"
               >
                 {link.label}
               </button>
@@ -121,25 +125,31 @@ const Navbar: React.FC = () => {
             <button
               onClick={() => scrollTo(SectionId.CONTACT)}
               className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-gold to-cyan-400 text-black text-sm font-semibold rounded-xl shadow-lg shadow-brand-gold/20 hover:shadow-brand-gold/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+              aria-label="Estimer mon bien - Aller au formulaire de contact"
             >
               <span>Estimer mon bien</span>
-              <ArrowRight size={16} />
+              <ArrowRight size={16} aria-hidden="true" />
             </button>
 
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
               className="w-11 h-11 rounded-xl flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-black/5 dark:border-white/10 text-brand-charcoal dark:text-white transition-colors duration-200"
+              aria-label={theme === 'dark' ? 'Activer le mode clair' : 'Activer le mode sombre'}
+              aria-pressed={theme === 'dark'}
             >
-              {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+              {theme === 'dark' ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
             </button>
 
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="lg:hidden w-11 h-11 flex items-center justify-center text-brand-charcoal dark:text-white rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10"
+              aria-label={isMobileMenuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
+              aria-expanded={isMobileMenuOpen}
+              aria-controls="mobile-menu"
             >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              {isMobileMenuOpen ? <X size={20} aria-hidden="true" /> : <Menu size={20} aria-hidden="true" />}
             </button>
           </div>
         </div>
@@ -148,16 +158,20 @@ const Navbar: React.FC = () => {
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div
+          id="mobile-menu"
           className="fixed inset-0 z-40 bg-[#FAFAF9] dark:bg-[#050608] flex flex-col pt-28 pb-8 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu de navigation mobile"
         >
           {/* Gradient Orbs - Static */}
-          <div className="absolute top-20 right-0 w-[60%] h-[40%] bg-gradient-to-br from-brand-gold/10 to-transparent rounded-full blur-[100px] pointer-events-none" />
-          <div className="absolute bottom-20 left-0 w-[40%] h-[30%] bg-gradient-to-tr from-blue-500/5 to-transparent rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute top-20 right-0 w-[60%] h-[40%] bg-gradient-to-br from-brand-gold/10 to-transparent rounded-full blur-[100px] pointer-events-none" aria-hidden="true" />
+          <div className="absolute bottom-20 left-0 w-[40%] h-[30%] bg-gradient-to-tr from-blue-500/5 to-transparent rounded-full blur-[80px] pointer-events-none" aria-hidden="true" />
 
           {/* Ethics Banner */}
           <div className="px-6 mb-10">
-            <div className="bg-gradient-to-r from-brand-gold/10 to-transparent border border-brand-gold/20 rounded-2xl p-5 flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-brand-gold/20 flex items-center justify-center">
+            <div className="bg-gradient-to-r from-brand-gold/10 to-transparent border border-brand-gold/20 rounded-2xl p-5 flex items-start gap-4" role="complementary">
+              <div className="w-10 h-10 rounded-xl bg-brand-gold/20 flex items-center justify-center" aria-hidden="true">
                 <ShieldCheck size={20} className="text-brand-gold" />
               </div>
               <div>
@@ -170,7 +184,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Nav Links */}
-          <div className="flex-1 px-6 space-y-2">
+          <nav className="flex-1 px-6 space-y-2" aria-label="Navigation mobile">
             {navLinks.map((link) => (
               <button
                 key={link.id}
@@ -180,16 +194,17 @@ const Navbar: React.FC = () => {
                 <span className="text-xl font-display text-brand-charcoal dark:text-white">
                   {link.label}
                 </span>
-                <ArrowRight size={20} className="text-brand-charcoal/30 dark:text-white/30" />
+                <ArrowRight size={20} className="text-brand-charcoal/30 dark:text-white/30" aria-hidden="true" />
               </button>
             ))}
-          </div>
+          </nav>
 
           {/* CTA */}
           <div className="px-6 mt-8">
             <button
               onClick={() => scrollTo(SectionId.CONTACT)}
               className="w-full py-4 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-2xl shadow-lg shadow-brand-gold/25 active:scale-[0.98] transition-transform"
+              aria-label="Estimer mon bien gratuitement - Aller au formulaire de contact"
             >
               Estimer mon bien gratuitement
             </button>

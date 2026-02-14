@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import PropertyModal from './PropertyModal';
 import IntelligentSearch from './IntelligentSearch';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // ============================================================================
 // HOOKS
@@ -485,6 +486,9 @@ const Listings: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
 
+  // Reduced motion preference
+  const prefersReducedMotion = useReducedMotion();
+
   // RAG Search state
   const [ragResults, setRagResults] = useState<RAGSearchResponse | null>(null);
   const [isRAGSearch, setIsRAGSearch] = useState(false);
@@ -690,9 +694,10 @@ const Listings: React.FC = () => {
         <AnimatePresence>
           {isRAGSearch && ragResults && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={prefersReducedMotion ? { duration: 0 } : undefined}
               className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-gold/10 via-cyan-400/5 to-transparent border border-brand-gold/20"
             >
               <div className="flex items-start justify-between gap-4">

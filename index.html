@@ -136,6 +136,33 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
       }
+
+      /* Reduced Motion Accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
+        }
+
+        /* Disable ambient orb animations */
+        .orb {
+          animation: none !important;
+        }
+      }
+
+      /* Motion-safe utility classes */
+      @media (prefers-reduced-motion: no-preference) {
+        .motion-safe\:animate-bounce {
+          animation: bounce 1s infinite;
+        }
+        .motion-safe\:animate-pulse {
+          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+      }
     </style>
     <script type="importmap">
     {

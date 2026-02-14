@@ -2,6 +2,7 @@ import React, { memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { SectionId } from '../types';
 import { Search, ArrowRight, MapPin, Building2, TrendingUp } from 'lucide-react';
+import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // Static stats - no need to recalculate
 const STATS = [
@@ -18,10 +19,21 @@ const fadeInUp = {
   visible: { opacity: 1, y: 0 }
 };
 
+// Reduced motion variants - instant transitions
+const fadeInUpReduced = {
+  hidden: { opacity: 1, y: 0 },
+  visible: { opacity: 1, y: 0 }
+};
+
 const Hero: React.FC = () => {
+  const prefersReducedMotion = useReducedMotion();
+  const animationVariants = prefersReducedMotion ? fadeInUpReduced : fadeInUp;
+
   const scrollToListings = useCallback(() => {
-    document.getElementById(SectionId.LISTINGS)?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+    document.getElementById(SectionId.LISTINGS)?.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth'
+    });
+  }, [prefersReducedMotion]);
 
   return (
     <section id={SectionId.HOME} className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-hidden">
@@ -49,7 +61,7 @@ const Hero: React.FC = () => {
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={fadeInUp}
+          variants={animationVariants}
           transition={{ duration: 0.6 }}
           className="mb-8"
         >
@@ -65,7 +77,7 @@ const Hero: React.FC = () => {
         <motion.h1
           initial="hidden"
           animate="visible"
-          variants={fadeInUp}
+          variants={animationVariants}
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-center mb-6"
         >
@@ -81,7 +93,7 @@ const Hero: React.FC = () => {
         <motion.p
           initial="hidden"
           animate="visible"
-          variants={fadeInUp}
+          variants={animationVariants}
           transition={{ duration: 0.6, delay: 0.2 }}
           className="text-lg md:text-xl text-white/70 text-center max-w-2xl mb-10 font-light"
         >
@@ -92,7 +104,7 @@ const Hero: React.FC = () => {
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={fadeInUp}
+          variants={animationVariants}
           transition={{ duration: 0.6, delay: 0.3 }}
           className="w-full max-w-3xl"
         >
@@ -101,16 +113,17 @@ const Hero: React.FC = () => {
             <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold/40 via-cyan-400/40 to-brand-gold/40 rounded-2xl blur-xl opacity-50 group-hover:opacity-75 transition-opacity duration-300" />
 
             {/* Search Container */}
-            <div className="relative bg-white/[0.08] backdrop-blur-2xl rounded-2xl p-2 border border-white/[0.1] shadow-2xl">
+            <div className="relative bg-white/[0.08] backdrop-blur-2xl rounded-2xl p-2 border border-white/[0.1] shadow-2xl" role="search">
               <div className="flex items-center gap-2">
                 {/* Search Input */}
                 <div className="flex-1 flex items-center gap-3 px-4">
-                  <Search size={22} className="text-white/40" />
+                  <Search size={22} className="text-white/40" aria-hidden="true" />
                   <input
                     type="text"
                     placeholder="Quartier, type de bien, budget..."
                     className="w-full bg-transparent border-none outline-none text-white placeholder-white/60 text-base md:text-lg py-4"
                     onFocus={scrollToListings}
+                    aria-label="Rechercher un bien immobilier"
                   />
                 </div>
 
@@ -118,42 +131,46 @@ const Hero: React.FC = () => {
                 <button
                   onClick={scrollToListings}
                   className="flex items-center gap-2 px-6 md:px-8 py-4 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-semibold rounded-xl shadow-lg shadow-brand-gold/25 hover:scale-[1.02] active:scale-[0.98] transition-transform"
+                  aria-label="Lancer la recherche"
                 >
                   <span className="hidden md:inline">Rechercher</span>
-                  <ArrowRight size={20} />
+                  <ArrowRight size={20} aria-hidden="true" />
                 </button>
               </div>
             </div>
           </div>
 
           {/* Quick Filters */}
-          <div className="flex flex-wrap justify-center gap-3 mt-6">
+          <nav className="flex flex-wrap justify-center gap-3 mt-6" aria-label="Filtres rapides">
             {QUICK_FILTERS.map((tag, i) => (
               <motion.button
                 key={tag}
-                initial={{ opacity: 0, y: 10 }}
+                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 + (i * 0.05) }}
+                transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.5 + (i * 0.05) }}
                 onClick={scrollToListings}
                 className="px-5 py-2 rounded-full bg-white/[0.06] backdrop-blur-sm border border-white/[0.08] text-white/70 text-sm font-medium hover:bg-white/[0.12] hover:border-brand-gold/30 hover:text-white transition-all duration-200"
+                aria-label={`Voir les biens en ${tag.toLowerCase()}`}
               >
                 {tag}
               </motion.button>
             ))}
-          </div>
+          </nav>
         </motion.div>
 
         {/* Stats */}
         <motion.div
           initial="hidden"
           animate="visible"
-          variants={fadeInUp}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          variants={animationVariants}
+          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, delay: 0.4 }}
           className="flex flex-wrap justify-center gap-8 md:gap-16 mt-16 md:mt-20"
+          role="region"
+          aria-label="Statistiques de l'agence"
         >
           {STATS.map((stat, i) => (
-            <div key={i} className="text-center">
-              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1">
+            <div key={i} className="text-center" role="group" aria-label={stat.label}>
+              <div className="text-3xl md:text-4xl font-display font-bold text-white mb-1" aria-label={`${stat.value} ${stat.label}`}>
                 {stat.value}
               </div>
               <div className="text-sm text-white/70 font-medium">
@@ -164,9 +181,9 @@ const Hero: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Scroll Indicator - CSS animation instead of Framer Motion */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
-        <div className="w-6 h-10 rounded-full border-2 border-white/20 flex justify-center pt-2 animate-bounce">
+      {/* Scroll Indicator - respects reduced motion preference */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20" aria-hidden="true">
+        <div className={`w-6 h-10 rounded-full border-2 border-white/20 flex justify-center pt-2 ${prefersReducedMotion ? '' : 'motion-safe:animate-bounce'}`}>
           <div className="w-1.5 h-3 bg-white/40 rounded-full" />
         </div>
       </div>
