@@ -590,12 +590,32 @@ const Listings: React.FC = () => {
 
   // Handle quick select from suggestions
   const handleQuickSelect = useCallback((result: SearchResult) => {
-    // Find full property and show modal
-    const fullProperty = properties.find(p => p.id === result.id);
-    if (fullProperty) {
-      setSelectedProperty(fullProperty);
-    }
-  }, [properties]);
+    // Convert SearchResult to Property and show modal directly
+    // The suggestion already contains all the necessary data from the API
+    const propertyFromResult: Property = {
+      id: result.id,
+      name: result.name,
+      type: result.type,
+      category: result.category as ListingCategory,
+      location: result.location,
+      city: result.city || '',
+      price: result.price,
+      priceNumeric: result.priceNumeric || 0,
+      beds: result.beds || 0,
+      baths: result.baths || 0,
+      area: result.area || '',
+      areaNumeric: result.areaNumeric || 0,
+      image: result.image,
+      images: result.images || [result.image],
+      features: result.features || [],
+      smartTags: result.smartTags || [],
+      description: result.description || '',
+      url: result.url || '',
+      datePublished: null,
+      dateScraped: new Date().toISOString(),
+    };
+    setSelectedProperty(propertyFromResult);
+  }, []);
 
   // Clear RAG search
   const clearRAGSearch = useCallback(() => {

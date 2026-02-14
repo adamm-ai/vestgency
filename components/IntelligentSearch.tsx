@@ -377,7 +377,7 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = memo(({
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.05 }}
                     onClick={() => handleSuggestionClick(result)}
-                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-brand-gold/5 dark:hover:bg-white/5 transition-colors text-left border-b border-black/[0.03] dark:border-white/[0.03] last:border-0"
+                    className="w-full px-4 py-3 flex items-center gap-3 hover:bg-brand-gold/10 dark:hover:bg-white/10 active:bg-brand-gold/20 transition-all duration-200 text-left border-b border-black/[0.03] dark:border-white/[0.03] last:border-0 cursor-pointer hover:scale-[1.01]"
                   >
                     {/* Image */}
                     <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 dark:bg-gray-800">

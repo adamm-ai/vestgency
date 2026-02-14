@@ -133,6 +133,19 @@ export interface SearchResult {
   price: string;
   category: ListingCategory;
   image: string;
+  // Additional fields returned by RAG API
+  city?: string;
+  priceNumeric?: number;
+  beds?: number;
+  baths?: number;
+  area?: string;
+  areaNumeric?: number;
+  images?: string[];
+  features?: string[];
+  smartTags?: string[];
+  description?: string;
+  url?: string;
+  _score?: number;
 }
 
 // ============================================================================
