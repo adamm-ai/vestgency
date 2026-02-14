@@ -13,7 +13,7 @@ services:
     plan: free
     rootDir: rag_backend
     buildCommand: pip install --no-cache-dir -r requirements.txt
-    startCommand: python server_production.py
+    startCommand: python server.py
     healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
