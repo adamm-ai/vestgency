@@ -28,12 +28,11 @@ EMBEDDINGS_CACHE = BASE_DIR / "embeddings_cache.pkl"
 # ============================================================================
 
 # Sentence Transformer model - multilingual for French support
-# Options:
-# - "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2" (384 dim, fast)
-# - "sentence-transformers/distiluse-base-multilingual-cased-v2" (512 dim, balanced)
-# - "sentence-transformers/paraphrase-multilingual-mpnet-base-v2" (768 dim, best quality)
-EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-mpnet-base-v2"
-EMBEDDING_DIMENSION = 768
+# Using lightweight model for Render free tier (512MB RAM limit)
+# - "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2" (384 dim, fast, ~420MB)
+# - "sentence-transformers/paraphrase-multilingual-mpnet-base-v2" (768 dim, best quality, ~1GB)
+EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+EMBEDDING_DIMENSION = 384
 
 # Alternative lightweight model for faster inference
 EMBEDDING_MODEL_LITE = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
