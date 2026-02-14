@@ -11,7 +11,9 @@ import { Property, SearchResult } from '../types';
 // CONFIGURATION
 // ============================================================================
 
-const RAG_API_URL = import.meta.env.VITE_RAG_API_URL || 'http://localhost:8001';
+// Build RAG URL - handle both full URLs and hostport format from Render
+const rawUrl = import.meta.env.VITE_RAG_API_URL || 'http://localhost:8001';
+const RAG_API_URL = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
 
 // ============================================================================
 // TYPES

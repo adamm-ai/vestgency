@@ -12,6 +12,7 @@ import {
   TrendingUp, Clock, Zap, Brain, CheckCircle2
 } from 'lucide-react';
 import { ragQuickSearch, ragSearchClient, RAGSearchResponse } from '../services/ragSearchService';
+import { searchProperties } from '../services/propertyService';
 import { SearchResult, ListingCategory } from '../types';
 
 // ============================================================================
@@ -85,7 +86,12 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = memo(({
   useEffect(() => {
     const checkRAG = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_RAG_API_URL || 'http://localhost:8001'}/health`);
+        // Build RAG URL - handle both full URLs and hostport format from Render
+        let ragUrl = import.meta.env.VITE_RAG_API_URL || 'http://localhost:8001';
+        if (ragUrl && !ragUrl.startsWith('http')) {
+          ragUrl = `https://${ragUrl}`;
+        }
+        const response = await fetch(`${ragUrl}/health`);
         const data = await response.json();
         setState(prev => ({ ...prev, ragAvailable: data.status === 'healthy' }));
         console.log('RAG service status:', data.status);
@@ -126,7 +132,10 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = memo(({
 
     try {
       // Quick search for suggestions - direct API call
-      const RAG_URL = import.meta.env.VITE_RAG_API_URL || 'http://localhost:8001';
+      let RAG_URL = import.meta.env.VITE_RAG_API_URL || 'http://localhost:8001';
+      if (RAG_URL && !RAG_URL.startsWith('http')) {
+        RAG_URL = `https://${RAG_URL}`;
+      }
       const response = await fetch(`${RAG_URL}/api/quick-search?q=${encodeURIComponent(query)}&limit=6`);
       const data = await response.json();
       const results = data.success ? data.results : [];
