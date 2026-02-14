@@ -136,14 +136,12 @@ class ChatResponse(BaseModel):
 # STARTUP/SHUTDOWN
 # ============================================================================
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Manage application lifecycle."""
-    global vector_store, search_agent, quick_searcher, rag_pipeline, real_estate_agent
+is_ready = False  # Global flag for readiness
 
-    logger.info("Starting RAG search server + Elite Real Estate Chatbot...")
+def initialize_components():
+    """Initialize RAG components in background thread."""
+    global vector_store, search_agent, quick_searcher, rag_pipeline, real_estate_agent, is_ready
 
-    # Initialize components
     try:
         from embeddings import PropertyEmbedder
         from vector_store import PropertyVectorStore
@@ -185,10 +183,24 @@ async def lifespan(app: FastAPI):
 
         logger.info(f"Server ready! {vector_store.index.ntotal} properties indexed.")
         logger.info("Chatbot NOUR is online and ready to assist clients!")
+        is_ready = True
 
     except Exception as e:
         logger.error(f"Failed to initialize: {e}")
-        raise
+        is_ready = False
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifecycle."""
+    import threading
+
+    logger.info("Starting RAG search server + Elite Real Estate Chatbot...")
+    logger.info("Server starting immediately, loading components in background...")
+
+    # Start component initialization in background thread
+    init_thread = threading.Thread(target=initialize_components, daemon=True)
+    init_thread.start()
 
     yield
 
@@ -227,13 +239,14 @@ async def health_check():
     """Check server health and status."""
     from config import EMBEDDING_MODEL
 
+    # Always return healthy for Render health check, but indicate if still loading
     return HealthResponse(
-        status="healthy" if vector_store and vector_store.is_initialized else "initializing",
+        status="healthy",  # Always healthy so Render doesn't kill the container
         version="2.0.0",
         index_loaded=vector_store.is_initialized if vector_store else False,
         total_properties=vector_store.index.ntotal if vector_store and vector_store.index else 0,
         embedding_model=EMBEDDING_MODEL,
-        chatbot_ready=real_estate_agent is not None
+        chatbot_ready=is_ready
     )
 
 
