@@ -2,46 +2,54 @@
  * Admin Portal - Vestate AI Backoffice
  * =====================================
  * Complete admin dashboard with authentication and CRM
+ *
+ * Components have been modularized into:
+ * - admin/auth/AdminLogin.tsx
+ * - admin/users/UsersManagement.tsx
+ * - admin/analytics/AnalyticsDashboard.tsx
+ * - admin/shared/{types,constants,utils}.ts
  */
 
 import React, { useState, useEffect, memo, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Lock, Mail, Eye, EyeOff, LogOut, Home, Building2, Users, BarChart3,
-  Settings, Plus, Search, Edit3, Trash2, X, Check, AlertCircle,
-  TrendingUp, DollarSign, MapPin, Calendar, Filter, Download,
+  Lock, LogOut, Home, Building2, Users, BarChart3,
+  Settings, Plus, Search, Edit3, Trash2, X, Check,
+  TrendingUp, DollarSign, MapPin, Calendar, Download,
   ChevronLeft, ChevronRight, RefreshCw, Bell, Moon, Sun, Menu,
-  ArrowLeft, Save, Image as ImageIcon, FileText, Target, Phone,
-  Clock, Star, UserPlus, MessageSquare, Activity, Archive,
-  ChevronDown, ExternalLink, MoreVertical, Award, Zap
+  Save, Target,
+  Clock, Star, UserPlus, Activity, Archive,
+  ExternalLink, MoreVertical, Award, Zap, Eye
 } from 'lucide-react';
 import * as CRM from '../services/crmService';
 import api, { authAPI, leadsAPI, usersAPI, statsAPI, notificationsAPI, getStoredToken, getStoredUser, clearAuthData, User as APIUser, Lead as APILead, CRMStats } from '../services/api';
 
+// Import extracted components
+// Note: AdminLogin, UsersManagement, AnalyticsDashboard are available as separate modules
+// but are still defined inline here during the transition period
+import { AdminLogin as ExtractedAdminLogin } from './admin/auth';
+import { UsersManagement as ExtractedUsersManagement } from './admin/users';
+import { AnalyticsDashboard as ExtractedAnalyticsDashboard } from './admin/analytics';
+import {
+  AdminUser,
+  Session,
+  LoginAttempts,
+  AdminView,
+  SESSION_EXPIRY_MS,
+  SESSION_STORAGE_KEY,
+  MAX_LOGIN_ATTEMPTS,
+  RATE_LIMIT_COOLDOWN_MS,
+  ATTEMPTS_STORAGE_KEY,
+  generateToken,
+  clearLoginAttempts,
+  getLoginAttempts,
+  saveLoginAttempts,
+  exportToCSV
+} from './admin/shared';
+
 // ============================================================================
-// TYPES
+// TYPES (Additional local types)
 // ============================================================================
-
-interface AdminUser {
-  email: string;
-  name: string;
-  role: 'admin' | 'agent';
-  avatar?: string;
-  lastLogin?: number;
-}
-
-interface Session {
-  user: AdminUser;
-  expiresAt: number;
-  token: string;
-  rememberMe: boolean;
-}
-
-interface LoginAttempts {
-  count: number;
-  lastAttempt: number;
-  lockedUntil: number | null;
-}
 
 interface Property {
   id: string;
@@ -63,84 +71,14 @@ interface AdminPortalProps {
   onClose: () => void;
 }
 
-type AdminView = 'dashboard' | 'crm' | 'properties' | 'users' | 'analytics' | 'settings';
-
 // ============================================================================
 // CONSTANTS
+// Note: Constants are also available as separate module at ./admin/shared
 // ============================================================================
-
-// Authentication is now handled by the backend API
-// No credentials stored in frontend code
-
-// Session configuration
-const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
-const MAX_LOGIN_ATTEMPTS = 5;
-const RATE_LIMIT_COOLDOWN_MS = 30 * 1000; // 30 seconds
-const SESSION_STORAGE_KEY = 'vestate_admin_session';
-const ATTEMPTS_STORAGE_KEY = 'vestate_login_attempts';
-
-// Simple hash function for password comparison (simulates secure auth)
-const simpleHash = (str: string): string => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash;
-  }
-  return Math.abs(hash).toString(16).padStart(8, '0');
-};
-
-// Generate a simple session token
-const generateToken = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
-};
-
-// Get login attempts from localStorage
-const getLoginAttempts = (): LoginAttempts => {
-  try {
-    const stored = localStorage.getItem(ATTEMPTS_STORAGE_KEY);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch {
-    // Ignore parse errors
-  }
-  return { count: 0, lastAttempt: 0, lockedUntil: null };
-};
-
-// Save login attempts to localStorage
-const saveLoginAttempts = (attempts: LoginAttempts): void => {
-  localStorage.setItem(ATTEMPTS_STORAGE_KEY, JSON.stringify(attempts));
-};
-
-// Clear login attempts
-const clearLoginAttempts = (): void => {
-  localStorage.removeItem(ATTEMPTS_STORAGE_KEY);
-};
-
-// ============================================================================
-// UTILITY FUNCTIONS
-// ============================================================================
-
-const exportToCSV = (data: any[], filename: string) => {
-  if (data.length === 0) {
-    console.warn('[Export] No data to export');
-    return;
-  }
-  const headers = Object.keys(data[0] || {}).join(',');
-  const rows = data.map(item => Object.values(item).map(v => `"${v}"`).join(','));
-  const csv = [headers, ...rows].join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-};
 
 // ============================================================================
 // LOGIN COMPONENT
+// Note: Also available as separate module at ./admin/auth/AdminLogin.tsx
 // ============================================================================
 
 const AdminLogin: React.FC<{ onLogin: (user: AdminUser, rememberMe: boolean) => void; onClose: () => void }> = memo(({ onLogin, onClose }) => {
