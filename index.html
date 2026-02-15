@@ -565,6 +565,148 @@
       html:not(.dark) .dynamic-island-expanded {
         background: rgba(0, 0, 0, 0.92);
       }
+
+      /* ============================================
+         MOBILE OPTIMIZATION - 2026 Touch-First
+         ============================================ */
+
+      /* Touch target minimum 44px utility */
+      .touch-target {
+        min-width: 44px;
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Mobile-first responsive spacing */
+      @media (max-width: 640px) {
+        /* Reduce excessive padding on mobile */
+        .mobile-py-compact {
+          padding-top: 1rem !important;
+          padding-bottom: 1rem !important;
+        }
+
+        /* Better font scaling for mobile */
+        .mobile-text-scale {
+          font-size: clamp(1.75rem, 8vw, 2.5rem) !important;
+          line-height: 1.15 !important;
+        }
+
+        /* Ensure touch targets on mobile */
+        button, a, [role="button"] {
+          min-height: 44px;
+        }
+
+        /* Fix tap highlight */
+        * {
+          -webkit-tap-highlight-color: rgba(10, 186, 181, 0.1);
+        }
+
+        /* Better scrolling */
+        .scroll-container {
+          -webkit-overflow-scrolling: touch;
+          scroll-snap-type: x mandatory;
+        }
+
+        /* Mobile glass effect - lighter blur for performance */
+        .liquid-glass,
+        .liquid-glass-2,
+        .liquid-glass-3 {
+          backdrop-filter: blur(12px) saturate(120%);
+          -webkit-backdrop-filter: blur(12px) saturate(120%);
+        }
+
+        /* Reduce orb effects on mobile for performance */
+        .orb {
+          opacity: 0.1;
+          filter: blur(100px);
+        }
+      }
+
+      /* iPhone SE and small devices */
+      @media (max-width: 375px) {
+        html {
+          font-size: 14px;
+        }
+
+        .container {
+          padding-left: 1rem !important;
+          padding-right: 1rem !important;
+        }
+      }
+
+      /* Safe area insets for notched devices */
+      @supports (padding: max(0px)) {
+        .safe-area-top {
+          padding-top: max(1rem, env(safe-area-inset-top));
+        }
+        .safe-area-bottom {
+          padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
+        .safe-area-x {
+          padding-left: max(1rem, env(safe-area-inset-left));
+          padding-right: max(1rem, env(safe-area-inset-right));
+        }
+      }
+
+      /* Improved focus states for accessibility */
+      button:focus-visible,
+      a:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible {
+        outline: 2px solid var(--tiffany);
+        outline-offset: 2px;
+      }
+
+      /* Active states for mobile feedback */
+      @media (hover: none) {
+        button:active,
+        a:active,
+        [role="button"]:active {
+          transform: scale(0.97);
+          opacity: 0.9;
+        }
+
+        .hover-lift:active {
+          transform: translateY(-2px) scale(0.99);
+        }
+
+        .card-2026:active {
+          transform: translateY(-2px);
+          border-color: rgba(10, 186, 181, 0.3);
+        }
+      }
+
+      /* Touch-friendly link underlines */
+      @media (hover: none) {
+        a:not([class]) {
+          text-decoration-thickness: 2px;
+          text-underline-offset: 3px;
+        }
+      }
+
+      /* Prevent text selection on interactive elements */
+      button, [role="button"] {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      /* Smooth momentum scrolling */
+      .momentum-scroll {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+      }
+
+      /* Landscape mobile optimization */
+      @media (max-height: 500px) and (orientation: landscape) {
+        .hero-section {
+          min-height: auto;
+          padding-top: 4rem;
+          padding-bottom: 2rem;
+        }
+      }
     </style>
     <script type="importmap">
     {

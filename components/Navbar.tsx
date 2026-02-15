@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
           <a
             href="#home"
             onClick={(e) => { e.preventDefault(); scrollTo(SectionId.HOME); }}
-            className="cursor-pointer flex items-center gap-2.5 group shrink-0"
+            className="cursor-pointer flex items-center gap-2 sm:gap-2.5 group shrink-0 min-h-[44px] py-1 active:opacity-80 transition-opacity"
             aria-label="Nourreska - Retour à l'accueil"
           >
             {/* Logo Icon */}
@@ -172,17 +172,17 @@ const Navbar: React.FC = () => {
             <button
               onClick={() => scrollTo(SectionId.CONTACT)}
               className={`
-                hidden md:flex items-center gap-2
+                hidden md:flex items-center justify-center gap-2
                 bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold
-                transition-all duration-500 ease-out
+                transition-all duration-500 ease-out min-h-[44px]
                 hover:shadow-lg hover:shadow-brand-tiffany/30 hover:scale-[1.02]
                 active:scale-[0.98]
                 ${isScrolled
-                  ? 'px-4 py-2 text-xs rounded-full'
-                  : 'px-5 py-2.5 text-sm rounded-xl'}
+                  ? 'px-4 py-2.5 text-xs rounded-full min-w-[44px]'
+                  : 'px-5 py-3 text-sm rounded-xl'}
               `}
             >
-              <Sparkles size={isScrolled ? 12 : 14} />
+              <Sparkles size={isScrolled ? 14 : 16} />
               <span className={`transition-all duration-300 ${isScrolled ? 'hidden' : 'inline'}`}>Estimer</span>
             </button>
 
@@ -194,12 +194,12 @@ const Navbar: React.FC = () => {
                 bg-white/[0.06] hover:bg-white/[0.12]
                 text-white/80 hover:text-brand-tiffany
                 border border-white/[0.08] hover:border-brand-tiffany/30
-                transition-all duration-300
-                ${isScrolled ? 'w-8 h-8 rounded-full' : 'w-10 h-10 rounded-xl'}
+                transition-all duration-300 active:scale-95
+                ${isScrolled ? 'w-10 h-10 min-w-[44px] min-h-[44px] rounded-full' : 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl'}
               `}
               aria-label={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
             >
-              {theme === 'dark' ? <Moon size={isScrolled ? 14 : 16} /> : <Sun size={isScrolled ? 14 : 16} />}
+              {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
             </button>
 
             {/* Mobile Menu Toggle */}
@@ -210,13 +210,13 @@ const Navbar: React.FC = () => {
                 bg-white/[0.06] hover:bg-white/[0.12]
                 text-white/80 hover:text-white
                 border border-white/[0.08]
-                transition-all duration-300
-                ${isScrolled ? 'w-8 h-8 rounded-full' : 'w-10 h-10 rounded-xl'}
+                transition-all duration-300 active:scale-95
+                ${isScrolled ? 'w-10 h-10 min-w-[44px] min-h-[44px] rounded-full' : 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl'}
               `}
               aria-label={isMobileMenuOpen ? 'Fermer' : 'Menu'}
               aria-expanded={isMobileMenuOpen}
             >
-              {isMobileMenuOpen ? <X size={isScrolled ? 14 : 18} /> : <Menu size={isScrolled ? 14 : 18} />}
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
@@ -233,15 +233,15 @@ const Navbar: React.FC = () => {
           <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-brand-tiffany/10 rounded-full blur-[150px] pointer-events-none" />
 
           {/* Navigation Links */}
-          <nav className="flex-1 flex flex-col items-center justify-center gap-4 px-8">
+          <nav className="flex-1 flex flex-col items-center justify-center gap-2 px-6 sm:px-8">
             {navLinks.map((link, i) => (
               <button
                 key={link.id}
                 onClick={() => scrollTo(link.id)}
-                className="group w-full max-w-sm py-5 text-center"
+                className="group w-full max-w-sm py-4 sm:py-5 text-center min-h-[56px] active:bg-white/[0.05] rounded-2xl transition-colors"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
-                <span className="text-3xl font-display text-white/90 group-hover:text-brand-tiffany transition-colors duration-300">
+                <span className="text-2xl sm:text-3xl font-display text-white/90 group-hover:text-brand-tiffany group-active:text-brand-tiffany transition-colors duration-300">
                   {link.label}
                 </span>
               </button>
@@ -249,16 +249,16 @@ const Navbar: React.FC = () => {
           </nav>
 
           {/* Bottom CTA */}
-          <div className="px-8 mt-auto">
+          <div className="px-6 sm:px-8 mt-auto safe-area-bottom">
             <button
               onClick={() => scrollTo(SectionId.CONTACT)}
-              className="w-full py-4 bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold text-lg rounded-2xl shadow-lg shadow-brand-tiffany/25"
+              className="w-full py-4 min-h-[56px] bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold text-base sm:text-lg rounded-2xl shadow-lg shadow-brand-tiffany/25 active:scale-[0.98] transition-transform"
             >
               Estimer mon bien
             </button>
 
             {/* Info */}
-            <div className="flex items-center justify-center gap-3 mt-6">
+            <div className="flex items-center justify-center gap-3 mt-5 sm:mt-6 pb-2">
               <div className="flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>

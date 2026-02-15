@@ -58,7 +58,7 @@ const Hero: React.FC = () => {
           MAIN CONTENT - Centered & Clean
           ======================================== */}
 
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pt-28 pb-32">
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24 md:pt-28 pb-20 sm:pb-28 md:pb-32">
         <div className="w-full max-w-4xl mx-auto text-center">
 
           {/* Badge */}
@@ -67,9 +67,9 @@ const Hero: React.FC = () => {
             animate="visible"
             variants={animationVariants}
             transition={{ duration: 0.5 }}
-            className="mb-8"
+            className="mb-6 sm:mb-8"
           >
-            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.1]">
+            <div className="inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.1]">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative rounded-full h-2 w-2 bg-green-400"></span>
@@ -102,7 +102,7 @@ const Hero: React.FC = () => {
             animate="visible"
             variants={animationVariants}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-base sm:text-lg md:text-xl text-white/60 max-w-xl mx-auto mb-10 font-light leading-relaxed"
+            className="text-sm sm:text-base md:text-lg lg:text-xl text-white/60 max-w-xl mx-auto mb-8 sm:mb-10 font-light leading-relaxed px-2 sm:px-0"
           >
             Vente, location et gestion de biens d'exception à Casablanca et dans tout le Maroc
           </motion.p>
@@ -113,16 +113,16 @@ const Hero: React.FC = () => {
             animate="visible"
             variants={animationVariants}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="w-full max-w-2xl mx-auto mb-8"
+            className="w-full max-w-2xl mx-auto mb-6 sm:mb-8 px-2 sm:px-0"
           >
             <div className="relative group">
               {/* Glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-tiffany/40 via-cyan-400/30 to-brand-tiffany/40 rounded-2xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-tiffany/40 via-cyan-400/30 to-brand-tiffany/40 rounded-xl sm:rounded-2xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
 
               {/* Search Container */}
-              <div className="relative flex items-center bg-white/[0.06] backdrop-blur-2xl rounded-2xl border border-white/[0.1] p-1.5">
-                <div className="flex-1 flex items-center gap-3 px-4 py-3">
-                  <Search size={20} className="text-white/40 shrink-0" />
+              <div className="relative flex items-center bg-white/[0.06] backdrop-blur-2xl rounded-xl sm:rounded-2xl border border-white/[0.1] p-1 sm:p-1.5">
+                <div className="flex-1 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
+                  <Search size={18} className="text-white/40 shrink-0 sm:w-5 sm:h-5" />
                   <input
                     type="text"
                     placeholder="Quartier, type de bien, budget..."
@@ -132,7 +132,7 @@ const Hero: React.FC = () => {
                 </div>
                 <button
                   onClick={scrollToListings}
-                  className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-brand-tiffany/30 transition-all duration-300"
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3.5 min-h-[44px] min-w-[44px] bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-brand-tiffany/30 active:scale-95 transition-all duration-300"
                 >
                   <span className="hidden sm:inline">Rechercher</span>
                   <ArrowRight size={18} />
@@ -153,7 +153,7 @@ const Hero: React.FC = () => {
               <button
                 key={tag}
                 onClick={scrollToListings}
-                className="px-4 sm:px-5 py-2 rounded-full bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-white/70 text-sm font-medium hover:bg-white/[0.1] hover:text-white hover:border-brand-tiffany/30 transition-all duration-300"
+                className="px-5 sm:px-6 py-3 sm:py-2.5 min-h-[44px] rounded-full bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-white/70 text-sm font-medium hover:bg-white/[0.1] hover:text-white hover:border-brand-tiffany/30 active:scale-95 transition-all duration-300"
               >
                 {tag}
               </button>
@@ -172,8 +172,8 @@ const Hero: React.FC = () => {
         transition={{ duration: 0.6, delay: 0.5 }}
         className="relative z-10 w-full border-t border-white/[0.06]"
       >
-        <div className="max-w-5xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-center gap-8 sm:gap-12 md:gap-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          <div className="flex items-center justify-center gap-6 sm:gap-12 md:gap-20">
             {[
               { value: '822+', label: 'Biens disponibles' },
               { value: '15+', label: 'Années d\'expertise' },
@@ -196,14 +196,14 @@ const Hero: React.FC = () => {
           SCROLL INDICATOR
           ======================================== */}
 
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20">
         <button
           onClick={scrollToListings}
-          className="flex flex-col items-center gap-2 text-white/40 hover:text-white/70 transition-colors"
+          className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 min-w-[44px] min-h-[44px] p-2 text-white/40 hover:text-white/70 active:text-white/90 transition-colors"
           aria-label="Voir les biens"
         >
-          <span className="text-xs font-medium tracking-wider uppercase">Découvrir</span>
-          <ChevronDown size={20} className={prefersReducedMotion ? '' : 'animate-bounce'} />
+          <span className="text-[10px] sm:text-xs font-medium tracking-wider uppercase">Découvrir</span>
+          <ChevronDown size={18} className={prefersReducedMotion ? '' : 'animate-bounce'} />
         </button>
       </div>
     </section>

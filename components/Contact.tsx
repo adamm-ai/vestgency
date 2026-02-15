@@ -8,13 +8,13 @@ const ContactCard = memo(({ icon: Icon, title, children }: {
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="p-6 rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/[0.04] group hover:border-brand-gold/20 transition-all duration-300">
-    <div className="flex items-start gap-4">
-      <div className="w-12 h-12 rounded-xl bg-brand-gold/10 flex items-center justify-center text-brand-gold shrink-0 group-hover:bg-brand-gold group-hover:text-black transition-all duration-300">
-        <Icon size={22} />
+  <div className="p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-black/[0.02] dark:bg-white/[0.02] border border-black/[0.04] dark:border-white/[0.04] group hover:border-brand-gold/20 active:border-brand-gold/20 transition-all duration-300">
+    <div className="flex items-start gap-3 sm:gap-4">
+      <div className="w-11 h-11 sm:w-12 sm:h-12 min-w-[44px] min-h-[44px] rounded-xl bg-brand-gold/10 flex items-center justify-center text-brand-gold shrink-0 group-hover:bg-brand-gold group-hover:text-black transition-all duration-300">
+        <Icon size={20} className="sm:w-[22px] sm:h-[22px]" />
       </div>
       <div>
-        <h4 className="text-brand-charcoal dark:text-white font-semibold mb-1">{title}</h4>
+        <h4 className="text-brand-charcoal dark:text-white font-semibold mb-1 text-sm sm:text-base">{title}</h4>
         {children}
       </div>
     </div>
@@ -91,13 +91,13 @@ const Contact: React.FC = () => {
   ];
 
   return (
-    <section id={SectionId.CONTACT} className="py-28 relative bg-white dark:bg-[#0a0a0c] overflow-hidden transition-colors duration-500">
+    <section id={SectionId.CONTACT} className="py-16 sm:py-20 md:py-28 relative bg-white dark:bg-[#0a0a0c] overflow-hidden transition-colors duration-500">
 
       {/* Background Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-brand-gold/5 rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
 
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
 
         {/* Header */}
         <div className="text-center mb-16">
@@ -147,7 +147,7 @@ const Contact: React.FC = () => {
 
           {/* Right: Form */}
           <div className="lg:col-span-3">
-            <div className="bg-white dark:bg-[#0c0c0f] p-8 md:p-10 rounded-3xl border border-black/[0.04] dark:border-white/[0.06] relative overflow-hidden shadow-2xl dark:shadow-black/40">
+            <div className="bg-white dark:bg-[#0c0c0f] p-5 sm:p-8 md:p-10 rounded-2xl sm:rounded-3xl border border-black/[0.04] dark:border-white/[0.06] relative overflow-hidden shadow-2xl dark:shadow-black/40">
 
               {/* Decorative */}
               <div className="absolute top-0 right-0 w-40 h-40 bg-brand-gold/10 blur-[60px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
@@ -180,13 +180,13 @@ const Contact: React.FC = () => {
                     <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-3 block font-semibold">
                       Type de projet
                     </label>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 sm:gap-2.5">
                       {projectTypes.map((type) => (
                         <button
                           key={type.value}
                           type="button"
                           onClick={() => handleTypeChange(type.value)}
-                          className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                          className={`px-4 sm:px-5 py-3 sm:py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 ${
                             formState.type === type.value
                               ? 'bg-brand-gold text-black'
                               : 'bg-black/[0.03] dark:bg-white/[0.05] text-brand-charcoal/70 dark:text-white/60 hover:bg-black/[0.06] dark:hover:bg-white/[0.08]'
@@ -261,7 +261,7 @@ const Contact: React.FC = () => {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-4 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-brand-gold/25 hover:shadow-brand-gold/40 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="w-full py-4 min-h-[52px] bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold uppercase tracking-wider text-sm sm:text-base rounded-xl shadow-lg shadow-brand-gold/25 hover:shadow-brand-gold/40 hover:scale-[1.01] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70"
                   >
                     {isLoading ? (
                       <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />

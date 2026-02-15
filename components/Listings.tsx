@@ -198,15 +198,17 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
           <>
             <button
               onClick={handlePrevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity duration-200"
+              aria-label="Image précédente"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={18} />
             </button>
             <button
               onClick={handleNextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity duration-200"
+              aria-label="Image suivante"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={18} />
             </button>
           </>
         )}
@@ -292,11 +294,12 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
         {!property.smartTags?.length && (
           <button
             onClick={handleLike}
-            className={`absolute top-3 right-3 z-20 w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-200 ${
-              isLiked ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30'
+            className={`absolute top-3 right-3 z-20 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-200 active:scale-90 ${
+              isLiked ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30 active:bg-white/40'
             }`}
+            aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
           >
-            <Heart size={14} fill={isLiked ? 'currentColor' : 'none'} />
+            <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
           </button>
         )}
 
@@ -380,15 +383,15 @@ interface TypeFilterProps {
 }
 
 const TypeFilter = memo(({ activeType, onTypeChange }: TypeFilterProps) => (
-  <div className="flex gap-3 overflow-x-auto pb-8 no-scrollbar">
+  <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-6 sm:pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
     {PROPERTY_TYPES.map((type) => (
       <button
         key={type}
         onClick={() => onTypeChange(type)}
-        className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-300 ${
+        className={`flex items-center gap-2 sm:gap-2.5 px-4 sm:px-5 py-3 sm:py-2.5 min-h-[44px] rounded-xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-300 active:scale-95 ${
           activeType === type
             ? 'btn-primary-2026 font-bold shadow-lg'
-            : 'liquid-glass text-brand-charcoal/70 dark:text-white/70 hover:border-brand-tiffany/40 hover:text-brand-charcoal dark:hover:text-white'
+            : 'liquid-glass text-brand-charcoal/70 dark:text-white/70 hover:border-brand-tiffany/40 active:border-brand-tiffany/40 hover:text-brand-charcoal dark:hover:text-white'
         }`}
       >
         {TYPE_ICONS[type] || <Home size={14} />}
@@ -432,24 +435,25 @@ const Pagination = memo(({ page, totalPages, onPageChange }: PaginationProps) =>
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-3 mt-14">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-10 sm:mt-14">
       <button
         onClick={() => onPageChange(Math.max(1, page - 1))}
         disabled={page === 1}
-        className="liquid-glass p-3 rounded-xl disabled:opacity-30 hover:border-brand-tiffany/40 transition-all duration-300"
+        className="liquid-glass p-3 min-w-[44px] min-h-[44px] rounded-xl disabled:opacity-30 hover:border-brand-tiffany/40 active:scale-95 transition-all duration-300"
+        aria-label="Page précédente"
       >
         <ChevronLeft size={20} />
       </button>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {pages.map(pageNum => (
           <button
             key={pageNum}
             onClick={() => onPageChange(pageNum)}
-            className={`w-11 h-11 rounded-xl text-sm font-bold transition-all duration-300 ${
+            className={`w-10 h-10 sm:w-11 sm:h-11 min-w-[44px] min-h-[44px] rounded-xl text-sm font-bold transition-all duration-300 active:scale-95 ${
               page === pageNum
                 ? 'btn-primary-2026'
-                : 'liquid-glass hover:border-brand-tiffany/40'
+                : 'liquid-glass hover:border-brand-tiffany/40 active:border-brand-tiffany/40'
             }`}
           >
             {pageNum}
@@ -460,12 +464,13 @@ const Pagination = memo(({ page, totalPages, onPageChange }: PaginationProps) =>
       <button
         onClick={() => onPageChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
-        className="liquid-glass p-3 rounded-xl disabled:opacity-30 hover:border-brand-tiffany/40 transition-all duration-300"
+        className="liquid-glass p-3 min-w-[44px] min-h-[44px] rounded-xl disabled:opacity-30 hover:border-brand-tiffany/40 active:scale-95 transition-all duration-300"
+        aria-label="Page suivante"
       >
         <ChevronRight size={20} />
       </button>
 
-      <span className="ml-5 text-sm text-gray-500 dark:text-gray-400 font-medium">
+      <span className="w-full sm:w-auto text-center sm:ml-5 mt-2 sm:mt-0 text-sm text-gray-500 dark:text-gray-400 font-medium">
         Page {page} sur {totalPages}
       </span>
     </div>
@@ -631,7 +636,7 @@ const Listings: React.FC = () => {
   }, []);
 
   return (
-    <section id={SectionId.LISTINGS} className="py-24 relative bg-[#FAFAF9] dark:bg-[#050608] overflow-hidden transition-colors duration-300">
+    <section id={SectionId.LISTINGS} className="py-16 sm:py-20 md:py-24 relative bg-[#FAFAF9] dark:bg-[#050608] overflow-hidden transition-colors duration-300">
       {/* Background - 2026 Mesh */}
       <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-radial from-brand-tiffany/8 to-transparent rounded-full blur-[180px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-radial from-blue-500/6 to-transparent rounded-full blur-[150px] pointer-events-none" />
@@ -654,15 +659,15 @@ const Listings: React.FC = () => {
 
           {/* Category Tabs - 2026 Glass */}
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            <div className="liquid-glass-2 p-1.5 rounded-2xl flex relative">
+            <div className="liquid-glass-2 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl flex relative">
               <div
-                className={`absolute top-1.5 bottom-1.5 bg-gradient-to-r from-brand-tiffany to-cyan-400 rounded-xl shadow-lg shadow-brand-tiffany/30 transition-all duration-400 ease-out ${
-                  activeTab === 'SALE' ? 'left-1.5 w-[calc(50%-6px)]' : 'left-[50%] w-[calc(50%-6px)]'
+                className={`absolute top-1 sm:top-1.5 bottom-1 sm:bottom-1.5 bg-gradient-to-r from-brand-tiffany to-cyan-400 rounded-lg sm:rounded-xl shadow-lg shadow-brand-tiffany/30 transition-all duration-400 ease-out ${
+                  activeTab === 'SALE' ? 'left-1 sm:left-1.5 w-[calc(50%-4px)] sm:w-[calc(50%-6px)]' : 'left-[50%] w-[calc(50%-4px)] sm:w-[calc(50%-6px)]'
                 }`}
               />
               <button
                 onClick={() => handleTabChange('SALE')}
-                className={`relative z-10 px-8 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-xl ${
+                className={`relative z-10 px-6 sm:px-8 py-3.5 sm:py-3 min-h-[44px] text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg sm:rounded-xl active:scale-95 ${
                   activeTab === 'SALE' ? 'text-black' : 'text-gray-500 dark:text-white/60 hover:text-brand-charcoal dark:hover:text-white'
                 }`}
               >
@@ -670,7 +675,7 @@ const Listings: React.FC = () => {
               </button>
               <button
                 onClick={() => handleTabChange('RENT')}
-                className={`relative z-10 px-8 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-xl ${
+                className={`relative z-10 px-6 sm:px-8 py-3.5 sm:py-3 min-h-[44px] text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg sm:rounded-xl active:scale-95 ${
                   activeTab === 'RENT' ? 'text-black' : 'text-gray-500 dark:text-white/60 hover:text-brand-charcoal dark:hover:text-white'
                 }`}
               >
@@ -738,7 +743,7 @@ const Listings: React.FC = () => {
                 </div>
                 <button
                   onClick={clearRAGSearch}
-                  className="px-3 py-1.5 rounded-lg bg-white/50 dark:bg-white/10 text-xs font-medium text-brand-charcoal dark:text-white hover:bg-white dark:hover:bg-white/20 transition-colors"
+                  className="px-4 py-2.5 min-h-[44px] rounded-lg bg-white/50 dark:bg-white/10 text-xs font-medium text-brand-charcoal dark:text-white hover:bg-white dark:hover:bg-white/20 active:scale-95 transition-all"
                 >
                   Effacer
                 </button>

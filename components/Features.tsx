@@ -12,14 +12,14 @@ const Features: React.FC = () => {
   ];
 
   return (
-    <section id={SectionId.SERVICES} className="py-32 relative overflow-hidden bg-[#F5F5F0] dark:bg-[#050608] transition-colors duration-300">
+    <section id={SectionId.SERVICES} className="py-16 sm:py-24 md:py-32 relative overflow-hidden bg-[#F5F5F0] dark:bg-[#050608] transition-colors duration-300">
 
       {/* Background Elements - 2026 Mesh */}
       <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-gradient-radial from-brand-tiffany/10 via-brand-tiffany/5 to-transparent rounded-full blur-[180px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-radial from-blue-500/8 via-blue-600/3 to-transparent rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-white/[0.02] to-transparent rounded-full blur-[100px] pointer-events-none dark:block hidden" />
 
-      <div className="container mx-auto px-6 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
 
         {/* Header - 2026 */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-20 gap-10">
@@ -49,11 +49,11 @@ const Features: React.FC = () => {
         <div className="h-[2px] bg-gradient-to-r from-transparent via-brand-tiffany/40 to-transparent mb-16 rounded-full" />
 
         {/* Services Grid - 2026 Glass Cards */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {SERVICES.map((item, idx) => (
             <div
               key={idx}
-              className="card-2026 group relative p-8 hover-lift cursor-default"
+              className="card-2026 group relative p-5 sm:p-8 hover-lift cursor-default"
             >
               {/* Background Gradient on Hover */}
               <div className="absolute inset-0 bg-gradient-to-br from-brand-tiffany/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl" />
@@ -93,7 +93,7 @@ const Features: React.FC = () => {
           <div className="absolute inset-0 backdrop-blur-sm" />
 
           {/* Content */}
-          <div className="relative px-8 py-20 md:px-20 md:py-24 flex flex-col md:flex-row items-center justify-between gap-10">
+          <div className="relative px-5 py-12 sm:px-8 sm:py-16 md:px-20 md:py-24 flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-10">
             <div className="text-center md:text-left">
               <h3 className="text-3xl md:text-4xl lg:text-5xl font-display text-white mb-5 leading-tight">
                 Estimation <span className="text-gradient-2026">gratuite</span> de votre bien
@@ -102,7 +102,7 @@ const Features: React.FC = () => {
                 Obtenez une estimation précise basée sur les données du marché et notre expertise terrain.
               </p>
             </div>
-            <button className="btn-primary-2026 px-10 py-5 text-base font-bold rounded-2xl whitespace-nowrap animate-pulse-glow">
+            <button className="btn-primary-2026 px-8 sm:px-10 py-4 sm:py-5 min-h-[52px] text-sm sm:text-base font-bold rounded-xl sm:rounded-2xl whitespace-nowrap animate-pulse-glow active:scale-[0.98] transition-transform">
               Estimer mon bien
             </button>
           </div>
