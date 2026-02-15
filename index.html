@@ -52,38 +52,216 @@
       }
     </script>
     <style>
+      /* ============================================
+         2026+ DESIGN SYSTEM - LIQUID GLASS EDITION
+         ============================================ */
+
+      :root {
+        --glass-bg: rgba(255, 255, 255, 0.03);
+        --glass-border: rgba(255, 255, 255, 0.08);
+        --glass-highlight: rgba(255, 255, 255, 0.15);
+        --glass-shadow: rgba(0, 0, 0, 0.4);
+        --tiffany: #0ABAB5;
+        --tiffany-glow: rgba(10, 186, 181, 0.3);
+        --depth-1: 0 2px 8px rgba(0,0,0,0.15);
+        --depth-2: 0 8px 32px rgba(0,0,0,0.25);
+        --depth-3: 0 24px 64px rgba(0,0,0,0.35);
+        --depth-4: 0 32px 80px rgba(0,0,0,0.45);
+      }
+
       body {
         background-color: #050608;
         color: #F2F0E9;
         overflow-x: hidden;
       }
-      
+
       /* Light mode overrides */
       html:not(.dark) body {
         background-color: #FAFAF9;
         color: #0A0A0C;
       }
 
-      /* Refined Ambient Orbs - Slower, more subtle */
+      html:not(.dark) {
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(0, 0, 0, 0.06);
+        --glass-highlight: rgba(255, 255, 255, 0.9);
+        --glass-shadow: rgba(0, 0, 0, 0.08);
+      }
+
+      /* ============================================
+         AMBIENT ORBS - 2026 Mesh Gradient Style
+         ============================================ */
       .orb {
         position: fixed;
         border-radius: 50%;
-        filter: blur(120px);
+        filter: blur(140px);
         z-index: -1;
-        opacity: 0.25; /* Reduced opacity for better text contrast */
-        animation: float-orb 30s infinite ease-in-out;
+        opacity: 0.2;
+        animation: float-orb 40s infinite ease-in-out;
         pointer-events: none;
+        will-change: transform;
       }
-      .orb-1 { top: -20%; left: -10%; width: 60vw; height: 60vw; background: #2c3e50; animation-delay: 0s; }
-      .orb-2 { bottom: -20%; right: -10%; width: 50vw; height: 50vw; background: #3d2b1f; animation-delay: -10s; }
-      .orb-3 { top: 30%; left: 30%; width: 40vw; height: 40vw; background: #000000; animation-delay: -15s; }
+      .orb-1 {
+        top: -25%; left: -15%;
+        width: 70vw; height: 70vw;
+        background: linear-gradient(135deg, #0ABAB5 0%, #065f5c 50%, #032e2d 100%);
+        animation-delay: 0s;
+      }
+      .orb-2 {
+        bottom: -25%; right: -15%;
+        width: 55vw; height: 55vw;
+        background: linear-gradient(225deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        animation-delay: -15s;
+      }
+      .orb-3 {
+        top: 40%; left: 50%;
+        width: 35vw; height: 35vw;
+        background: radial-gradient(circle, rgba(10,186,181,0.15) 0%, transparent 70%);
+        animation-delay: -25s;
+      }
 
       @keyframes float-orb {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        50% { transform: translate(30px, -30px) scale(1.05); }
+        0%, 100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+        25% { transform: translate(20px, -40px) scale(1.02) rotate(2deg); }
+        50% { transform: translate(-10px, -20px) scale(1.04) rotate(-1deg); }
+        75% { transform: translate(30px, 10px) scale(1.01) rotate(1deg); }
       }
 
-      /* High-Definition Noise */
+      /* ============================================
+         LIQUID GLASS SYSTEM - Multi-Level
+         ============================================ */
+
+      /* Level 1: Subtle Glass */
+      .liquid-glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px) saturate(120%);
+        -webkit-backdrop-filter: blur(20px) saturate(120%);
+        border: 1px solid var(--glass-border);
+        box-shadow:
+          var(--depth-1),
+          inset 0 1px 0 var(--glass-highlight);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Level 2: Medium Glass */
+      .liquid-glass-2 {
+        background: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.05) 0%,
+          rgba(255, 255, 255, 0.02) 50%,
+          rgba(255, 255, 255, 0.04) 100%
+        );
+        backdrop-filter: blur(32px) saturate(140%);
+        -webkit-backdrop-filter: blur(32px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow:
+          var(--depth-2),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Level 3: Premium Glass with Refraction */
+      .liquid-glass-3 {
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.08) 0%,
+          rgba(255, 255, 255, 0.02) 30%,
+          rgba(10, 186, 181, 0.03) 70%,
+          rgba(255, 255, 255, 0.05) 100%
+        );
+        backdrop-filter: blur(40px) saturate(160%) brightness(1.05);
+        -webkit-backdrop-filter: blur(40px) saturate(160%) brightness(1.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow:
+          var(--depth-3),
+          inset 0 2px 0 rgba(255, 255, 255, 0.15),
+          inset 0 -2px 0 rgba(0, 0, 0, 0.15),
+          0 0 80px -20px var(--tiffany-glow);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Level 4: Hero Glass - Maximum Effect */
+      .liquid-glass-hero {
+        background: linear-gradient(
+          160deg,
+          rgba(255, 255, 255, 0.1) 0%,
+          rgba(255, 255, 255, 0.03) 25%,
+          rgba(10, 186, 181, 0.05) 50%,
+          rgba(255, 255, 255, 0.02) 75%,
+          rgba(255, 255, 255, 0.08) 100%
+        );
+        backdrop-filter: blur(60px) saturate(180%) brightness(1.1);
+        -webkit-backdrop-filter: blur(60px) saturate(180%) brightness(1.1);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow:
+          var(--depth-4),
+          inset 0 2px 0 rgba(255, 255, 255, 0.2),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.2),
+          0 0 120px -30px var(--tiffany-glow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .liquid-glass-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.05) 50%,
+          transparent 100%
+        );
+        animation: glass-shimmer 8s ease-in-out infinite;
+      }
+
+      @keyframes glass-shimmer {
+        0%, 100% { left: -100%; }
+        50% { left: 100%; }
+      }
+
+      /* ============================================
+         HOVER EFFECTS - Premium 2026
+         ============================================ */
+      .hover-lift {
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .hover-lift:hover {
+        transform: translateY(-8px) scale(1.01);
+        box-shadow:
+          0 40px 80px -20px rgba(0, 0, 0, 0.4),
+          0 0 60px -10px var(--tiffany-glow);
+      }
+
+      .hover-glow {
+        position: relative;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .hover-glow::after {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: inherit;
+        background: linear-gradient(135deg, var(--tiffany), #06D6A0, var(--tiffany));
+        opacity: 0;
+        z-index: -1;
+        filter: blur(15px);
+        transition: opacity 0.4s ease;
+      }
+
+      .hover-glow:hover::after {
+        opacity: 0.5;
+      }
+
+      /* ============================================
+         GRAIN TEXTURE - Refined
+         ============================================ */
       body::before {
         content: "";
         position: fixed;
@@ -91,78 +269,150 @@
         left: 0;
         width: 100%;
         height: 100%;
-        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.025'/%3E%3C/svg%3E");
         pointer-events: none;
         z-index: 9999;
         mix-blend-mode: overlay;
       }
 
-      /* Premium Glass Effect */
-      .liquid-glass {
-        background: rgba(255, 255, 255, 0.02);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      }
-      
-      .liquid-glass-high {
-        background: rgba(15, 20, 25, 0.6);
-        backdrop-filter: blur(40px) saturate(140%);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-      }
-
-      /* Smooth Scrollbar */
+      /* ============================================
+         SCROLLBAR - 2026 Style
+         ============================================ */
       ::-webkit-scrollbar {
-        width: 6px;
+        width: 8px;
       }
       ::-webkit-scrollbar-track {
-        background: #050608;
+        background: linear-gradient(180deg, #050608 0%, #0a0a0c 100%);
       }
       ::-webkit-scrollbar-thumb {
-        background: rgba(255,255,255,0.15);
+        background: linear-gradient(180deg, rgba(10, 186, 181, 0.3) 0%, rgba(255,255,255,0.1) 100%);
         border-radius: 10px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: rgba(10, 186, 181, 0.5);
+        background: linear-gradient(180deg, rgba(10, 186, 181, 0.6) 0%, rgba(255,255,255,0.2) 100%);
       }
 
-      /* Hide scrollbar for image carousels */
-      .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-      }
-      .scrollbar-hide {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
+      .scrollbar-hide::-webkit-scrollbar { display: none; }
+      .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* ============================================
+         BUTTON SYSTEM - 2026
+         ============================================ */
+      .btn-primary-2026 {
+        background: linear-gradient(135deg, #0ABAB5 0%, #06D6A0 50%, #0ABAB5 100%);
+        background-size: 200% 200%;
+        color: #000;
+        font-weight: 600;
+        border: none;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow:
+          0 4px 15px rgba(10, 186, 181, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
 
-      /* Reduced Motion Accessibility */
+      .btn-primary-2026:hover {
+        background-position: 100% 100%;
+        transform: translateY(-2px) scale(1.02);
+        box-shadow:
+          0 8px 30px rgba(10, 186, 181, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.4);
+      }
+
+      .btn-primary-2026:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      /* ============================================
+         TEXT GRADIENT - Premium
+         ============================================ */
+      .text-gradient-2026 {
+        background: linear-gradient(135deg, #0ABAB5 0%, #06D6A0 30%, #0ABAB5 60%, #81D8D0 100%);
+        background-size: 300% 300%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradient-flow 8s ease infinite;
+      }
+
+      @keyframes gradient-flow {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+
+      /* ============================================
+         CARD STYLES - 2026
+         ============================================ */
+      .card-2026 {
+        background: linear-gradient(
+          145deg,
+          rgba(255, 255, 255, 0.04) 0%,
+          rgba(255, 255, 255, 0.01) 100%
+        );
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 24px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .card-2026::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      }
+
+      .card-2026:hover {
+        border-color: rgba(10, 186, 181, 0.3);
+        transform: translateY(-4px);
+        box-shadow:
+          0 20px 50px -15px rgba(0, 0, 0, 0.4),
+          0 0 50px -10px var(--tiffany-glow);
+      }
+
+      /* ============================================
+         ACCESSIBILITY - Reduced Motion
+         ============================================ */
       @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
+        *, *::before, *::after {
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
           transition-duration: 0.01ms !important;
           scroll-behavior: auto !important;
         }
-
-        /* Disable ambient orb animations */
-        .orb {
-          animation: none !important;
-        }
+        .orb { animation: none !important; }
+        .liquid-glass-hero::before { animation: none !important; }
+        .text-gradient-2026 { animation: none !important; }
       }
 
-      /* Motion-safe utility classes */
       @media (prefers-reduced-motion: no-preference) {
-        .motion-safe\:animate-bounce {
-          animation: bounce 1s infinite;
-        }
-        .motion-safe\:animate-pulse {
-          animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
+        .motion-safe\:animate-bounce { animation: bounce 1s infinite; }
+        .motion-safe\:animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
       }
+
+      /* ============================================
+         UTILITY ANIMATIONS
+         ============================================ */
+      @keyframes float-gentle {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(10, 186, 181, 0.2); }
+        50% { box-shadow: 0 0 40px rgba(10, 186, 181, 0.4); }
+      }
+
+      .animate-float { animation: float-gentle 6s ease-in-out infinite; }
+      .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
     </style>
     <script type="importmap">
     {

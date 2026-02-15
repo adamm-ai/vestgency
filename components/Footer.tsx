@@ -6,7 +6,7 @@ import { useReducedMotion } from '../hooks/useReducedMotion';
 const SocialLink = memo(({ icon: Icon, href, label }: { icon: React.ElementType; href: string; label: string }) => (
   <a
     href={href}
-    className="w-10 h-10 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-white/60 hover:text-brand-gold hover:bg-brand-gold/10 hover:border-brand-gold/20 hover:scale-110 hover:-translate-y-0.5 active:scale-95 transition-all duration-200"
+    className="liquid-glass w-11 h-11 rounded-xl flex items-center justify-center text-white/60 hover:text-brand-tiffany hover:bg-brand-tiffany/10 hover:border-brand-tiffany/30 hover:scale-110 hover:-translate-y-1 hover:shadow-lg hover:shadow-brand-tiffany/20 active:scale-95 transition-all duration-300"
     aria-label={label}
   >
     <Icon size={18} aria-hidden="true" />
@@ -56,35 +56,38 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
   return (
     <footer className="relative bg-[#050608] text-white overflow-hidden">
 
-      {/* Background Gradient */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-brand-gold/5 rounded-full blur-[150px] pointer-events-none" />
+      {/* Background Gradients - 2026 */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-radial from-brand-tiffany/8 to-transparent rounded-full blur-[200px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-gradient-radial from-blue-500/5 to-transparent rounded-full blur-[150px] pointer-events-none" />
 
-      {/* Newsletter Section */}
+      {/* Newsletter Section - 2026 Glass */}
       <div className="border-b border-white/[0.06]">
-        <div className="container mx-auto px-6 py-16">
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="text-center lg:text-left">
-              <h3 className="text-2xl md:text-3xl font-display text-white mb-2">
-                Restez informé des <span className="text-brand-gold">meilleures offres</span>
-              </h3>
-              <p className="text-white/70 font-light">
-                Inscrivez-vous à notre newsletter pour recevoir nos exclusivités
-              </p>
-            </div>
+        <div className="container mx-auto px-6 py-20">
+          <div className="liquid-glass-3 rounded-3xl p-8 md:p-12">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-10">
+              <div className="text-center lg:text-left">
+                <h3 className="text-2xl md:text-4xl font-display text-white mb-3">
+                  Restez informé des <span className="text-gradient-2026">meilleures offres</span>
+                </h3>
+                <p className="text-white/60 font-light text-lg">
+                  Inscrivez-vous à notre newsletter pour recevoir nos exclusivités
+                </p>
+              </div>
 
-            <div className="w-full lg:w-auto">
-              <div className="flex gap-3 w-full lg:w-auto">
-                <input
-                  type="email"
-                  placeholder="Votre adresse email"
-                  className="flex-1 lg:w-80 px-5 py-4 rounded-xl bg-white/[0.05] border border-white/[0.08] text-white placeholder-white/60 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
-                />
-                <button
-                  className="px-6 py-4 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-xl shadow-lg shadow-brand-gold/20 hover:shadow-brand-gold/40 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 flex items-center gap-2 whitespace-nowrap"
-                >
-                  S'inscrire
-                  <ArrowRight size={18} />
-                </button>
+              <div className="w-full lg:w-auto">
+                <div className="flex gap-3 w-full lg:w-auto">
+                  <input
+                    type="email"
+                    placeholder="Votre adresse email"
+                    className="flex-1 lg:w-80 px-6 py-4 rounded-xl liquid-glass text-white placeholder-white/50 focus:border-brand-tiffany/50 focus:ring-2 focus:ring-brand-tiffany/20 outline-none transition-all duration-300"
+                  />
+                  <button
+                    className="btn-primary-2026 px-8 py-4 rounded-xl flex items-center gap-2 whitespace-nowrap"
+                  >
+                    S'inscrire
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -95,18 +98,19 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
       <div className="container mx-auto px-6 py-16">
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
 
-          {/* Brand */}
+          {/* Brand - 2026 */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-gold to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-gold/20">
-                <span className="text-black font-display font-bold text-lg">N</span>
+            <div className="flex items-center gap-4 mb-8">
+              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-tiffany via-cyan-400 to-brand-tiffany flex items-center justify-center shadow-xl shadow-brand-tiffany/30">
+                <span className="text-black font-display font-bold text-xl">N</span>
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/30 via-transparent to-transparent opacity-60" />
               </div>
               <div>
-                <h2 className="text-lg font-display font-bold text-brand-gold">Nourreska</h2>
-                <span className="text-white/70 text-[10px] tracking-[0.15em] uppercase">Immobilier de prestige</span>
+                <h2 className="text-xl font-display font-bold text-gradient-2026">Nourreska</h2>
+                <span className="text-white/50 text-[10px] tracking-[0.15em] uppercase">Immobilier de prestige</span>
               </div>
             </div>
-            <p className="text-white/70 text-sm font-light leading-relaxed mb-6">
+            <p className="text-white/60 text-sm font-light leading-relaxed mb-8">
               Votre partenaire de confiance pour tous vos projets immobiliers à Casablanca et dans tout le Maroc.
             </p>
 
@@ -118,17 +122,17 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             </div>
           </div>
 
-          {/* Navigation */}
+          {/* Navigation - 2026 */}
           <div>
-            <h4 className="text-brand-gold text-xs font-bold uppercase tracking-[0.2em] mb-6">Navigation</h4>
-            <ul className="space-y-3">
+            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-7">Navigation</h4>
+            <ul className="space-y-4">
               {navigation.map((item, i) => (
                 <li key={i}>
                   <button
                     onClick={() => scrollTo(item.id)}
-                    className="text-sm text-white/60 hover:text-white transition-colors duration-200 flex items-center gap-2 group"
+                    className="text-sm text-white/60 hover:text-white hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group"
                   >
-                    <span className="w-1.5 h-1.5 bg-brand-gold/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    <span className="w-2 h-2 bg-brand-tiffany/50 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
                     {item.label}
                   </button>
                 </li>
@@ -136,17 +140,17 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             </ul>
           </div>
 
-          {/* Services */}
+          {/* Services - 2026 */}
           <div>
-            <h4 className="text-brand-gold text-xs font-bold uppercase tracking-[0.2em] mb-6">Nos Services</h4>
-            <ul className="space-y-3">
+            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-7">Nos Services</h4>
+            <ul className="space-y-4">
               {services.map((service, i) => (
                 <li key={i}>
                   <a
                     href="#"
-                    className="text-sm text-white/60 hover:text-white transition-colors duration-200 flex items-center gap-2 group"
+                    className="text-sm text-white/60 hover:text-white hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group"
                   >
-                    <span className="w-1.5 h-1.5 bg-brand-gold/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                    <span className="w-2 h-2 bg-brand-tiffany/50 rounded-full scale-0 group-hover:scale-100 transition-transform duration-300" />
                     {service}
                   </a>
                 </li>
@@ -154,26 +158,32 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Contact - 2026 */}
           <div>
-            <h4 className="text-brand-gold text-xs font-bold uppercase tracking-[0.2em] mb-6">Contact</h4>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <MapPin size={18} className="text-brand-gold/70 shrink-0 mt-0.5" />
-                <p className="text-sm text-white/60">
+            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-7">Contact</h4>
+            <div className="space-y-5">
+              <div className="flex items-start gap-4 group">
+                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-tiffany/30 transition-all duration-300">
+                  <MapPin size={16} className="text-brand-tiffany" />
+                </div>
+                <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors">
                   Boulevard Anfa, Quartier Racine<br />
                   Casablanca, Maroc
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <Phone size={18} className="text-brand-gold/70 shrink-0" />
-                <a href="tel:+212522000000" className="text-sm text-white/60 hover:text-white transition-colors duration-200">
+              <div className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-tiffany/30 transition-all duration-300">
+                  <Phone size={16} className="text-brand-tiffany" />
+                </div>
+                <a href="tel:+212522000000" className="text-sm text-white/60 hover:text-white transition-colors duration-300">
                   +212 5 22 00 00 00
                 </a>
               </div>
-              <div className="flex items-center gap-3">
-                <Mail size={18} className="text-brand-gold/70 shrink-0" />
-                <a href="mailto:contact@nourreska.com" className="text-sm text-white/60 hover:text-white transition-colors duration-200">
+              <div className="flex items-center gap-4 group">
+                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-tiffany/30 transition-all duration-300">
+                  <Mail size={16} className="text-brand-tiffany" />
+                </div>
+                <a href="mailto:contact@nourreska.com" className="text-sm text-white/60 hover:text-white transition-colors duration-300">
                   contact@nourreska.com
                 </a>
               </div>
@@ -183,37 +193,37 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
         </div>
       </div>
 
-      {/* Bottom Bar */}
+      {/* Bottom Bar - 2026 */}
       <div className="border-t border-white/[0.06]">
-        <div className="container mx-auto px-6 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-white/60">
+        <div className="container mx-auto px-6 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+            <p className="text-xs text-white/50 font-medium">
               &copy; {new Date().getFullYear()} Nourreska. Tous droits réservés.
             </p>
 
-            <div className="flex items-center gap-6">
-              <a href="#" className="text-xs text-white/60 hover:text-white/70 transition-colors duration-200">
+            <div className="flex items-center gap-8">
+              <a href="#" className="text-xs text-white/50 hover:text-white transition-colors duration-300">
                 Mentions légales
               </a>
-              <a href="#" className="text-xs text-white/60 hover:text-white/70 transition-colors duration-200">
-                Politique de confidentialité
+              <a href="#" className="text-xs text-white/50 hover:text-white transition-colors duration-300">
+                Confidentialité
               </a>
-              <a href="#" className="text-xs text-white/60 hover:text-white/70 transition-colors duration-200">
+              <a href="#" className="text-xs text-white/50 hover:text-white transition-colors duration-300">
                 CGV
               </a>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-5">
               <button
                 onClick={onAdminClick}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-brand-gold hover:border-brand-gold/30 hover:bg-brand-gold/5 transition-all duration-200 group"
+                className="liquid-glass flex items-center gap-2 px-4 py-2 rounded-xl text-white/60 hover:text-brand-tiffany hover:border-brand-tiffany/30 transition-all duration-300 group"
               >
-                <Shield size={14} className="group-hover:text-brand-gold transition-colors" />
-                <span className="text-xs font-medium">Admin Portal</span>
+                <Shield size={14} className="group-hover:text-brand-tiffany transition-colors" />
+                <span className="text-xs font-semibold">Admin</span>
               </button>
-              <div className="flex items-center gap-2 text-xs text-white/60">
+              <div className="flex items-center gap-2 text-xs text-white/50">
                 <span>Conçu avec</span>
-                <span className="text-brand-gold font-semibold">excellence</span>
+                <span className="text-gradient-2026 font-bold">excellence</span>
               </div>
             </div>
           </div>

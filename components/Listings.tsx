@@ -168,7 +168,7 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
 
   return (
     <div
-      className="relative rounded-2xl overflow-hidden h-full flex flex-col bg-white dark:bg-[#0c0c0f] border border-black/[0.04] dark:border-white/[0.06] group hover:border-brand-gold/30 transition-all duration-300 shadow-lg dark:shadow-2xl dark:shadow-black/40 cursor-pointer"
+      className="card-2026 relative overflow-hidden h-full flex flex-col group hover-lift cursor-pointer"
       onClick={handleClick}
     >
       {/* Image Carousel Area */}
@@ -264,13 +264,13 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
           </div>
         )}
 
-        {/* Tags */}
+        {/* Tags - 2026 Glass */}
         <div className="absolute top-3 left-3 z-20 flex gap-2">
-          <span className="px-2.5 py-1 rounded-full bg-white/95 dark:bg-black/80 backdrop-blur-sm border border-white/20 text-brand-charcoal dark:text-white text-[10px] font-bold uppercase tracking-wider shadow-lg">
+          <span className="liquid-glass px-3 py-1.5 rounded-full text-brand-charcoal dark:text-white text-[10px] font-bold uppercase tracking-wider">
             {property.type}
           </span>
-          <span className={`px-2.5 py-1 rounded-full backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider shadow-lg ${
-            property.category === 'RENT' ? 'bg-emerald-500/90' : 'bg-blue-500/90'
+          <span className={`px-3 py-1.5 rounded-full text-white text-[10px] font-bold uppercase tracking-wider shadow-lg ${
+            property.category === 'RENT' ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-brand-tiffany to-cyan-400'
           }`}>
             {property.category === 'RENT' ? 'Location' : 'Vente'}
           </span>
@@ -380,15 +380,15 @@ interface TypeFilterProps {
 }
 
 const TypeFilter = memo(({ activeType, onTypeChange }: TypeFilterProps) => (
-  <div className="flex gap-2 overflow-x-auto pb-6 no-scrollbar">
+  <div className="flex gap-3 overflow-x-auto pb-8 no-scrollbar">
     {PROPERTY_TYPES.map((type) => (
       <button
         key={type}
         onClick={() => onTypeChange(type)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-full border text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-200 ${
+        className={`flex items-center gap-2.5 px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-300 ${
           activeType === type
-            ? 'bg-brand-gold text-black border-brand-gold font-bold'
-            : 'border-black/10 dark:border-white/10 bg-white/50 dark:bg-white/[0.03] text-brand-charcoal/70 dark:text-white/60 hover:border-brand-gold/50'
+            ? 'btn-primary-2026 font-bold shadow-lg'
+            : 'liquid-glass text-brand-charcoal/70 dark:text-white/70 hover:border-brand-tiffany/40 hover:text-brand-charcoal dark:hover:text-white'
         }`}
       >
         {TYPE_ICONS[type] || <Home size={14} />}
@@ -432,24 +432,24 @@ const Pagination = memo(({ page, totalPages, onPageChange }: PaginationProps) =>
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-2 mt-10">
+    <div className="flex items-center justify-center gap-3 mt-14">
       <button
         onClick={() => onPageChange(Math.max(1, page - 1))}
         disabled={page === 1}
-        className="p-2 rounded-lg border border-black/10 dark:border-white/10 disabled:opacity-30 hover:border-brand-gold transition-colors"
+        className="liquid-glass p-3 rounded-xl disabled:opacity-30 hover:border-brand-tiffany/40 transition-all duration-300"
       >
         <ChevronLeft size={20} />
       </button>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2">
         {pages.map(pageNum => (
           <button
             key={pageNum}
             onClick={() => onPageChange(pageNum)}
-            className={`w-10 h-10 rounded-lg text-sm font-semibold transition-all ${
+            className={`w-11 h-11 rounded-xl text-sm font-bold transition-all duration-300 ${
               page === pageNum
-                ? 'bg-brand-gold text-black'
-                : 'hover:bg-black/5 dark:hover:bg-white/5'
+                ? 'btn-primary-2026'
+                : 'liquid-glass hover:border-brand-tiffany/40'
             }`}
           >
             {pageNum}
@@ -460,12 +460,12 @@ const Pagination = memo(({ page, totalPages, onPageChange }: PaginationProps) =>
       <button
         onClick={() => onPageChange(Math.min(totalPages, page + 1))}
         disabled={page === totalPages}
-        className="p-2 rounded-lg border border-black/10 dark:border-white/10 disabled:opacity-30 hover:border-brand-gold transition-colors"
+        className="liquid-glass p-3 rounded-xl disabled:opacity-30 hover:border-brand-tiffany/40 transition-all duration-300"
       >
         <ChevronRight size={20} />
       </button>
 
-      <span className="ml-4 text-sm text-gray-500">
+      <span className="ml-5 text-sm text-gray-500 dark:text-gray-400 font-medium">
         Page {page} sur {totalPages}
       </span>
     </div>
@@ -631,46 +631,47 @@ const Listings: React.FC = () => {
   }, []);
 
   return (
-    <section id={SectionId.LISTINGS} className="py-20 relative bg-[#FAFAF9] dark:bg-[#050608] overflow-hidden transition-colors duration-300">
-      {/* Background - Static, no animations */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-brand-gold/5 rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none" />
+    <section id={SectionId.LISTINGS} className="py-24 relative bg-[#FAFAF9] dark:bg-[#050608] overflow-hidden transition-colors duration-300">
+      {/* Background - 2026 Mesh */}
+      <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-gradient-radial from-brand-tiffany/8 to-transparent rounded-full blur-[180px] pointer-events-none" />
+      <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-gradient-radial from-blue-500/6 to-transparent rounded-full blur-[150px] pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-white/[0.01] to-transparent rounded-full blur-[100px] pointer-events-none dark:block hidden" />
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 gap-6">
+        {/* Header - 2026 */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-12 gap-8">
           <div>
-            <span className="text-brand-gold text-xs font-bold uppercase tracking-[0.3em] mb-3 block">
+            <span className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.35em] mb-4 block">
               {total} Annonces
             </span>
-            <h2 className="text-3xl md:text-5xl font-display text-brand-charcoal dark:text-white mb-2">
-              Nos <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-gold to-cyan-400 italic font-serif">Biens</span>
+            <h2 className="text-3xl md:text-5xl lg:text-6xl font-display text-brand-charcoal dark:text-white mb-3">
+              Nos <span className="text-gradient-2026 italic font-serif">Biens</span>
             </h2>
-            <p className="text-brand-charcoal/50 dark:text-white/70 text-sm md:text-base font-light max-w-md">
+            <p className="text-brand-charcoal/60 dark:text-white/60 text-sm md:text-base font-light max-w-lg">
               Découvrez notre sélection de {activeTab === 'SALE' ? 'biens à vendre' : 'locations'} à Casablanca
             </p>
           </div>
 
-          {/* Category Tabs */}
+          {/* Category Tabs - 2026 Glass */}
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            <div className="p-1 rounded-xl bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.04] dark:border-white/[0.06] flex relative backdrop-blur-sm">
+            <div className="liquid-glass-2 p-1.5 rounded-2xl flex relative">
               <div
-                className={`absolute top-1 bottom-1 bg-gradient-to-r from-brand-gold to-cyan-400 rounded-lg shadow-lg transition-all duration-300 ${
-                  activeTab === 'SALE' ? 'left-1 w-[calc(50%-4px)]' : 'left-[50%] w-[calc(50%-4px)]'
+                className={`absolute top-1.5 bottom-1.5 bg-gradient-to-r from-brand-tiffany to-cyan-400 rounded-xl shadow-lg shadow-brand-tiffany/30 transition-all duration-400 ease-out ${
+                  activeTab === 'SALE' ? 'left-1.5 w-[calc(50%-6px)]' : 'left-[50%] w-[calc(50%-6px)]'
                 }`}
               />
               <button
                 onClick={() => handleTabChange('SALE')}
-                className={`relative z-10 px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                  activeTab === 'SALE' ? 'text-black' : 'text-gray-500 dark:text-white/60'
+                className={`relative z-10 px-8 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-xl ${
+                  activeTab === 'SALE' ? 'text-black' : 'text-gray-500 dark:text-white/60 hover:text-brand-charcoal dark:hover:text-white'
                 }`}
               >
                 Vente
               </button>
               <button
                 onClick={() => handleTabChange('RENT')}
-                className={`relative z-10 px-6 py-2.5 text-xs font-bold uppercase tracking-wider transition-colors ${
-                  activeTab === 'RENT' ? 'text-black' : 'text-gray-500 dark:text-white/60'
+                className={`relative z-10 px-8 py-3 text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-xl ${
+                  activeTab === 'RENT' ? 'text-black' : 'text-gray-500 dark:text-white/60 hover:text-brand-charcoal dark:hover:text-white'
                 }`}
               >
                 Location
