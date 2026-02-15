@@ -413,6 +413,158 @@
 
       .animate-float { animation: float-gentle 6s ease-in-out infinite; }
       .animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+
+      /* ============================================
+         DYNAMIC ISLAND - Apple Style
+         ============================================ */
+
+      .dynamic-island {
+        /* Base pill shape */
+        background: #000000;
+        border-radius: 50px;
+        position: relative;
+        overflow: hidden;
+
+        /* Premium shadow */
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.06),
+          0 4px 30px rgba(0, 0, 0, 0.5),
+          0 10px 60px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+        /* Smooth transitions */
+        transition:
+          width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+          padding 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+          border-radius 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+          background 0.4s ease,
+          box-shadow 0.4s ease;
+      }
+
+      .dynamic-island::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.08) 0%,
+          rgba(255, 255, 255, 0.02) 50%,
+          transparent 100%
+        );
+        border-radius: inherit;
+        pointer-events: none;
+      }
+
+      .dynamic-island::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: radial-gradient(
+          ellipse 80% 50% at 50% 0%,
+          rgba(255, 255, 255, 0.1) 0%,
+          transparent 50%
+        );
+        pointer-events: none;
+      }
+
+      /* Expanded state */
+      .dynamic-island-expanded {
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(40px) saturate(180%);
+        -webkit-backdrop-filter: blur(40px) saturate(180%);
+        border-radius: 38px;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.1),
+          0 8px 40px rgba(0, 0, 0, 0.4),
+          0 20px 80px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+
+      /* Compact/Scrolled state - True Dynamic Island */
+      .dynamic-island-compact {
+        background: #000000;
+        border-radius: 50px;
+        box-shadow:
+          0 0 0 1px rgba(255, 255, 255, 0.08),
+          0 4px 20px rgba(0, 0, 0, 0.6),
+          0 8px 40px rgba(0, 0, 0, 0.4),
+          inset 0 1px 0 rgba(255, 255, 255, 0.1),
+          inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+      }
+
+      /* Liquid morph animation */
+      @keyframes liquid-morph {
+        0%, 100% {
+          border-radius: 50px;
+        }
+        50% {
+          border-radius: 44px;
+        }
+      }
+
+      .dynamic-island-liquid {
+        animation: liquid-morph 4s ease-in-out infinite;
+      }
+
+      /* Inner glow on hover */
+      .dynamic-island:hover {
+        box-shadow:
+          0 0 0 1px rgba(10, 186, 181, 0.2),
+          0 4px 30px rgba(0, 0, 0, 0.5),
+          0 10px 60px rgba(0, 0, 0, 0.4),
+          0 0 40px rgba(10, 186, 181, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      }
+
+      /* Breathing glow effect */
+      @keyframes island-breathe {
+        0%, 100% {
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.06),
+            0 4px 30px rgba(0, 0, 0, 0.5),
+            0 10px 60px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+        50% {
+          box-shadow:
+            0 0 0 1px rgba(10, 186, 181, 0.15),
+            0 4px 30px rgba(0, 0, 0, 0.5),
+            0 10px 60px rgba(0, 0, 0, 0.4),
+            0 0 30px rgba(10, 186, 181, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+      }
+
+      .dynamic-island-breathing {
+        animation: island-breathe 4s ease-in-out infinite;
+      }
+
+      /* Notch indicator dots */
+      .island-indicator {
+        width: 6px;
+        height: 6px;
+        background: #1a1a1a;
+        border-radius: 50%;
+        position: relative;
+      }
+
+      .island-indicator::after {
+        content: '';
+        position: absolute;
+        inset: 1px;
+        background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2), transparent);
+        border-radius: 50%;
+      }
+
+      /* Light mode adjustments */
+      html:not(.dark) .dynamic-island {
+        background: rgba(0, 0, 0, 0.9);
+      }
+
+      html:not(.dark) .dynamic-island-expanded {
+        background: rgba(0, 0, 0, 0.92);
+      }
     </style>
     <script type="importmap">
     {

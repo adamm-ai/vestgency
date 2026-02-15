@@ -1,25 +1,15 @@
 import React, { memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { SectionId } from '../types';
-import { Search, ArrowRight, MapPin, Building2, TrendingUp } from 'lucide-react';
+import { Search, ArrowRight, ChevronDown } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
-// Static stats - no need to recalculate
-const STATS = [
-  { value: '822+', label: 'Biens disponibles', icon: Building2 },
-  { value: '15+', label: 'Années d\'expertise', icon: TrendingUp },
-  { value: '98%', label: 'Clients satisfaits', icon: MapPin },
-];
-
-const QUICK_FILTERS = ['Vente', 'Location', 'Neuf', 'Luxe'];
-
-// Animation variants - defined once
+// Animation variants
 const fadeInUp = {
-  hidden: { opacity: 0, y: 30 },
+  hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 }
 };
 
-// Reduced motion variants - instant transitions
 const fadeInUpReduced = {
   hidden: { opacity: 1, y: 0 },
   visible: { opacity: 1, y: 0 }
@@ -36,198 +26,186 @@ const Hero: React.FC = () => {
   }, [prefersReducedMotion]);
 
   return (
-    <section id={SectionId.HOME} className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-hidden">
-      {/* Background Image - High Quality with Premium Overlay */}
-      <div className="absolute inset-0 z-0">
-        {/* Multi-layer gradient for depth */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-[#050608] z-10" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30 z-10" />
-        {/* Tiffany tint overlay */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-brand-tiffany/5 via-transparent to-transparent z-10" />
+    <section
+      id={SectionId.HOME}
+      className="relative min-h-[100dvh] w-full flex flex-col overflow-hidden bg-black"
+    >
+      {/* ========================================
+          BACKGROUND LAYERS
+          ======================================== */}
+
+      {/* Background Image */}
+      <div className="absolute inset-0">
         <img
           src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2400&auto=format&fit=crop"
           alt="Luxury Real Estate Morocco"
-          className="w-full h-full object-cover scale-105"
+          className="w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
         />
+        {/* Gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
       </div>
 
-      {/* Premium Ambient Elements - 2026 Mesh Style */}
-      <div className="absolute inset-0 z-10 overflow-hidden pointer-events-none">
-        {/* Primary Tiffany Glow */}
-        <div className="absolute top-[15%] left-[5%] w-[500px] h-[500px] bg-gradient-radial from-brand-tiffany/25 via-brand-tiffany/10 to-transparent rounded-full blur-[150px] animate-float" />
-        {/* Secondary Blue Accent */}
-        <div className="absolute bottom-[20%] right-[0%] w-[600px] h-[600px] bg-gradient-radial from-blue-500/15 via-blue-600/5 to-transparent rounded-full blur-[180px]" />
-        {/* Subtle Center Highlight */}
-        <div className="absolute top-[40%] left-[40%] w-[300px] h-[300px] bg-white/5 rounded-full blur-[100px]" />
-        {/* Grid Pattern Overlay */}
-        <div className="absolute inset-0 opacity-[0.02]" style={{
-          backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-          backgroundSize: '60px 60px'
-        }} />
+      {/* Ambient Glow Effects */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-brand-tiffany/20 rounded-full blur-[180px]" />
+        <div className="absolute bottom-[20%] right-[5%] w-[350px] h-[350px] bg-blue-500/15 rounded-full blur-[150px]" />
       </div>
 
-      {/* Main Content */}
-      <div className="relative z-20 w-full max-w-6xl px-6 flex flex-col items-center pt-24 md:pt-0">
-        {/* Badge - 2026 Liquid Glass */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={animationVariants}
-          transition={{ duration: 0.6 }}
-          className="mb-10"
-        >
-          <div className="liquid-glass-3 inline-flex items-center gap-3 px-6 py-3 rounded-full hover-glow cursor-default">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400"></span>
+      {/* ========================================
+          MAIN CONTENT - Centered & Clean
+          ======================================== */}
+
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 pt-28 pb-32">
+        <div className="w-full max-w-4xl mx-auto text-center">
+
+          {/* Badge */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={animationVariants}
+            transition={{ duration: 0.5 }}
+            className="mb-8"
+          >
+            <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.1]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative rounded-full h-2 w-2 bg-green-400"></span>
+              </span>
+              <span className="text-xs text-white/90 font-medium tracking-wide">
+                Agence N°1 à Casablanca
+              </span>
+            </div>
+          </motion.div>
+
+          {/* Main Title */}
+          <motion.h1
+            initial="hidden"
+            animate="visible"
+            variants={animationVariants}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-6"
+          >
+            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display text-white tracking-tight leading-[1.1]">
+              Trouvez le bien
             </span>
-            <span className="text-xs md:text-sm text-white/95 font-semibold tracking-wide">
-              Agence N°1 à Casablanca
+            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display tracking-tight leading-[1.1] bg-gradient-to-r from-brand-tiffany via-cyan-300 to-brand-tiffany bg-clip-text text-transparent">
+              de vos rêves
             </span>
-            <span className="hidden sm:inline-block w-1 h-1 bg-white/30 rounded-full" />
-            <span className="hidden sm:inline text-xs text-brand-tiffany font-medium">
-              2026
-            </span>
-          </div>
-        </motion.div>
+          </motion.h1>
 
-        {/* Title - Premium Typography 2026 */}
-        <motion.h1
-          initial="hidden"
-          animate="visible"
-          variants={animationVariants}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="text-center mb-8"
-        >
-          <span className="block text-5xl md:text-7xl lg:text-[5.5rem] xl:text-[6.5rem] font-display text-white tracking-tight leading-[1.05] drop-shadow-2xl">
-            Trouvez le bien
-          </span>
-          <span className="block text-5xl md:text-7xl lg:text-[5.5rem] xl:text-[6.5rem] font-display tracking-tight leading-[1.05] text-gradient-2026">
-            de vos rêves
-          </span>
-        </motion.h1>
+          {/* Subtitle */}
+          <motion.p
+            initial="hidden"
+            animate="visible"
+            variants={animationVariants}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-base sm:text-lg md:text-xl text-white/60 max-w-xl mx-auto mb-10 font-light leading-relaxed"
+          >
+            Vente, location et gestion de biens d'exception à Casablanca et dans tout le Maroc
+          </motion.p>
 
-        {/* Subtitle - Refined */}
-        <motion.p
-          initial="hidden"
-          animate="visible"
-          variants={animationVariants}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg md:text-xl lg:text-2xl text-white/75 text-center max-w-2xl mb-12 font-light leading-relaxed"
-        >
-          Vente, location et gestion de biens d'exception
-          <span className="hidden md:inline"> à Casablanca et dans tout le Maroc</span>
-          <span className="md:hidden"> au Maroc</span>
-        </motion.p>
+          {/* Search Bar */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={animationVariants}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="w-full max-w-2xl mx-auto mb-8"
+          >
+            <div className="relative group">
+              {/* Glow */}
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-tiffany/40 via-cyan-400/30 to-brand-tiffany/40 rounded-2xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
 
-        {/* Search Bar - 2026 Liquid Glass */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={animationVariants}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="w-full max-w-3xl"
-        >
-          <div className="relative group">
-            {/* Animated Glow Effect */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-brand-tiffany/50 via-cyan-400/30 to-brand-tiffany/50 rounded-3xl blur-2xl opacity-40 group-hover:opacity-70 transition-all duration-500 animate-pulse-glow" />
-
-            {/* Outer Glow Ring */}
-            <div className="absolute -inset-[2px] bg-gradient-to-r from-brand-tiffany/20 via-transparent to-brand-tiffany/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-            {/* Search Container - Premium Glass */}
-            <div className="liquid-glass-hero relative rounded-3xl p-2.5 md:p-3" role="search">
-              <div className="flex items-center gap-2">
-                {/* Search Input */}
-                <div className="flex-1 flex items-center gap-4 px-5">
-                  <div className="relative">
-                    <Search size={24} className="text-white/50 group-hover:text-brand-tiffany transition-colors duration-300" aria-hidden="true" />
-                  </div>
+              {/* Search Container */}
+              <div className="relative flex items-center bg-white/[0.06] backdrop-blur-2xl rounded-2xl border border-white/[0.1] p-1.5">
+                <div className="flex-1 flex items-center gap-3 px-4 py-3">
+                  <Search size={20} className="text-white/40 shrink-0" />
                   <input
                     type="text"
                     placeholder="Quartier, type de bien, budget..."
-                    className="w-full bg-transparent border-none outline-none text-white placeholder-white/50 text-base md:text-lg py-4 focus:placeholder-white/70 transition-all"
+                    className="w-full bg-transparent border-none outline-none text-white placeholder-white/40 text-base"
                     onFocus={scrollToListings}
-                    aria-label="Rechercher un bien immobilier"
                   />
                 </div>
-
-                {/* Search Button - Premium 2026 */}
                 <button
                   onClick={scrollToListings}
-                  className="btn-primary-2026 flex items-center gap-2.5 px-7 md:px-10 py-4 md:py-5 rounded-2xl text-base font-bold"
-                  aria-label="Lancer la recherche"
+                  className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-brand-tiffany/30 transition-all duration-300"
                 >
-                  <span className="hidden md:inline">Rechercher</span>
-                  <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" aria-hidden="true" />
+                  <span className="hidden sm:inline">Rechercher</span>
+                  <ArrowRight size={18} />
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Quick Filters - 2026 Pills */}
-          <nav className="flex flex-wrap justify-center gap-3 mt-8" aria-label="Filtres rapides">
-            {QUICK_FILTERS.map((tag, i) => (
-              <motion.button
+          {/* Quick Filters */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={animationVariants}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="flex flex-wrap justify-center gap-2 sm:gap-3"
+          >
+            {['Vente', 'Location', 'Neuf', 'Luxe'].map((tag) => (
+              <button
                 key={tag}
-                initial={prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={prefersReducedMotion ? { duration: 0 } : { delay: 0.5 + (i * 0.05) }}
                 onClick={scrollToListings}
-                className="liquid-glass px-6 py-2.5 rounded-full text-white/80 text-sm font-medium hover:bg-white/[0.1] hover:border-brand-tiffany/40 hover:text-white hover:shadow-lg hover:shadow-brand-tiffany/10 transition-all duration-300"
-                aria-label={`Voir les biens en ${tag.toLowerCase()}`}
+                className="px-4 sm:px-5 py-2 rounded-full bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-white/70 text-sm font-medium hover:bg-white/[0.1] hover:text-white hover:border-brand-tiffany/30 transition-all duration-300"
               >
                 {tag}
-              </motion.button>
+              </button>
             ))}
-          </nav>
-        </motion.div>
-
-        {/* Stats - 2026 Glass Cards */}
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={animationVariants}
-          transition={prefersReducedMotion ? { duration: 0 } : { duration: 0.6, delay: 0.4 }}
-          className="flex flex-wrap justify-center gap-6 md:gap-8 mt-16 md:mt-24"
-          role="region"
-          aria-label="Statistiques de l'agence"
-        >
-          {STATS.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={i}
-                className="liquid-glass-2 hover-lift group px-8 py-6 rounded-2xl text-center min-w-[140px] cursor-default"
-                role="group"
-                aria-label={stat.label}
-              >
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Icon size={20} className="text-brand-tiffany opacity-70 group-hover:opacity-100 transition-opacity" />
-                  <div className="text-3xl md:text-4xl font-display font-bold text-white group-hover:text-gradient-2026" aria-label={`${stat.value} ${stat.label}`}>
-                    {stat.value}
-                  </div>
-                </div>
-                <div className="text-sm text-white/60 font-medium group-hover:text-white/80 transition-colors">
-                  {stat.label}
-                </div>
-              </div>
-            );
-          })}
-        </motion.div>
-      </div>
-
-      {/* Scroll Indicator - 2026 Premium */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20" aria-hidden="true">
-        <div className={`liquid-glass w-8 h-14 rounded-full flex justify-center pt-3 ${prefersReducedMotion ? '' : 'motion-safe:animate-bounce'}`}>
-          <div className="w-1.5 h-4 bg-gradient-to-b from-brand-tiffany to-white/20 rounded-full" />
+          </motion.div>
         </div>
       </div>
 
-      {/* Bottom Gradient Fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[#050608] to-transparent z-10 pointer-events-none" />
+      {/* ========================================
+          STATS BAR - Bottom Fixed
+          ======================================== */}
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+        className="relative z-10 w-full border-t border-white/[0.06]"
+      >
+        <div className="max-w-5xl mx-auto px-6 py-6">
+          <div className="flex items-center justify-center gap-8 sm:gap-12 md:gap-20">
+            {[
+              { value: '822+', label: 'Biens disponibles' },
+              { value: '15+', label: 'Années d\'expertise' },
+              { value: '98%', label: 'Clients satisfaits' },
+            ].map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-2xl sm:text-3xl font-display font-bold text-white mb-1">
+                  {stat.value}
+                </div>
+                <div className="text-xs sm:text-sm text-white/50 font-medium">
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ========================================
+          SCROLL INDICATOR
+          ======================================== */}
+
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+        <button
+          onClick={scrollToListings}
+          className="flex flex-col items-center gap-2 text-white/40 hover:text-white/70 transition-colors"
+          aria-label="Voir les biens"
+        >
+          <span className="text-xs font-medium tracking-wider uppercase">Découvrir</span>
+          <ChevronDown size={20} className={prefersReducedMotion ? '' : 'animate-bounce'} />
+        </button>
+      </div>
     </section>
   );
 };
