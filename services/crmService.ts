@@ -203,6 +203,115 @@ export interface LeadFilters {
 }
 
 // ============================================================================
+// DEMANDS SYSTEM - Property Requests & Seller Submissions
+// ============================================================================
+
+export type DemandType = 'property_search' | 'property_sale' | 'property_rental_management';
+export type DemandStatus = 'new' | 'processing' | 'matched' | 'contacted' | 'completed' | 'cancelled';
+export type DemandUrgency = 'low' | 'medium' | 'high' | 'urgent';
+export type DemandSource = 'chatbot' | 'website_form' | 'phone' | 'email' | 'walk_in' | 'referral' | 'manual';
+export type PropertyType = 'villa' | 'apartment' | 'riad' | 'land' | 'commercial' | 'penthouse' | 'duplex' | 'studio' | 'other';
+
+export interface Demand {
+  id: string;
+  type: DemandType;
+  status: DemandStatus;
+  urgency: DemandUrgency;
+
+  // Contact Information
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  whatsapp?: string;
+  preferredContact?: 'phone' | 'email' | 'whatsapp';
+
+  // For Property Seekers (property_search)
+  searchCriteria?: {
+    propertyType?: PropertyType[];
+    transactionType: 'RENT' | 'SALE';
+    budgetMin?: number;
+    budgetMax?: number;
+    cities?: string[];
+    neighborhoods?: string[];
+    bedroomsMin?: number;
+    bedroomsMax?: number;
+    bathroomsMin?: number;
+    surfaceMin?: number;
+    surfaceMax?: number;
+    amenities?: string[];
+    additionalNotes?: string;
+  };
+
+  // For Property Sellers/Owners (property_sale, property_rental_management)
+  propertyDetails?: {
+    propertyType: PropertyType;
+    transactionType: 'RENT' | 'SALE' | 'MANAGEMENT';
+    title?: string;
+    description?: string;
+    address?: string;
+    city: string;
+    neighborhood?: string;
+    price?: number;
+    surface?: number;
+    bedrooms?: number;
+    bathrooms?: number;
+    yearBuilt?: number;
+    amenities?: string[];
+    images?: string[];
+    documents?: string[];
+  };
+
+  // Matching & Tracking
+  matchedPropertyIds?: string[];
+  matchedDemandIds?: string[];
+  matchScore?: number;
+  lastMatchCheck?: string;
+
+  // Source & Attribution
+  source: DemandSource;
+  chatSessionId?: string;
+  leadId?: string; // Link to existing lead if any
+  assignedTo?: string;
+
+  // Notes & History
+  notes?: Note[];
+  activities?: Activity[];
+
+  // Timestamps
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+  cancelledAt?: string;
+  cancelReason?: string;
+}
+
+export interface DemandMatch {
+  id: string;
+  demandId: string;
+  matchedEntityId: string; // Property ID or another Demand ID
+  matchType: 'demand_to_property' | 'demand_to_demand' | 'property_to_demand';
+  matchScore: number; // 0-100
+  matchReasons: string[];
+  matchDetails: Record<string, any>;
+  status: 'pending' | 'notified' | 'contacted' | 'successful' | 'rejected';
+  createdAt: string;
+  notifiedAt?: string;
+  respondedAt?: string;
+}
+
+export interface DemandStats {
+  totalDemands: number;
+  newDemandsToday: number;
+  newDemandsWeek: number;
+  demandsByType: Record<DemandType, number>;
+  demandsByStatus: Record<DemandStatus, number>;
+  totalMatches: number;
+  successfulMatches: number;
+  avgMatchScore: number;
+}
+
+// ============================================================================
 // STORAGE KEYS
 // ============================================================================
 
@@ -212,6 +321,8 @@ const STORAGE_KEYS = {
   NOTIFICATIONS: 'nourreska_crm_notifications',
   SETTINGS: 'nourreska_crm_settings',
   CHAT_SESSIONS: 'nourreska_crm_chat_sessions',
+  DEMANDS: 'nourreska_crm_demands',
+  DEMAND_MATCHES: 'nourreska_crm_demand_matches',
 };
 
 // ============================================================================
@@ -648,6 +759,22 @@ export function recordActivity(leadId: string, activity: Omit<Activity, 'id' | '
 
   return updateLead(leadId, {
     activities: [...(lead.activities || []), newActivity],
+  });
+}
+
+// Simplified activity logging function for chatbot use
+export function addActivity(
+  leadId: string,
+  type: ActivityType,
+  title: string,
+  description?: string,
+  agent?: string
+): Lead | null {
+  return recordActivity(leadId, {
+    type,
+    title,
+    description,
+    agent: agent || 'NOUR AI',
   });
 }
 
@@ -1107,6 +1234,612 @@ export function downloadLeadsCSV(): void {
 }
 
 // ============================================================================
+// DEMANDS MANAGEMENT
+// ============================================================================
+
+function getDemandsFromStorage(): Demand[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.DEMANDS);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('[CRM] Error reading demands:', error);
+    return [];
+  }
+}
+
+function saveDemandsToStorage(demands: Demand[]): void {
+  localStorage.setItem(STORAGE_KEYS.DEMANDS, JSON.stringify(demands));
+}
+
+function getMatchesFromStorage(): DemandMatch[] {
+  try {
+    const data = localStorage.getItem(STORAGE_KEYS.DEMAND_MATCHES);
+    return data ? JSON.parse(data) : [];
+  } catch (error) {
+    console.error('[CRM] Error reading matches:', error);
+    return [];
+  }
+}
+
+function saveMatchesToStorage(matches: DemandMatch[]): void {
+  localStorage.setItem(STORAGE_KEYS.DEMAND_MATCHES, JSON.stringify(matches));
+}
+
+export function getDemands(filters?: { type?: DemandType; status?: DemandStatus; search?: string }): Demand[] {
+  let demands = getDemandsFromStorage();
+
+  if (filters?.type) {
+    demands = demands.filter(d => d.type === filters.type);
+  }
+  if (filters?.status) {
+    demands = demands.filter(d => d.status === filters.status);
+  }
+  if (filters?.search) {
+    const query = filters.search.toLowerCase();
+    demands = demands.filter(d =>
+      d.firstName.toLowerCase().includes(query) ||
+      d.lastName.toLowerCase().includes(query) ||
+      d.email.toLowerCase().includes(query) ||
+      d.phone.includes(query)
+    );
+  }
+
+  return demands.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function getDemandById(id: string): Demand | undefined {
+  return getDemandsFromStorage().find(d => d.id === id);
+}
+
+export function createDemand(data: Partial<Demand>): Demand {
+  const demands = getDemandsFromStorage();
+  const now = formatDate(new Date());
+
+  const newDemand: Demand = {
+    id: generateId(),
+    type: data.type || 'property_search',
+    status: 'new',
+    urgency: data.urgency || 'medium',
+    firstName: data.firstName || '',
+    lastName: data.lastName || '',
+    email: data.email || '',
+    phone: data.phone || '',
+    whatsapp: data.whatsapp,
+    preferredContact: data.preferredContact,
+    searchCriteria: data.searchCriteria,
+    propertyDetails: data.propertyDetails,
+    source: data.source || 'website_form',
+    chatSessionId: data.chatSessionId,
+    leadId: data.leadId,
+    assignedTo: data.assignedTo,
+    notes: [],
+    activities: [{
+      id: generateId(),
+      type: 'lead_created',
+      title: 'Demande créée',
+      description: `Nouvelle demande de type ${data.type === 'property_search' ? 'recherche' : data.type === 'property_sale' ? 'vente' : 'gestion locative'}`,
+      createdAt: now,
+    }],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  demands.unshift(newDemand);
+  saveDemandsToStorage(demands);
+
+  // Create notification
+  createNotification({
+    type: 'new_lead',
+    title: 'Nouvelle demande',
+    message: `${newDemand.firstName} ${newDemand.lastName} - ${newDemand.type === 'property_search' ? 'Recherche de bien' : newDemand.type === 'property_sale' ? 'Vente de bien' : 'Gestion locative'}`,
+  });
+
+  // Trigger matching check
+  setTimeout(() => runMatchingEngine(newDemand.id), 1000);
+
+  console.log('[CRM] Created demand:', newDemand.id);
+  return newDemand;
+}
+
+export function updateDemand(id: string, updates: Partial<Demand>): Demand | undefined {
+  const demands = getDemandsFromStorage();
+  const index = demands.findIndex(d => d.id === id);
+
+  if (index === -1) return undefined;
+
+  const oldDemand = demands[index];
+  const updatedDemand: Demand = {
+    ...oldDemand,
+    ...updates,
+    updatedAt: formatDate(new Date()),
+  };
+
+  // Track status change
+  if (updates.status && updates.status !== oldDemand.status) {
+    updatedDemand.activities = [
+      ...(updatedDemand.activities || []),
+      {
+        id: generateId(),
+        type: 'status_changed',
+        title: 'Statut modifié',
+        description: `${oldDemand.status} → ${updates.status}`,
+        createdAt: formatDate(new Date()),
+      },
+    ];
+  }
+
+  demands[index] = updatedDemand;
+  saveDemandsToStorage(demands);
+
+  return updatedDemand;
+}
+
+export function deleteDemand(id: string): boolean {
+  const demands = getDemandsFromStorage();
+  const filtered = demands.filter(d => d.id !== id);
+
+  if (filtered.length === demands.length) return false;
+
+  saveDemandsToStorage(filtered);
+  return true;
+}
+
+export function getDemandStats(): DemandStats {
+  const demands = getDemandsFromStorage();
+  const matches = getMatchesFromStorage();
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
+
+  const stats: DemandStats = {
+    totalDemands: demands.length,
+    newDemandsToday: demands.filter(d => new Date(d.createdAt).getTime() >= startOfToday).length,
+    newDemandsWeek: demands.filter(d => new Date(d.createdAt).getTime() >= startOfWeek).length,
+    demandsByType: {
+      property_search: 0,
+      property_sale: 0,
+      property_rental_management: 0,
+    },
+    demandsByStatus: {
+      new: 0,
+      processing: 0,
+      matched: 0,
+      contacted: 0,
+      completed: 0,
+      cancelled: 0,
+    },
+    totalMatches: matches.length,
+    successfulMatches: matches.filter(m => m.status === 'successful').length,
+    avgMatchScore: matches.length > 0
+      ? Math.round(matches.reduce((sum, m) => sum + m.matchScore, 0) / matches.length)
+      : 0,
+  };
+
+  demands.forEach(d => {
+    stats.demandsByType[d.type]++;
+    stats.demandsByStatus[d.status]++;
+  });
+
+  return stats;
+}
+
+// ============================================================================
+// AI MATCHING ENGINE
+// ============================================================================
+
+interface PropertyData {
+  id: string;
+  name?: string;
+  type?: string;
+  category: 'RENT' | 'SALE';
+  price?: string;
+  priceNumeric?: number;
+  location?: string;
+  city?: string;
+  beds?: number;
+  baths?: number;
+  surface?: number;
+  amenities?: string[];
+}
+
+// Scoring weights for matching
+const MATCH_WEIGHTS = {
+  transactionType: 30, // Must match
+  propertyType: 20,
+  location: 20,
+  budget: 15,
+  bedrooms: 10,
+  surface: 5,
+  amenities: 5, // Bonus
+};
+
+export function calculateMatchScore(demand: Demand, property: PropertyData): { score: number; reasons: string[]; details: Record<string, any> } {
+  let score = 0;
+  const reasons: string[] = [];
+  const details: Record<string, any> = {};
+
+  const criteria = demand.searchCriteria;
+  if (!criteria) return { score: 0, reasons: ['Pas de critères de recherche'], details };
+
+  // Transaction Type Match (Critical - 30%)
+  const demandTransaction = criteria.transactionType;
+  const propertyTransaction = property.category;
+
+  if (demandTransaction === propertyTransaction) {
+    score += MATCH_WEIGHTS.transactionType;
+    reasons.push(`Type transaction: ${demandTransaction}`);
+    details.transactionMatch = true;
+  } else {
+    // Transaction mismatch = no match
+    reasons.push(`Transaction incompatible: ${demandTransaction} vs ${propertyTransaction}`);
+    return { score: 0, reasons, details };
+  }
+
+  // Property Type Match (20%)
+  if (criteria.propertyType && criteria.propertyType.length > 0) {
+    const propertyTypeLower = (property.type || '').toLowerCase();
+    const typeMatch = criteria.propertyType.some(t =>
+      propertyTypeLower.includes(t.toLowerCase()) ||
+      t.toLowerCase().includes(propertyTypeLower)
+    );
+    if (typeMatch) {
+      score += MATCH_WEIGHTS.propertyType;
+      reasons.push(`Type bien: ${property.type}`);
+    }
+    details.propertyTypeMatch = typeMatch;
+  } else {
+    score += MATCH_WEIGHTS.propertyType * 0.5; // Partial score if no preference
+  }
+
+  // Location Match (20%)
+  if (criteria.cities && criteria.cities.length > 0) {
+    const propertyCity = (property.city || property.location || '').toLowerCase();
+    const cityMatch = criteria.cities.some(c => propertyCity.includes(c.toLowerCase()));
+    if (cityMatch) {
+      score += MATCH_WEIGHTS.location;
+      reasons.push(`Ville: ${property.city || property.location}`);
+    }
+    // Check neighborhoods
+    if (!cityMatch && criteria.neighborhoods && criteria.neighborhoods.length > 0) {
+      const neighborhoodMatch = criteria.neighborhoods.some(n =>
+        propertyCity.includes(n.toLowerCase()) ||
+        (property.location || '').toLowerCase().includes(n.toLowerCase())
+      );
+      if (neighborhoodMatch) {
+        score += MATCH_WEIGHTS.location * 0.8;
+        reasons.push(`Quartier: ${property.location}`);
+      }
+    }
+    details.locationMatch = cityMatch;
+  } else {
+    score += MATCH_WEIGHTS.location * 0.5;
+  }
+
+  // Budget Match (15%)
+  const propertyPrice = property.priceNumeric || parseInt(property.price?.replace(/\D/g, '') || '0');
+  if (propertyPrice > 0) {
+    const budgetMin = criteria.budgetMin || 0;
+    const budgetMax = criteria.budgetMax || Infinity;
+
+    if (propertyPrice >= budgetMin && propertyPrice <= budgetMax) {
+      score += MATCH_WEIGHTS.budget;
+      reasons.push(`Prix dans le budget: ${propertyPrice.toLocaleString()} MAD`);
+      details.budgetMatch = 'exact';
+    } else if (propertyPrice >= budgetMin * 0.9 && propertyPrice <= budgetMax * 1.1) {
+      // 10% tolerance
+      score += MATCH_WEIGHTS.budget * 0.7;
+      reasons.push(`Prix proche du budget (±10%)`);
+      details.budgetMatch = 'close';
+    } else if (propertyPrice >= budgetMin * 0.8 && propertyPrice <= budgetMax * 1.2) {
+      // 20% tolerance
+      score += MATCH_WEIGHTS.budget * 0.4;
+      reasons.push(`Prix hors budget (±20%)`);
+      details.budgetMatch = 'far';
+    }
+  }
+
+  // Bedrooms Match (10%)
+  if (criteria.bedroomsMin !== undefined && property.beds !== undefined) {
+    if (property.beds >= criteria.bedroomsMin) {
+      score += MATCH_WEIGHTS.bedrooms;
+      reasons.push(`${property.beds} chambres`);
+    } else if (property.beds >= criteria.bedroomsMin - 1) {
+      score += MATCH_WEIGHTS.bedrooms * 0.5;
+    }
+    details.bedroomsMatch = property.beds >= (criteria.bedroomsMin || 0);
+  } else {
+    score += MATCH_WEIGHTS.bedrooms * 0.5;
+  }
+
+  // Surface Match (5%)
+  const propertySurface = property.surface || 0;
+  if (criteria.surfaceMin !== undefined && propertySurface > 0) {
+    if (propertySurface >= criteria.surfaceMin) {
+      score += MATCH_WEIGHTS.surface;
+      reasons.push(`Surface: ${propertySurface}m²`);
+    } else if (propertySurface >= criteria.surfaceMin * 0.9) {
+      score += MATCH_WEIGHTS.surface * 0.5;
+    }
+    details.surfaceMatch = propertySurface >= (criteria.surfaceMin || 0);
+  } else {
+    score += MATCH_WEIGHTS.surface * 0.5;
+  }
+
+  // Amenities Bonus (5%)
+  if (criteria.amenities && criteria.amenities.length > 0 && property.amenities) {
+    const matchedAmenities = criteria.amenities.filter(a =>
+      property.amenities?.some(pa => pa.toLowerCase().includes(a.toLowerCase()))
+    );
+    const amenityScore = (matchedAmenities.length / criteria.amenities.length) * MATCH_WEIGHTS.amenities;
+    score += amenityScore;
+    if (matchedAmenities.length > 0) {
+      reasons.push(`Équipements: ${matchedAmenities.join(', ')}`);
+    }
+    details.amenitiesMatch = matchedAmenities;
+  }
+
+  // Normalize score to 0-100
+  const normalizedScore = Math.min(100, Math.round(score));
+
+  return { score: normalizedScore, reasons, details };
+}
+
+export function findMatchesForDemand(demandId: string, properties: PropertyData[]): DemandMatch[] {
+  const demand = getDemandById(demandId);
+  if (!demand || demand.type !== 'property_search') return [];
+
+  const matches: DemandMatch[] = [];
+  const now = formatDate(new Date());
+
+  for (const property of properties) {
+    const { score, reasons, details } = calculateMatchScore(demand, property);
+
+    // Only include matches with score >= 60
+    if (score >= 60) {
+      matches.push({
+        id: generateId(),
+        demandId: demand.id,
+        matchedEntityId: property.id,
+        matchType: 'demand_to_property',
+        matchScore: score,
+        matchReasons: reasons,
+        matchDetails: details,
+        status: 'pending',
+        createdAt: now,
+      });
+    }
+  }
+
+  // Sort by score descending
+  return matches.sort((a, b) => b.matchScore - a.matchScore);
+}
+
+export function matchSellerWithBuyers(demandId: string): DemandMatch[] {
+  const sellerDemand = getDemandById(demandId);
+  if (!sellerDemand || sellerDemand.type === 'property_search') return [];
+
+  const propertyDetails = sellerDemand.propertyDetails;
+  if (!propertyDetails) return [];
+
+  // Get all property search demands
+  const searchDemands = getDemands({ type: 'property_search', status: 'new' })
+    .concat(getDemands({ type: 'property_search', status: 'processing' }));
+
+  const matches: DemandMatch[] = [];
+  const now = formatDate(new Date());
+
+  // Create a pseudo-property from seller's property details
+  const pseudoProperty: PropertyData = {
+    id: sellerDemand.id,
+    name: propertyDetails.title,
+    type: propertyDetails.propertyType,
+    category: propertyDetails.transactionType === 'MANAGEMENT' ? 'RENT' : propertyDetails.transactionType as 'RENT' | 'SALE',
+    priceNumeric: propertyDetails.price,
+    location: propertyDetails.neighborhood,
+    city: propertyDetails.city,
+    beds: propertyDetails.bedrooms,
+    baths: propertyDetails.bathrooms,
+    surface: propertyDetails.surface,
+    amenities: propertyDetails.amenities,
+  };
+
+  for (const buyerDemand of searchDemands) {
+    const { score, reasons, details } = calculateMatchScore(buyerDemand, pseudoProperty);
+
+    if (score >= 60) {
+      matches.push({
+        id: generateId(),
+        demandId: sellerDemand.id,
+        matchedEntityId: buyerDemand.id,
+        matchType: 'demand_to_demand',
+        matchScore: score,
+        matchReasons: reasons,
+        matchDetails: details,
+        status: 'pending',
+        createdAt: now,
+      });
+    }
+  }
+
+  return matches.sort((a, b) => b.matchScore - a.matchScore);
+}
+
+export function runMatchingEngine(demandId?: string): { newMatches: number; totalChecked: number } {
+  const existingMatches = getMatchesFromStorage();
+  let newMatches: DemandMatch[] = [];
+  let totalChecked = 0;
+
+  // Get properties from localStorage or a global state
+  const propertiesData = localStorage.getItem('nourreska_properties');
+  const properties: PropertyData[] = propertiesData ? JSON.parse(propertiesData) : [];
+
+  if (demandId) {
+    // Match specific demand
+    const demand = getDemandById(demandId);
+    if (demand) {
+      if (demand.type === 'property_search') {
+        const matches = findMatchesForDemand(demandId, properties);
+        newMatches = matches.filter(m =>
+          !existingMatches.some(e =>
+            e.demandId === m.demandId && e.matchedEntityId === m.matchedEntityId
+          )
+        );
+        totalChecked = properties.length;
+      } else {
+        const matches = matchSellerWithBuyers(demandId);
+        newMatches = matches.filter(m =>
+          !existingMatches.some(e =>
+            e.demandId === m.demandId && e.matchedEntityId === m.matchedEntityId
+          )
+        );
+        totalChecked = getDemands({ type: 'property_search' }).length;
+      }
+
+      // Update demand with match info
+      if (newMatches.length > 0) {
+        updateDemand(demandId, {
+          status: 'matched',
+          matchedPropertyIds: newMatches.map(m => m.matchedEntityId),
+          matchScore: newMatches[0]?.matchScore,
+          lastMatchCheck: formatDate(new Date()),
+        });
+      }
+    }
+  } else {
+    // Run for all active demands
+    const activeDemands = getDemands({ status: 'new' }).concat(getDemands({ status: 'processing' }));
+
+    for (const demand of activeDemands) {
+      if (demand.type === 'property_search') {
+        const matches = findMatchesForDemand(demand.id, properties);
+        const uniqueMatches = matches.filter(m =>
+          !existingMatches.some(e =>
+            e.demandId === m.demandId && e.matchedEntityId === m.matchedEntityId
+          )
+        );
+        newMatches.push(...uniqueMatches);
+      } else {
+        const matches = matchSellerWithBuyers(demand.id);
+        const uniqueMatches = matches.filter(m =>
+          !existingMatches.some(e =>
+            e.demandId === m.demandId && e.matchedEntityId === m.matchedEntityId
+          )
+        );
+        newMatches.push(...uniqueMatches);
+      }
+      totalChecked++;
+    }
+  }
+
+  // Save new matches
+  if (newMatches.length > 0) {
+    saveMatchesToStorage([...existingMatches, ...newMatches]);
+
+    // Create notifications for high-score matches
+    const highScoreMatches = newMatches.filter(m => m.matchScore >= 80);
+    highScoreMatches.forEach(match => {
+      const demand = getDemandById(match.demandId);
+      if (demand) {
+        createNotification({
+          type: 'new_lead',
+          title: 'Nouveau match trouvé!',
+          message: `Score ${match.matchScore}% - ${demand.firstName} ${demand.lastName}: ${match.matchReasons.slice(0, 2).join(', ')}`,
+        });
+      }
+    });
+
+    console.log(`[CRM Matching] Found ${newMatches.length} new matches`);
+  }
+
+  return { newMatches: newMatches.length, totalChecked };
+}
+
+export function getMatchesForDemand(demandId: string): DemandMatch[] {
+  return getMatchesFromStorage()
+    .filter(m => m.demandId === demandId)
+    .sort((a, b) => b.matchScore - a.matchScore);
+}
+
+export function updateMatchStatus(matchId: string, status: DemandMatch['status']): DemandMatch | undefined {
+  const matches = getMatchesFromStorage();
+  const index = matches.findIndex(m => m.id === matchId);
+
+  if (index === -1) return undefined;
+
+  const now = formatDate(new Date());
+  matches[index] = {
+    ...matches[index],
+    status,
+    ...(status === 'notified' ? { notifiedAt: now } : {}),
+    ...(status === 'contacted' || status === 'successful' || status === 'rejected' ? { respondedAt: now } : {}),
+  };
+
+  saveMatchesToStorage(matches);
+  return matches[index];
+}
+
+// ============================================================================
+// CHATBOT DEMAND CAPTURE
+// ============================================================================
+
+export function createDemandFromChat(
+  sessionId: string,
+  messages: ChatMessage[],
+  extractedData: {
+    type: DemandType;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    searchCriteria?: Demand['searchCriteria'];
+    propertyDetails?: Demand['propertyDetails'];
+  }
+): Demand {
+  return createDemand({
+    ...extractedData,
+    source: 'chatbot',
+    chatSessionId: sessionId,
+  });
+}
+
+export function detectDemandIntent(message: string): DemandType | null {
+  const msgLower = message.toLowerCase();
+
+  // Property search patterns
+  const searchPatterns = [
+    'je cherche', 'je recherche', 'looking for', 'interested in',
+    'vous avez', 'avez-vous', 'besoin d\'un', 'besoin d\'une',
+    'je veux louer', 'je veux acheter', 'louer un', 'acheter un',
+  ];
+
+  // Property sale patterns
+  const salePatterns = [
+    'vendre mon', 'vendre ma', 'à vendre', 'je vends',
+    'mettre en vente', 'selling my', 'sell my',
+    'j\'ai un bien à vendre', 'j\'ai une propriété',
+  ];
+
+  // Rental management patterns
+  const managementPatterns = [
+    'gestion locative', 'gérer mon bien', 'mettre en location',
+    'louer mon', 'rental management', 'gérer ma propriété',
+    'j\'ai un appartement à louer', 'cherche à louer mon',
+  ];
+
+  if (managementPatterns.some(p => msgLower.includes(p))) {
+    return 'property_rental_management';
+  }
+  if (salePatterns.some(p => msgLower.includes(p))) {
+    return 'property_sale';
+  }
+  if (searchPatterns.some(p => msgLower.includes(p))) {
+    return 'property_search';
+  }
+
+  return null;
+}
+
+// ============================================================================
 // INITIALIZATION
 // ============================================================================
 
@@ -1114,7 +1847,15 @@ export function initializeCRM(): void {
   // Ensure default agent exists
   getAgentsFromStorage();
 
-  console.log('[CRM] Nourreska CRM initialized');
+  // Initialize demands storage if not exists
+  if (!localStorage.getItem(STORAGE_KEYS.DEMANDS)) {
+    saveDemandsToStorage([]);
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.DEMAND_MATCHES)) {
+    saveMatchesToStorage([]);
+  }
+
+  console.log('[CRM] Nourreska CRM initialized with Demands & Matching Engine');
 }
 
 // Auto-initialize

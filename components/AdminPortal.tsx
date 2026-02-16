@@ -19,7 +19,8 @@ import {
   ChevronLeft, ChevronRight, RefreshCw, Bell, Moon, Sun, Menu,
   Save, Target, Mail, AlertCircle,
   Clock, Star, UserPlus, Activity, Archive,
-  ExternalLink, MoreVertical, Award, Zap, Eye, EyeOff
+  ExternalLink, MoreVertical, Award, Zap, Eye, EyeOff,
+  FileText, ClipboardList, Sparkles, Link2, MessageSquare, Phone
 } from 'lucide-react';
 import * as CRM from '../services/crmService';
 import api, { authAPI, leadsAPI, usersAPI, statsAPI, notificationsAPI, getStoredToken, getStoredUser, clearAuthData, User as APIUser, Lead as APILead, CRMStats } from '../services/api';
@@ -1079,6 +1080,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   const [selectedLead, setSelectedLead] = useState<CRM.Lead | null>(null);
   const [crmSearchQuery, setCrmSearchQuery] = useState('');
   const [crmStatusFilter, setCrmStatusFilter] = useState<CRM.LeadStatus | 'all'>('all');
+  const [crmTimeFilter, setCrmTimeFilter] = useState<'today' | 'week' | 'month' | 'all'>('all');
   const [showNotifications, setShowNotifications] = useState(false);
   const [crmView, setCrmView] = useState<'pipeline' | 'list'>('pipeline');
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
@@ -1092,6 +1094,16 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   });
   const [isCreatingLead, setIsCreatingLead] = useState(false);
   const [leadCreationError, setLeadCreationError] = useState('');
+
+  // Demands State
+  const [demands, setDemands] = useState<CRM.Demand[]>([]);
+  const [demandStats, setDemandStats] = useState<CRM.DemandStats | null>(null);
+  const [selectedDemand, setSelectedDemand] = useState<CRM.Demand | null>(null);
+  const [demandTypeFilter, setDemandTypeFilter] = useState<CRM.DemandType | 'all'>('all');
+  const [demandStatusFilter, setDemandStatusFilter] = useState<CRM.DemandStatus | 'all'>('all');
+  const [showAddDemandModal, setShowAddDemandModal] = useState(false);
+  const [demandMatches, setDemandMatches] = useState<CRM.DemandMatch[]>([]);
+  const [isRunningMatching, setIsRunningMatching] = useState(false);
 
   // Settings State
   const [settingsTab, setSettingsTab] = useState<'profile' | 'notifications' | 'crm' | 'theme' | 'about'>('profile');
@@ -1227,9 +1239,69 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     return () => clearInterval(interval);
   }, [refreshCRM]);
 
+  // Load demands
+  const refreshDemands = useCallback(() => {
+    const allDemands = CRM.getDemands();
+    setDemands(allDemands);
+    setDemandStats(CRM.getDemandStats());
+  }, []);
+
+  useEffect(() => {
+    refreshDemands();
+  }, [refreshDemands]);
+
+  // Run AI matching
+  const runAIMatching = useCallback(async (demandId?: string) => {
+    setIsRunningMatching(true);
+    try {
+      // Store properties for matching
+      localStorage.setItem('nourreska_properties', JSON.stringify(properties));
+      const result = CRM.runMatchingEngine(demandId);
+      console.log('[Matching]', result);
+      refreshDemands();
+      if (demandId) {
+        setDemandMatches(CRM.getMatchesForDemand(demandId));
+      }
+    } finally {
+      setIsRunningMatching(false);
+    }
+  }, [properties, refreshDemands]);
+
+  // Get filtered demands
+  const filteredDemands = useMemo(() => {
+    let result = demands;
+    if (demandTypeFilter !== 'all') {
+      result = result.filter(d => d.type === demandTypeFilter);
+    }
+    if (demandStatusFilter !== 'all') {
+      result = result.filter(d => d.status === demandStatusFilter);
+    }
+    return result;
+  }, [demands, demandTypeFilter, demandStatusFilter]);
+
+  // Helper function for time filtering
+  const getTimeFilteredLeads = useCallback((leadsToFilter: CRM.Lead[]) => {
+    if (crmTimeFilter === 'all') return leadsToFilter;
+
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+    return leadsToFilter.filter(lead => {
+      const leadDate = typeof lead.createdAt === 'number' ? lead.createdAt : new Date(lead.createdAt).getTime();
+      switch (crmTimeFilter) {
+        case 'today': return leadDate >= startOfToday;
+        case 'week': return leadDate >= startOfWeek;
+        case 'month': return leadDate >= startOfMonth;
+        default: return true;
+      }
+    });
+  }, [crmTimeFilter]);
+
   // Filtered leads
   const filteredLeads = useMemo(() => {
-    let result = leads;
+    let result = getTimeFilteredLeads(leads);
     if (crmStatusFilter !== 'all') {
       result = result.filter(l => l.status === crmStatusFilter);
     }
@@ -1242,21 +1314,66 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
         l.phone.includes(query)
       );
     }
-    return result;
-  }, [leads, crmStatusFilter, crmSearchQuery]);
+    // Sort by most recent first
+    return result.sort((a, b) => {
+      const dateA = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt).getTime();
+      const dateB = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+  }, [leads, crmStatusFilter, crmSearchQuery, getTimeFilteredLeads]);
 
-  // Leads by status for pipeline
+  // Leads by status for pipeline (also time filtered)
   const leadsByStatus = useMemo(() => {
     const grouped: Record<CRM.LeadStatus, CRM.Lead[]> = {
       new: [], contacted: [], qualified: [], visit_scheduled: [],
       visit_completed: [], proposal_sent: [], negotiation: [],
       won: [], lost: [], nurturing: []
     };
-    leads.forEach(lead => {
+    const timeFiltered = getTimeFilteredLeads(leads);
+    timeFiltered.forEach(lead => {
       grouped[lead.status].push(lead);
     });
+    // Sort each group by most recent first
+    Object.keys(grouped).forEach(status => {
+      grouped[status as CRM.LeadStatus].sort((a, b) => {
+        const dateA = typeof a.createdAt === 'number' ? a.createdAt : new Date(a.createdAt).getTime();
+        const dateB = typeof b.createdAt === 'number' ? b.createdAt : new Date(b.createdAt).getTime();
+        return dateB - dateA;
+      });
+    });
     return grouped;
-  }, [leads]);
+  }, [leads, getTimeFilteredLeads]);
+
+  // Format lead timestamp with relative time
+  const formatLeadTimestamp = useCallback((createdAt: string | number) => {
+    const date = typeof createdAt === 'number' ? new Date(createdAt) : new Date(createdAt);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    // Relative time for recent leads
+    let relative = '';
+    if (diffMins < 1) relative = "À l'instant";
+    else if (diffMins < 60) relative = `Il y a ${diffMins} min`;
+    else if (diffHours < 24) relative = `Il y a ${diffHours}h`;
+    else if (diffDays < 7) relative = `Il y a ${diffDays}j`;
+    else relative = '';
+
+    // Full date with time
+    const fullDate = date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: diffDays > 365 ? '2-digit' : undefined
+    });
+    const fullTime = date.toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    return { relative, fullDate, fullTime, date };
+  }, []);
 
   // Unread notifications count
   const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
@@ -1282,6 +1399,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'crm', label: 'CRM', icon: Target, badge: true },
+    { id: 'demands', label: 'Demandes', icon: ClipboardList },
     { id: 'properties', label: 'Propriétés', icon: Building2 },
     { id: 'users', label: 'Utilisateurs', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
@@ -1845,6 +1963,18 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                     <option value="lost">Perdus</option>
                   </select>
 
+                  {/* Time Period Filter */}
+                  <select
+                    value={crmTimeFilter}
+                    onChange={(e) => setCrmTimeFilter(e.target.value as 'today' | 'week' | 'month' | 'all')}
+                    className="px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:border-brand-gold/50 outline-none transition-all"
+                  >
+                    <option value="all">Toutes périodes</option>
+                    <option value="today">Aujourd'hui</option>
+                    <option value="week">Cette semaine</option>
+                    <option value="month">Ce mois</option>
+                  </select>
+
                   <button
                     onClick={refreshCRM}
                     className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-white hover:border-white/20 transition-all"
@@ -2013,9 +2143,12 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                                       <Star size={12} className="text-brand-gold" />
                                       <span className="text-xs font-medium text-brand-gold">{lead.score}</span>
                                     </div>
-                                    <span className="text-[10px] text-white/30">
-                                      {new Date(lead.createdAt).toLocaleDateString('fr-FR')}
-                                    </span>
+                                    <div className="flex items-center gap-1.5 text-[10px]" title={`Capturé le ${formatLeadTimestamp(lead.createdAt).fullDate} à ${formatLeadTimestamp(lead.createdAt).fullTime}`}>
+                                      <Clock size={10} className="text-white/30" />
+                                      <span className="text-white/40">
+                                        {formatLeadTimestamp(lead.createdAt).relative || formatLeadTimestamp(lead.createdAt).fullDate}
+                                      </span>
+                                    </div>
                                   </div>
                                 </motion.button>
                               ))}
@@ -2118,8 +2251,11 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                                   <span className="text-xs font-medium text-white">{lead.score}</span>
                                 </div>
                               </td>
-                              <td className="p-4 text-xs text-white/50">
-                                {new Date(lead.createdAt).toLocaleDateString('fr-FR')}
+                              <td className="p-4">
+                                <div className="flex flex-col" title={`Capturé le ${formatLeadTimestamp(lead.createdAt).fullDate} à ${formatLeadTimestamp(lead.createdAt).fullTime}`}>
+                                  <span className="text-xs text-white/60">{formatLeadTimestamp(lead.createdAt).fullDate}</span>
+                                  <span className="text-[10px] text-white/40">{formatLeadTimestamp(lead.createdAt).fullTime} {formatLeadTimestamp(lead.createdAt).relative ? `• ${formatLeadTimestamp(lead.createdAt).relative}` : ''}</span>
+                                </div>
                               </td>
                               <td className="p-4">
                                 <div className="flex items-center justify-end gap-1">
@@ -2706,6 +2842,435 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                             </button>
                           </div>
                         </form>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
+            {/* ========== DEMANDS VIEW ========== */}
+            {currentView === 'demands' && (
+              <div className="space-y-6">
+                {/* Header */}
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                      <ClipboardList className="text-brand-gold" />
+                      Gestion des Demandes
+                    </h2>
+                    <p className="text-sm text-white/50 mt-1">
+                      Demandes de recherche, vente et gestion locative
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => runAIMatching()}
+                      disabled={isRunningMatching}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-all disabled:opacity-50"
+                    >
+                      <Sparkles size={18} className={isRunningMatching ? 'animate-spin' : ''} />
+                      {isRunningMatching ? 'Matching...' : 'Lancer le Matching IA'}
+                    </button>
+                    <button
+                      onClick={() => setShowAddDemandModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-lg hover:shadow-lg hover:shadow-brand-gold/25 transition-all"
+                    >
+                      <Plus size={18} />
+                      Nouvelle Demande
+                    </button>
+                  </div>
+                </div>
+
+                {/* Demands Stats */}
+                {demandStats && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {[
+                      { label: 'Total', value: demandStats.totalDemands, icon: ClipboardList, color: 'from-brand-gold to-amber-500' },
+                      { label: 'Recherches', value: demandStats.demandsByType.property_search, icon: Search, color: 'from-blue-500 to-cyan-400' },
+                      { label: 'Ventes', value: demandStats.demandsByType.property_sale, icon: DollarSign, color: 'from-emerald-500 to-teal-400' },
+                      { label: 'Gestion Loc.', value: demandStats.demandsByType.property_rental_management, icon: Building2, color: 'from-purple-500 to-pink-400' },
+                      { label: 'Matchs', value: demandStats.totalMatches, icon: Link2, color: 'from-orange-500 to-red-400' },
+                      { label: 'Score Moy.', value: `${demandStats.avgMatchScore}%`, icon: Sparkles, color: 'from-cyan-500 to-blue-400' },
+                    ].map((stat, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="relative overflow-hidden rounded-xl bg-white/[0.02] border border-white/[0.06] p-4"
+                      >
+                        <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${stat.color} opacity-10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2`} />
+                        <div className="relative">
+                          <stat.icon size={18} className="text-white/40 mb-2" />
+                          <p className="text-2xl font-bold text-white">{stat.value}</p>
+                          <p className="text-xs text-white/50">{stat.label}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Filters */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <select
+                    value={demandTypeFilter}
+                    onChange={(e) => setDemandTypeFilter(e.target.value as CRM.DemandType | 'all')}
+                    className="px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:border-brand-gold/50 outline-none transition-all"
+                  >
+                    <option value="all">Tous les types</option>
+                    <option value="property_search">Recherche de bien</option>
+                    <option value="property_sale">Vente de bien</option>
+                    <option value="property_rental_management">Gestion locative</option>
+                  </select>
+                  <select
+                    value={demandStatusFilter}
+                    onChange={(e) => setDemandStatusFilter(e.target.value as CRM.DemandStatus | 'all')}
+                    className="px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:border-brand-gold/50 outline-none transition-all"
+                  >
+                    <option value="all">Tous les statuts</option>
+                    <option value="new">Nouvelle</option>
+                    <option value="processing">En traitement</option>
+                    <option value="matched">Matchée</option>
+                    <option value="contacted">Contactée</option>
+                    <option value="completed">Terminée</option>
+                    <option value="cancelled">Annulée</option>
+                  </select>
+                  <button
+                    onClick={refreshDemands}
+                    className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-white hover:border-white/20 transition-all"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                </div>
+
+                {/* Demands List */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredDemands.map(demand => {
+                    const typeConfig: Record<CRM.DemandType, { label: string; color: string; icon: any }> = {
+                      property_search: { label: 'Recherche', color: 'bg-blue-500', icon: Search },
+                      property_sale: { label: 'Vente', color: 'bg-emerald-500', icon: DollarSign },
+                      property_rental_management: { label: 'Gestion', color: 'bg-purple-500', icon: Building2 },
+                    };
+                    const config = typeConfig[demand.type];
+                    const TypeIcon = config.icon;
+
+                    return (
+                      <motion.div
+                        key={demand.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        onClick={() => {
+                          setSelectedDemand(demand);
+                          setDemandMatches(CRM.getMatchesForDemand(demand.id));
+                        }}
+                        className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:border-brand-gold/30 hover:bg-white/[0.04] transition-all cursor-pointer"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-lg ${config.color}/20 flex items-center justify-center`}>
+                              <TypeIcon size={16} className={`${config.color.replace('bg-', 'text-')}`} />
+                            </div>
+                            <div>
+                              <p className="font-medium text-white text-sm">
+                                {demand.firstName} {demand.lastName}
+                              </p>
+                              <p className="text-xs text-white/50">{config.label}</p>
+                            </div>
+                          </div>
+                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
+                            demand.status === 'new' ? 'bg-blue-500/20 text-blue-400' :
+                            demand.status === 'matched' ? 'bg-emerald-500/20 text-emerald-400' :
+                            demand.status === 'processing' ? 'bg-yellow-500/20 text-yellow-400' :
+                            demand.status === 'completed' ? 'bg-green-500/20 text-green-400' :
+                            'bg-gray-500/20 text-gray-400'
+                          }`}>
+                            {demand.status}
+                          </span>
+                        </div>
+
+                        {demand.email && (
+                          <p className="text-xs text-white/50 truncate mb-1">{demand.email}</p>
+                        )}
+                        {demand.phone && (
+                          <div className="flex items-center gap-1 text-xs text-white/50 mb-2">
+                            <Phone size={10} />
+                            {demand.phone}
+                          </div>
+                        )}
+
+                        {/* Search criteria summary */}
+                        {demand.type === 'property_search' && demand.searchCriteria && (
+                          <div className="text-xs text-white/40 mb-2">
+                            {demand.searchCriteria.transactionType === 'RENT' ? 'Location' : 'Achat'} •
+                            {demand.searchCriteria.cities?.join(', ') || 'Toutes villes'} •
+                            {demand.searchCriteria.budgetMax ? `${(demand.searchCriteria.budgetMax / 1000000).toFixed(1)}M MAD` : 'Budget libre'}
+                          </div>
+                        )}
+
+                        {/* Property details summary */}
+                        {(demand.type === 'property_sale' || demand.type === 'property_rental_management') && demand.propertyDetails && (
+                          <div className="text-xs text-white/40 mb-2">
+                            {demand.propertyDetails.propertyType} • {demand.propertyDetails.city} •
+                            {demand.propertyDetails.price ? `${(demand.propertyDetails.price / 1000000).toFixed(1)}M MAD` : 'Prix à définir'}
+                          </div>
+                        )}
+
+                        {/* Match score */}
+                        {demand.matchScore && (
+                          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/[0.04]">
+                            <Sparkles size={12} className="text-purple-400" />
+                            <span className="text-xs text-purple-400 font-medium">Match: {demand.matchScore}%</span>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] mt-2">
+                          <span className="text-[10px] text-white/30">
+                            {formatLeadTimestamp(demand.createdAt).relative || formatLeadTimestamp(demand.createdAt).fullDate}
+                          </span>
+                          <span className="text-[10px] text-white/30">{demand.source}</span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+
+                  {filteredDemands.length === 0 && (
+                    <div className="col-span-full p-12 text-center">
+                      <ClipboardList size={48} className="text-white/10 mx-auto mb-4" />
+                      <p className="text-white/40">Aucune demande trouvée</p>
+                      <p className="text-xs text-white/30 mt-1">Les demandes du chatbot et formulaires apparaîtront ici</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected Demand Detail Modal */}
+                <AnimatePresence>
+                  {selectedDemand && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                      onClick={() => setSelectedDemand(null)}
+                    >
+                      <motion.div
+                        initial={{ scale: 0.95 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0.95 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-[#12121a] border border-white/[0.08] rounded-2xl"
+                      >
+                        <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-white/[0.06] bg-[#12121a]">
+                          <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                            <FileText size={20} className="text-brand-gold" />
+                            Détails de la demande
+                          </h3>
+                          <button
+                            onClick={() => setSelectedDemand(null)}
+                            className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
+                          >
+                            <X size={20} />
+                          </button>
+                        </div>
+
+                        <div className="p-6 space-y-6">
+                          {/* Contact Info */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs text-white/40 mb-1">Nom complet</p>
+                              <p className="text-white font-medium">{selectedDemand.firstName} {selectedDemand.lastName}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-white/40 mb-1">Email</p>
+                              <p className="text-white">{selectedDemand.email || '-'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-white/40 mb-1">Téléphone</p>
+                              <p className="text-white">{selectedDemand.phone || '-'}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-white/40 mb-1">Source</p>
+                              <p className="text-white capitalize">{selectedDemand.source}</p>
+                            </div>
+                          </div>
+
+                          {/* Status & Actions */}
+                          <div className="flex items-center gap-4">
+                            <select
+                              value={selectedDemand.status}
+                              onChange={(e) => {
+                                const updated = CRM.updateDemand(selectedDemand.id, { status: e.target.value as CRM.DemandStatus });
+                                if (updated) {
+                                  setSelectedDemand(updated);
+                                  refreshDemands();
+                                }
+                              }}
+                              className="flex-1 px-4 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none"
+                            >
+                              <option value="new">Nouvelle</option>
+                              <option value="processing">En traitement</option>
+                              <option value="matched">Matchée</option>
+                              <option value="contacted">Contactée</option>
+                              <option value="completed">Terminée</option>
+                              <option value="cancelled">Annulée</option>
+                            </select>
+                            <button
+                              onClick={() => runAIMatching(selectedDemand.id)}
+                              disabled={isRunningMatching}
+                              className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/30 transition-all disabled:opacity-50"
+                            >
+                              <Sparkles size={16} className={isRunningMatching ? 'animate-spin' : ''} />
+                              Trouver Matchs
+                            </button>
+                          </div>
+
+                          {/* Search Criteria */}
+                          {selectedDemand.type === 'property_search' && selectedDemand.searchCriteria && (
+                            <div className="p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                              <h4 className="text-sm font-semibold text-blue-400 mb-3 flex items-center gap-2">
+                                <Search size={16} />
+                                Critères de recherche
+                              </h4>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-white/50">Type:</span>
+                                  <span className="text-white ml-2">{selectedDemand.searchCriteria.transactionType === 'RENT' ? 'Location' : 'Achat'}</span>
+                                </div>
+                                {selectedDemand.searchCriteria.propertyType && (
+                                  <div>
+                                    <span className="text-white/50">Bien:</span>
+                                    <span className="text-white ml-2">{selectedDemand.searchCriteria.propertyType.join(', ')}</span>
+                                  </div>
+                                )}
+                                {selectedDemand.searchCriteria.cities && (
+                                  <div>
+                                    <span className="text-white/50">Villes:</span>
+                                    <span className="text-white ml-2">{selectedDemand.searchCriteria.cities.join(', ')}</span>
+                                  </div>
+                                )}
+                                {selectedDemand.searchCriteria.budgetMin || selectedDemand.searchCriteria.budgetMax ? (
+                                  <div>
+                                    <span className="text-white/50">Budget:</span>
+                                    <span className="text-white ml-2">
+                                      {selectedDemand.searchCriteria.budgetMin?.toLocaleString()} - {selectedDemand.searchCriteria.budgetMax?.toLocaleString()} MAD
+                                    </span>
+                                  </div>
+                                ) : null}
+                                {selectedDemand.searchCriteria.bedroomsMin && (
+                                  <div>
+                                    <span className="text-white/50">Chambres:</span>
+                                    <span className="text-white ml-2">{selectedDemand.searchCriteria.bedroomsMin}+</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Property Details */}
+                          {(selectedDemand.type === 'property_sale' || selectedDemand.type === 'property_rental_management') && selectedDemand.propertyDetails && (
+                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                              <h4 className="text-sm font-semibold text-emerald-400 mb-3 flex items-center gap-2">
+                                <Building2 size={16} />
+                                Détails du bien
+                              </h4>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-white/50">Type:</span>
+                                  <span className="text-white ml-2 capitalize">{selectedDemand.propertyDetails.propertyType}</span>
+                                </div>
+                                <div>
+                                  <span className="text-white/50">Ville:</span>
+                                  <span className="text-white ml-2">{selectedDemand.propertyDetails.city}</span>
+                                </div>
+                                {selectedDemand.propertyDetails.price && (
+                                  <div>
+                                    <span className="text-white/50">Prix:</span>
+                                    <span className="text-white ml-2">{selectedDemand.propertyDetails.price.toLocaleString()} MAD</span>
+                                  </div>
+                                )}
+                                {selectedDemand.propertyDetails.surface && (
+                                  <div>
+                                    <span className="text-white/50">Surface:</span>
+                                    <span className="text-white ml-2">{selectedDemand.propertyDetails.surface} m²</span>
+                                  </div>
+                                )}
+                                {selectedDemand.propertyDetails.bedrooms && (
+                                  <div>
+                                    <span className="text-white/50">Chambres:</span>
+                                    <span className="text-white ml-2">{selectedDemand.propertyDetails.bedrooms}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* AI Matches */}
+                          {demandMatches.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-purple-400 mb-3 flex items-center gap-2">
+                                <Sparkles size={16} />
+                                Matchs IA ({demandMatches.length})
+                              </h4>
+                              <div className="space-y-2">
+                                {demandMatches.slice(0, 5).map(match => (
+                                  <div
+                                    key={match.id}
+                                    className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg"
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span className={`text-lg font-bold ${
+                                        match.matchScore >= 80 ? 'text-green-400' :
+                                        match.matchScore >= 60 ? 'text-yellow-400' :
+                                        'text-orange-400'
+                                      }`}>
+                                        {match.matchScore}%
+                                      </span>
+                                      <span className="text-xs text-white/50">
+                                        {match.matchType === 'demand_to_property' ? 'Bien' : 'Demande'} #{match.matchedEntityId.slice(-6)}
+                                      </span>
+                                    </div>
+                                    <div className="flex flex-wrap gap-1">
+                                      {match.matchReasons.slice(0, 4).map((reason, i) => (
+                                        <span key={i} className="px-2 py-0.5 text-[10px] bg-purple-500/20 text-purple-300 rounded">
+                                          {reason}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Add Demand Modal */}
+                <AnimatePresence>
+                  {showAddDemandModal && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                      onClick={() => setShowAddDemandModal(false)}
+                    >
+                      <motion.div
+                        initial={{ scale: 0.95 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0.95 }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-xl max-h-[90vh] overflow-y-auto bg-[#12121a] border border-white/[0.08] rounded-2xl"
+                      >
+                        <AddDemandForm
+                          onClose={() => setShowAddDemandModal(false)}
+                          onSuccess={() => {
+                            setShowAddDemandModal(false);
+                            refreshDemands();
+                          }}
+                        />
                       </motion.div>
                     </motion.div>
                   )}
@@ -3714,6 +4279,482 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
 });
 
 AdminDashboard.displayName = 'AdminDashboard';
+
+// ============================================================================
+// ADD DEMAND FORM COMPONENT
+// ============================================================================
+
+interface AddDemandFormProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const AddDemandForm: React.FC<AddDemandFormProps> = memo(({ onClose, onSuccess }) => {
+  const [demandType, setDemandType] = useState<CRM.DemandType>('property_search');
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    urgency: 'medium' as CRM.DemandUrgency,
+    source: 'manual' as CRM.DemandSource,
+    notes: '',
+    // Search criteria
+    transactionType: 'SALE' as 'RENT' | 'SALE',
+    propertyTypes: [] as CRM.PropertyType[],
+    cities: '',
+    budgetMin: '',
+    budgetMax: '',
+    bedroomsMin: '',
+    surfaceMin: '',
+    amenities: '',
+    // Property details for sellers
+    sellerPropertyType: 'apartment' as CRM.PropertyType,
+    sellerCity: '',
+    sellerPrice: '',
+    sellerSurface: '',
+    sellerBedrooms: '',
+    sellerAmenities: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const handlePropertyTypeToggle = (type: CRM.PropertyType) => {
+    setFormData(prev => ({
+      ...prev,
+      propertyTypes: prev.propertyTypes.includes(type)
+        ? prev.propertyTypes.filter(t => t !== type)
+        : [...prev.propertyTypes, type]
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+
+    if (!formData.firstName.trim()) {
+      setError('Le prénom est requis');
+      return;
+    }
+
+    if (!formData.email && !formData.phone) {
+      setError('Email ou téléphone requis');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const demandData: Parameters<typeof CRM.createDemand>[0] = {
+        type: demandType,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        urgency: formData.urgency,
+        source: formData.source,
+        notes: formData.notes.trim() || undefined,
+      };
+
+      // Build search criteria for property seekers
+      if (demandType === 'property_search') {
+        demandData.searchCriteria = {
+          transactionType: formData.transactionType,
+          propertyType: formData.propertyTypes.length > 0 ? formData.propertyTypes : undefined,
+          cities: formData.cities ? formData.cities.split(',').map(c => c.trim()) : undefined,
+          budgetMin: formData.budgetMin ? parseInt(formData.budgetMin) : undefined,
+          budgetMax: formData.budgetMax ? parseInt(formData.budgetMax) : undefined,
+          bedroomsMin: formData.bedroomsMin ? parseInt(formData.bedroomsMin) : undefined,
+          surfaceMin: formData.surfaceMin ? parseInt(formData.surfaceMin) : undefined,
+          amenities: formData.amenities ? formData.amenities.split(',').map(a => a.trim()) : undefined,
+        };
+      }
+
+      // Build property details for sellers
+      if (demandType === 'property_sale' || demandType === 'property_rental_management') {
+        demandData.propertyDetails = {
+          propertyType: formData.sellerPropertyType,
+          transactionType: demandType === 'property_sale' ? 'SALE' : 'MANAGEMENT',
+          city: formData.sellerCity.trim() || 'Non spécifié',
+          price: formData.sellerPrice ? parseInt(formData.sellerPrice) : undefined,
+          surface: formData.sellerSurface ? parseInt(formData.sellerSurface) : undefined,
+          bedrooms: formData.sellerBedrooms ? parseInt(formData.sellerBedrooms) : undefined,
+          amenities: formData.sellerAmenities ? formData.sellerAmenities.split(',').map(a => a.trim()) : undefined,
+        };
+      }
+
+      CRM.createDemand(demandData);
+      onSuccess();
+    } catch (err) {
+      setError('Erreur lors de la création de la demande');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const propertyTypeOptions: { value: CRM.PropertyType; label: string }[] = [
+    { value: 'villa', label: 'Villa' },
+    { value: 'apartment', label: 'Appartement' },
+    { value: 'riad', label: 'Riad' },
+    { value: 'land', label: 'Terrain' },
+    { value: 'commercial', label: 'Commercial' },
+    { value: 'penthouse', label: 'Penthouse' },
+    { value: 'duplex', label: 'Duplex' },
+    { value: 'studio', label: 'Studio' },
+  ];
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b border-white/[0.06] bg-[#12121a]">
+        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+          <Plus size={20} className="text-brand-gold" />
+          Nouvelle Demande
+        </h3>
+        <button
+          onClick={onClose}
+          className="p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-all"
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {/* Error */}
+        {error && (
+          <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm flex items-center gap-2">
+            <AlertCircle size={16} />
+            {error}
+          </div>
+        )}
+
+        {/* Demand Type */}
+        <div>
+          <label className="block text-xs text-white/50 mb-2">Type de demande</label>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: 'property_search', label: 'Recherche', icon: Search },
+              { value: 'property_sale', label: 'Vente', icon: DollarSign },
+              { value: 'property_rental_management', label: 'Gestion Locative', icon: Building2 },
+            ].map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setDemandType(value as CRM.DemandType)}
+                className={`p-3 rounded-lg border flex flex-col items-center gap-1 transition-all ${
+                  demandType === value
+                    ? 'border-brand-gold bg-brand-gold/10 text-brand-gold'
+                    : 'border-white/10 bg-white/[0.02] text-white/60 hover:border-white/20'
+                }`}
+              >
+                <Icon size={20} />
+                <span className="text-xs font-medium">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Contact Info */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-white/50 mb-2">Prénom *</label>
+            <input
+              type="text"
+              value={formData.firstName}
+              onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+              placeholder="Prénom"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-2">Nom</label>
+            <input
+              type="text"
+              value={formData.lastName}
+              onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+              placeholder="Nom"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-2">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+              placeholder="email@exemple.com"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-2">Téléphone</label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+              placeholder="+212 6XX XXX XXX"
+            />
+          </div>
+        </div>
+
+        {/* Urgency & Source */}
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-white/50 mb-2">Urgence</label>
+            <select
+              value={formData.urgency}
+              onChange={(e) => setFormData(prev => ({ ...prev, urgency: e.target.value as CRM.DemandUrgency }))}
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none"
+            >
+              <option value="low">Faible</option>
+              <option value="medium">Moyenne</option>
+              <option value="high">Haute</option>
+              <option value="urgent">Urgente</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-white/50 mb-2">Source</label>
+            <select
+              value={formData.source}
+              onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value as CRM.DemandSource }))}
+              className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none"
+            >
+              <option value="manual">Saisie manuelle</option>
+              <option value="phone">Téléphone</option>
+              <option value="email">Email</option>
+              <option value="walk_in">Visite agence</option>
+              <option value="referral">Référence</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Search Criteria (for property_search) */}
+        {demandType === 'property_search' && (
+          <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl space-y-4">
+            <h4 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
+              <Search size={16} />
+              Critères de recherche
+            </h4>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Transaction</label>
+                <select
+                  value={formData.transactionType}
+                  onChange={(e) => setFormData(prev => ({ ...prev, transactionType: e.target.value as 'RENT' | 'SALE' }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none"
+                >
+                  <option value="SALE">Achat</option>
+                  <option value="RENT">Location</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Villes (séparées par virgule)</label>
+                <input
+                  type="text"
+                  value={formData.cities}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cities: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="Casablanca, Rabat"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-white/50 mb-2">Types de bien</label>
+              <div className="flex flex-wrap gap-2">
+                {propertyTypeOptions.map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handlePropertyTypeToggle(option.value)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      formData.propertyTypes.includes(option.value)
+                        ? 'bg-brand-gold text-black'
+                        : 'bg-white/[0.05] text-white/60 hover:bg-white/[0.1]'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Budget Min (MAD)</label>
+                <input
+                  type="number"
+                  value={formData.budgetMin}
+                  onChange={(e) => setFormData(prev => ({ ...prev, budgetMin: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="500000"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Budget Max (MAD)</label>
+                <input
+                  type="number"
+                  value={formData.budgetMax}
+                  onChange={(e) => setFormData(prev => ({ ...prev, budgetMax: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="5000000"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Chambres min.</label>
+                <input
+                  type="number"
+                  value={formData.bedroomsMin}
+                  onChange={(e) => setFormData(prev => ({ ...prev, bedroomsMin: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="2"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Surface min. (m²)</label>
+                <input
+                  type="number"
+                  value={formData.surfaceMin}
+                  onChange={(e) => setFormData(prev => ({ ...prev, surfaceMin: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="100"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-white/50 mb-2">Équipements (séparés par virgule)</label>
+              <input
+                type="text"
+                value={formData.amenities}
+                onChange={(e) => setFormData(prev => ({ ...prev, amenities: e.target.value }))}
+                className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                placeholder="piscine, jardin, parking"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Property Details (for sellers) */}
+        {(demandType === 'property_sale' || demandType === 'property_rental_management') && (
+          <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-4">
+            <h4 className="text-sm font-semibold text-emerald-400 flex items-center gap-2">
+              <Building2 size={16} />
+              Détails du bien à {demandType === 'property_sale' ? 'vendre' : 'gérer'}
+            </h4>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Type de bien</label>
+                <select
+                  value={formData.sellerPropertyType}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sellerPropertyType: e.target.value as CRM.PropertyType }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none"
+                >
+                  {propertyTypeOptions.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Ville</label>
+                <input
+                  type="text"
+                  value={formData.sellerCity}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sellerCity: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="Casablanca"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Prix souhaité (MAD)</label>
+                <input
+                  type="number"
+                  value={formData.sellerPrice}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sellerPrice: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="3500000"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Surface (m²)</label>
+                <input
+                  type="number"
+                  value={formData.sellerSurface}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sellerSurface: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="150"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-white/50 mb-2">Nombre de chambres</label>
+                <input
+                  type="number"
+                  value={formData.sellerBedrooms}
+                  onChange={(e) => setFormData(prev => ({ ...prev, sellerBedrooms: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                  placeholder="3"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-white/50 mb-2">Équipements (séparés par virgule)</label>
+              <input
+                type="text"
+                value={formData.sellerAmenities}
+                onChange={(e) => setFormData(prev => ({ ...prev, sellerAmenities: e.target.value }))}
+                className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none"
+                placeholder="piscine, jardin, parking"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Notes */}
+        <div>
+          <label className="block text-xs text-white/50 mb-2">Notes additionnelles</label>
+          <textarea
+            value={formData.notes}
+            onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+            rows={3}
+            className="w-full px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none resize-none"
+            placeholder="Informations supplémentaires..."
+          />
+        </div>
+
+        {/* Submit */}
+        <div className="flex items-center gap-3 pt-4 border-t border-white/[0.06]">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white font-medium hover:bg-white/10 transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-xl hover:shadow-lg hover:shadow-brand-gold/25 transition-all disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <RefreshCw size={16} className="animate-spin" />
+                Création...
+              </span>
+            ) : (
+              'Créer la demande'
+            )}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+});
+
+AddDemandForm.displayName = 'AddDemandForm';
 
 // ============================================================================
 // MAIN COMPONENT

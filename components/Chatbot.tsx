@@ -42,6 +42,18 @@ interface ExtractedData {
   transactionType?: 'RENT' | 'SALE';
   budgetMin?: number;
   budgetMax?: number;
+  // Enhanced demand data
+  demandType?: CRM.DemandType;
+  propertyTypes?: CRM.PropertyType[];
+  neighborhoods?: string[];
+  bedroomsMin?: number;
+  surfaceMin?: number;
+  amenities?: string[];
+  // For sellers
+  sellerPropertyType?: CRM.PropertyType;
+  sellerPrice?: number;
+  sellerSurface?: number;
+  sellerBedrooms?: number;
 }
 
 // ============================================================================
@@ -80,29 +92,79 @@ const Chatbot: React.FC = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const [extractedData, setExtractedData] = useState<ExtractedData>({});
   const [leadCreated, setLeadCreated] = useState(false);
+  const [demandCreated, setDemandCreated] = useState(false);
+  const [leadId, setLeadId] = useState<string | null>(null);
+  const [propertiesViewed, setPropertiesViewed] = useState<string[]>([]);
 
-  // Extract contact info from user message
+  // Extract contact info and demand data from user message
   const extractInfoFromMessage = useCallback((text: string) => {
     const contactInfo = CRM.extractContactFromMessage(text);
     const budget = CRM.detectBudget(text);
+    const textLower = text.toLowerCase();
+
+    // Detect demand type
+    const demandType = CRM.detectDemandIntent(text);
 
     // Detect transaction type
     let transactionType: 'RENT' | 'SALE' | undefined;
-    const textLower = text.toLowerCase();
-    if (textLower.includes('louer') || textLower.includes('location') || textLower.includes('bail')) {
+    if (textLower.includes('louer') || textLower.includes('location') || textLower.includes('bail') || textLower.includes('rent')) {
       transactionType = 'RENT';
-    } else if (textLower.includes('acheter') || textLower.includes('achat') || textLower.includes('vendre')) {
+    } else if (textLower.includes('acheter') || textLower.includes('achat') || textLower.includes('buy') || textLower.includes('vendre')) {
       transactionType = 'SALE';
     }
 
     // Detect city
     let city: string | undefined;
-    const cities = ['casablanca', 'rabat', 'marrakech', 'tanger', 'fes', 'agadir', 'anfa', 'bouskoura', 'californie'];
-    for (const c of cities) {
+    const cities: string[] = [];
+    const cityList = ['casablanca', 'rabat', 'marrakech', 'tanger', 'fes', 'agadir', 'anfa', 'bouskoura', 'californie', 'dar bouazza', 'ain diab', 'maarif'];
+    for (const c of cityList) {
       if (textLower.includes(c)) {
-        city = c.charAt(0).toUpperCase() + c.slice(1);
-        break;
+        cities.push(c.charAt(0).toUpperCase() + c.slice(1));
+        if (!city) city = c.charAt(0).toUpperCase() + c.slice(1);
       }
+    }
+
+    // Detect property types
+    const propertyTypes: CRM.PropertyType[] = [];
+    const typePatterns: Record<string, CRM.PropertyType> = {
+      'villa': 'villa', 'appartement': 'apartment', 'apartment': 'apartment',
+      'riad': 'riad', 'terrain': 'land', 'commercial': 'commercial',
+      'penthouse': 'penthouse', 'duplex': 'duplex', 'studio': 'studio',
+    };
+    for (const [pattern, type] of Object.entries(typePatterns)) {
+      if (textLower.includes(pattern)) {
+        propertyTypes.push(type);
+      }
+    }
+
+    // Detect bedrooms
+    let bedroomsMin: number | undefined;
+    const bedroomMatch = text.match(/(\d+)\s*(?:chambres?|ch|bedrooms?|beds?)/i);
+    if (bedroomMatch) bedroomsMin = parseInt(bedroomMatch[1]);
+
+    // Detect surface
+    let surfaceMin: number | undefined;
+    const surfaceMatch = text.match(/(\d+)\s*(?:m²|m2|mètres?|sqm)/i);
+    if (surfaceMatch) surfaceMin = parseInt(surfaceMatch[1]);
+
+    // Detect amenities
+    const amenities: string[] = [];
+    const amenityList = ['piscine', 'pool', 'jardin', 'garden', 'parking', 'garage', 'terrasse', 'terrace', 'vue mer', 'sea view', 'meublé', 'furnished'];
+    for (const a of amenityList) {
+      if (textLower.includes(a)) amenities.push(a);
+    }
+
+    // For sellers - detect property details
+    let sellerPropertyType: CRM.PropertyType | undefined;
+    let sellerPrice: number | undefined;
+    let sellerSurface: number | undefined;
+    let sellerBedrooms: number | undefined;
+
+    if (demandType === 'property_sale' || demandType === 'property_rental_management') {
+      sellerPropertyType = propertyTypes[0];
+      sellerPrice = budget.min || budget.max;
+      sellerSurface = surfaceMin;
+      sellerBedrooms = bedroomsMin;
     }
 
     return {
@@ -110,6 +172,16 @@ const Chatbot: React.FC = () => {
       ...budget,
       transactionType,
       city,
+      demandType,
+      propertyTypes: propertyTypes.length > 0 ? propertyTypes : undefined,
+      neighborhoods: cities.length > 0 ? cities : undefined,
+      bedroomsMin,
+      surfaceMin,
+      amenities: amenities.length > 0 ? amenities : undefined,
+      sellerPropertyType,
+      sellerPrice,
+      sellerSurface,
+      sellerBedrooms,
     };
   }, []);
 
@@ -125,7 +197,7 @@ const Chatbot: React.FC = () => {
       timestamp: m.timestamp.toISOString(),
     }));
 
-    CRM.convertChatToLead(state.conversationId, crmMessages, {
+    const lead = CRM.convertChatToLead(state.conversationId, crmMessages, {
       firstName: extractedData.firstName,
       lastName: extractedData.lastName,
       email: extractedData.email,
@@ -136,9 +208,133 @@ const Chatbot: React.FC = () => {
       budgetMax: extractedData.budgetMax,
     });
 
+    if (lead) {
+      setLeadId(lead.id);
+    }
     setLeadCreated(true);
     console.log('[CRM] Lead created from chatbot conversation');
   }, [extractedData, leadCreated, state.messages, state.conversationId]);
+
+  // Add activity to existing lead
+  const addLeadActivity = useCallback((type: CRM.ActivityType, title: string, description?: string) => {
+    if (!leadId) return;
+    CRM.addActivity(leadId, type, title, description);
+  }, [leadId]);
+
+  // Detect and log property interest from bot response
+  const detectPropertyInterest = useCallback((botResponse: string) => {
+    // Detect if bot mentioned specific properties
+    const propertyMentions = botResponse.match(/(?:référence|réf|id|code)[\s:]+([A-Z0-9-]+)/gi);
+    if (propertyMentions && propertyMentions.length > 0) {
+      const propertyIds = propertyMentions.map(m => m.replace(/.*[\s:]+/, '').trim());
+      setPropertiesViewed(prev => [...new Set([...prev, ...propertyIds])]);
+
+      // Log activity if lead exists
+      if (leadId) {
+        addLeadActivity('note', 'Propriétés consultées via chatbot', `Réfs: ${propertyIds.join(', ')}`);
+      }
+    }
+
+    // Detect if bot suggested scheduling a visit
+    if (botResponse.toLowerCase().includes('visite') || botResponse.toLowerCase().includes('rendez-vous')) {
+      if (leadId) {
+        // Update lead status to visit_scheduled interest
+        const leads = CRM.getLeads();
+        const lead = leads.find(l => l.id === leadId);
+        if (lead && lead.status === 'new') {
+          CRM.updateLead(leadId, { status: 'contacted' });
+          addLeadActivity('status_change', 'Statut mis à jour', 'Intérêt pour une visite détecté');
+        }
+      }
+    }
+  }, [leadId, addLeadActivity]);
+
+  // Update lead engagement score based on conversation depth
+  const updateLeadEngagement = useCallback(() => {
+    if (!leadId) return;
+
+    const leads = CRM.getLeads();
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) return;
+
+    // Calculate engagement score based on conversation
+    let engagementBonus = 0;
+    const messageCount = state.messages.filter(m => m.role === 'user').length;
+
+    // More messages = more engagement
+    if (messageCount >= 5) engagementBonus += 10;
+    if (messageCount >= 10) engagementBonus += 10;
+
+    // Budget info = higher intent
+    if (extractedData.budgetMin || extractedData.budgetMax) engagementBonus += 15;
+
+    // Property type specified = clearer intent
+    if (extractedData.propertyTypes && extractedData.propertyTypes.length > 0) engagementBonus += 10;
+
+    // City specified = location intent
+    if (extractedData.city) engagementBonus += 5;
+
+    // Properties viewed = active interest
+    if (propertiesViewed.length > 0) engagementBonus += propertiesViewed.length * 5;
+
+    // Update lead score if bonus is significant
+    if (engagementBonus > 0) {
+      const newScore = Math.min(100, lead.score + engagementBonus);
+      if (newScore !== lead.score) {
+        CRM.updateLead(leadId, { score: newScore });
+        console.log(`[CRM] Lead score updated: ${lead.score} -> ${newScore}`);
+      }
+    }
+  }, [leadId, state.messages, extractedData, propertiesViewed]);
+
+  // Convert conversation to CRM demand
+  const convertToCRMDemand = useCallback(() => {
+    if (demandCreated) return;
+    if (!extractedData.demandType) return;
+    if (!extractedData.email && !extractedData.phone) return; // Need contact info
+
+    let demandData: Parameters<typeof CRM.createDemand>[0] = {
+      type: extractedData.demandType,
+      firstName: extractedData.firstName || 'Visiteur',
+      lastName: extractedData.lastName || '',
+      email: extractedData.email || '',
+      phone: extractedData.phone || '',
+      source: 'chatbot',
+      chatSessionId: state.conversationId,
+      urgency: 'medium',
+    };
+
+    // Build search criteria for property seekers
+    if (extractedData.demandType === 'property_search') {
+      demandData.searchCriteria = {
+        transactionType: extractedData.transactionType || 'SALE',
+        propertyType: extractedData.propertyTypes,
+        cities: extractedData.neighborhoods || (extractedData.city ? [extractedData.city] : undefined),
+        budgetMin: extractedData.budgetMin,
+        budgetMax: extractedData.budgetMax,
+        bedroomsMin: extractedData.bedroomsMin,
+        surfaceMin: extractedData.surfaceMin,
+        amenities: extractedData.amenities,
+      };
+    }
+
+    // Build property details for sellers
+    if (extractedData.demandType === 'property_sale' || extractedData.demandType === 'property_rental_management') {
+      demandData.propertyDetails = {
+        propertyType: extractedData.sellerPropertyType || 'other',
+        transactionType: extractedData.demandType === 'property_sale' ? 'SALE' : 'MANAGEMENT',
+        city: extractedData.city || 'Non spécifié',
+        price: extractedData.sellerPrice,
+        surface: extractedData.sellerSurface,
+        bedrooms: extractedData.sellerBedrooms,
+        amenities: extractedData.amenities,
+      };
+    }
+
+    CRM.createDemand(demandData);
+    setDemandCreated(true);
+    console.log('[CRM] Demand created from chatbot:', extractedData.demandType);
+  }, [extractedData, demandCreated, state.conversationId]);
 
   // Check connection
   useEffect(() => {
@@ -192,6 +388,24 @@ const Chatbot: React.FC = () => {
       convertToCRMLead();
     }
   }, [isOpen, extractedData, state.messages.length, leadCreated, convertToCRMLead]);
+
+  // Auto-create demand when demand type and contact info detected
+  useEffect(() => {
+    if (extractedData.demandType && (extractedData.email || extractedData.phone) && state.messages.length >= 4 && !demandCreated) {
+      // Wait to capture more details before creating demand
+      const timer = setTimeout(() => {
+        convertToCRMDemand();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [extractedData, state.messages.length, demandCreated, convertToCRMDemand]);
+
+  // Create demand when chat closes with demand intent
+  useEffect(() => {
+    if (!isOpen && extractedData.demandType && (extractedData.email || extractedData.phone) && state.messages.length > 3 && !demandCreated) {
+      convertToCRMDemand();
+    }
+  }, [isOpen, extractedData, state.messages.length, demandCreated, convertToCRMDemand]);
 
   // Send message
   const sendMessage = useCallback(async (messageText: string) => {
@@ -285,6 +499,12 @@ const Chatbot: React.FC = () => {
         isLoading: false
       }));
 
+      // CRM: Detect property interest and update engagement
+      if (fullResponse) {
+        detectPropertyInterest(fullResponse);
+        updateLeadEngagement();
+      }
+
     } catch {
       try {
         const response = await fetch(`${RAG_API_URL}/api/chat`, {
@@ -298,16 +518,23 @@ const Chatbot: React.FC = () => {
         });
 
         const data = await response.json();
+        const responseText = data.response || "Erreur de traitement.";
 
         setState(prev => ({
           ...prev,
           messages: prev.messages.map(msg =>
             msg.id === modelMsgId
-              ? { ...msg, text: data.response || "Erreur de traitement.", isStreaming: false }
+              ? { ...msg, text: responseText, isStreaming: false }
               : msg
           ),
           isLoading: false
         }));
+
+        // CRM: Detect property interest and update engagement
+        if (responseText && responseText !== "Erreur de traitement.") {
+          detectPropertyInterest(responseText);
+          updateLeadEngagement();
+        }
       } catch {
         setState(prev => ({
           ...prev,
@@ -320,7 +547,7 @@ const Chatbot: React.FC = () => {
         }));
       }
     }
-  }, [state.isLoading, state.conversationId]);
+  }, [state.isLoading, state.conversationId, detectPropertyInterest, updateLeadEngagement, extractInfoFromMessage]);
 
   const handleSend = () => sendMessage(input);
 
@@ -328,6 +555,11 @@ const Chatbot: React.FC = () => {
     // Create lead before clearing if we have contact info
     if ((extractedData.email || extractedData.phone) && !leadCreated) {
       convertToCRMLead();
+    }
+
+    // Log final engagement before clearing
+    if (leadId) {
+      updateLeadEngagement();
     }
 
     try {
@@ -339,6 +571,9 @@ const Chatbot: React.FC = () => {
     // Reset CRM tracking
     setExtractedData({});
     setLeadCreated(false);
+    setDemandCreated(false);
+    setLeadId(null);
+    setPropertiesViewed([]);
 
     setState(prev => ({
       ...prev,
