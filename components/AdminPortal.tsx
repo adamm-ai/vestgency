@@ -17,9 +17,9 @@ import {
   Settings, Plus, Search, Edit3, Trash2, X, Check,
   TrendingUp, DollarSign, MapPin, Calendar, Download,
   ChevronLeft, ChevronRight, RefreshCw, Bell, Moon, Sun, Menu,
-  Save, Target,
+  Save, Target, Mail,
   Clock, Star, UserPlus, Activity, Archive,
-  ExternalLink, MoreVertical, Award, Zap, Eye
+  ExternalLink, MoreVertical, Award, Zap, Eye, EyeOff
 } from 'lucide-react';
 import * as CRM from '../services/crmService';
 import api, { authAPI, leadsAPI, usersAPI, statsAPI, notificationsAPI, getStoredToken, getStoredUser, clearAuthData, User as APIUser, Lead as APILead, CRMStats } from '../services/api';
