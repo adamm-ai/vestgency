@@ -78,15 +78,9 @@ services:
       - key: VITE_APP_NAME
         value: Vestate AI
       - key: VITE_API_URL
-        fromService:
-          name: vestate-api
-          type: web
-          property: hostport
+        value: https://vestate-api-fisw.onrender.com
       - key: VITE_RAG_API_URL
-        fromService:
-          name: nourreska-rag
-          type: web
-          property: hostport
+        value: https://nourreska-rag.onrender.com
 
 # ============================================
 # PostgreSQL Database
