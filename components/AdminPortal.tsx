@@ -1090,6 +1090,8 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     transactionType: 'SALE' as CRM.PropertyCategory,
     budgetMin: '', budgetMax: '', urgency: 'medium' as CRM.LeadUrgency,
   });
+  const [isCreatingLead, setIsCreatingLead] = useState(false);
+  const [leadCreationError, setLeadCreationError] = useState('');
 
   // Settings State
   const [settingsTab, setSettingsTab] = useState<'profile' | 'notifications' | 'crm' | 'theme' | 'about'>('profile');
@@ -1894,8 +1896,15 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                               if (leadId) {
                                 const lead = leads.find(l => l.id === leadId);
                                 if (lead && lead.status !== status) {
+                                  // Map CRM status (lowercase) to API status (uppercase)
+                                  const statusMap: Record<string, string> = {
+                                    'new': 'NEW', 'contacted': 'CONTACTED', 'qualified': 'QUALIFIED',
+                                    'visit_scheduled': 'VISIT_SCHEDULED', 'visit_completed': 'VISIT_COMPLETED',
+                                    'proposal_sent': 'PROPOSAL_SENT', 'negotiation': 'NEGOTIATION',
+                                    'won': 'WON', 'lost': 'LOST', 'nurturing': 'QUALIFIED'
+                                  };
                                   try {
-                                    await leadsAPI.update(leadId, { status: status.toUpperCase() as any });
+                                    await leadsAPI.update(leadId, { status: statusMap[status] || status.toUpperCase() });
                                   } catch (error) {
                                     CRM.updateLead(leadId, { status });
                                   }
@@ -2273,8 +2282,15 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                               value={selectedLead.status}
                               onChange={async (e) => {
                                 const newStatus = e.target.value as CRM.LeadStatus;
+                                // Map CRM status (lowercase) to API status (uppercase)
+                                const statusMap: Record<string, string> = {
+                                  'new': 'NEW', 'contacted': 'CONTACTED', 'qualified': 'QUALIFIED',
+                                  'visit_scheduled': 'VISIT_SCHEDULED', 'visit_completed': 'VISIT_COMPLETED',
+                                  'proposal_sent': 'PROPOSAL_SENT', 'negotiation': 'NEGOTIATION',
+                                  'won': 'WON', 'lost': 'LOST', 'nurturing': 'QUALIFIED'
+                                };
                                 try {
-                                  await leadsAPI.update(selectedLead.id, { status: newStatus.toUpperCase() as any });
+                                  await leadsAPI.update(selectedLead.id, { status: statusMap[newStatus] || newStatus.toUpperCase() });
                                 } catch (error) {
                                   CRM.updateLead(selectedLead.id, { status: newStatus });
                                 }
@@ -2418,44 +2434,89 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                         <form
                           onSubmit={async (e) => {
                             e.preventDefault();
+                            setLeadCreationError('');
+                            setIsCreatingLead(true);
+
+                            // Map source values: frontend uses underscores, API expects uppercase
+                            const sourceMap: Record<string, string> = {
+                              'website_form': 'WEBSITE_FORM',
+                              'chatbot': 'CHATBOT',
+                              'phone': 'PHONE',
+                              'email': 'EMAIL',
+                              'walk_in': 'WALK_IN',
+                              'referral': 'REFERRAL',
+                              'social_media': 'SOCIAL_MEDIA',
+                              'other': 'OTHER'
+                            };
+
+                            const urgencyMap: Record<string, string> = {
+                              'low': 'LOW',
+                              'medium': 'MEDIUM',
+                              'high': 'HIGH',
+                              'critical': 'CRITICAL'
+                            };
+
                             const leadData = {
                               firstName: newLeadForm.firstName || 'Nouveau',
                               lastName: newLeadForm.lastName || 'Lead',
                               email: newLeadForm.email || undefined,
                               phone: newLeadForm.phone || undefined,
                               city: newLeadForm.city || undefined,
-                              source: newLeadForm.source.toUpperCase() as any,
+                              status: 'NEW' as const,
+                              source: sourceMap[newLeadForm.source] || 'OTHER',
                               transactionType: newLeadForm.transactionType,
                               budgetMin: newLeadForm.budgetMin ? parseInt(newLeadForm.budgetMin) * 1000000 : undefined,
                               budgetMax: newLeadForm.budgetMax ? parseInt(newLeadForm.budgetMax) * 1000000 : undefined,
-                              urgency: newLeadForm.urgency.toUpperCase() as any,
+                              urgency: urgencyMap[newLeadForm.urgency] || 'MEDIUM',
                             };
+
                             try {
                               const result = await leadsAPI.create(leadData);
                               console.log('[CRM] Lead created via API:', result.lead.id);
-                            } catch (error) {
-                              // Fallback to localStorage
-                              const newLead = CRM.createLead({
-                                firstName: newLeadForm.firstName || 'Nouveau',
-                                lastName: newLeadForm.lastName || 'Lead',
-                                email: newLeadForm.email || undefined,
-                                phone: newLeadForm.phone || undefined,
-                                city: newLeadForm.city || undefined,
-                                source: newLeadForm.source,
-                                transactionType: newLeadForm.transactionType,
-                                budgetMin: newLeadForm.budgetMin ? parseInt(newLeadForm.budgetMin) * 1000000 : undefined,
-                                budgetMax: newLeadForm.budgetMax ? parseInt(newLeadForm.budgetMax) * 1000000 : undefined,
-                                urgency: newLeadForm.urgency,
+                              refreshCRM();
+                              setShowAddLeadModal(false);
+                              setNewLeadForm({
+                                firstName: '', lastName: '', email: '', phone: '', city: '',
+                                source: 'website_form', transactionType: 'SALE',
+                                budgetMin: '', budgetMax: '', urgency: 'medium',
                               });
-                              console.log('[CRM] Lead created via localStorage:', newLead.id);
+                            } catch (error: any) {
+                              console.error('[CRM] API lead creation failed:', error);
+                              const errorMessage = error?.message || 'Erreur lors de la création du lead';
+                              setLeadCreationError(errorMessage);
+
+                              // Fallback to localStorage only if API is unavailable
+                              if (error?.status === 0 || error?.message?.includes('fetch')) {
+                                try {
+                                  const newLead = CRM.createLead({
+                                    firstName: newLeadForm.firstName || 'Nouveau',
+                                    lastName: newLeadForm.lastName || 'Lead',
+                                    email: newLeadForm.email || undefined,
+                                    phone: newLeadForm.phone || undefined,
+                                    city: newLeadForm.city || undefined,
+                                    source: newLeadForm.source as CRM.LeadSource,
+                                    transactionType: newLeadForm.transactionType,
+                                    budgetMin: newLeadForm.budgetMin ? parseInt(newLeadForm.budgetMin) * 1000000 : undefined,
+                                    budgetMax: newLeadForm.budgetMax ? parseInt(newLeadForm.budgetMax) * 1000000 : undefined,
+                                    urgency: newLeadForm.urgency as CRM.LeadUrgency,
+                                  });
+                                  console.log('[CRM] Lead created via localStorage (offline mode):', newLead.id);
+                                  setLeadCreationError('');
+                                  refreshCRM();
+                                  setShowAddLeadModal(false);
+                                  setNewLeadForm({
+                                    firstName: '', lastName: '', email: '', phone: '', city: '',
+                                    source: 'website_form', transactionType: 'SALE',
+                                    budgetMin: '', budgetMax: '', urgency: 'medium',
+                                  });
+                                } catch (localError) {
+                                  console.error('[CRM] localStorage fallback failed:', localError);
+                                  setLeadCreationError('Impossible de créer le lead. Veuillez réessayer.');
+                                }
+                              }
+                            } finally {
+                              setIsCreatingLead(false);
                             }
-                            refreshCRM();
-                            setShowAddLeadModal(false);
-                            setNewLeadForm({
-                              firstName: '', lastName: '', email: '', phone: '', city: '',
-                              source: 'website_form', transactionType: 'SALE',
-                              budgetMin: '', budgetMax: '', urgency: 'medium',
-                            });
                           }}
                           className="p-6 space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto"
                         >
@@ -2605,21 +2666,43 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                             </div>
                           </div>
 
+                          {/* Error Message */}
+                          {leadCreationError && (
+                            <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                              <AlertCircle size={16} />
+                              {leadCreationError}
+                            </div>
+                          )}
+
                           {/* Actions */}
                           <div className="flex gap-3 pt-4 border-t border-white/[0.06]">
                             <button
                               type="button"
-                              onClick={() => setShowAddLeadModal(false)}
-                              className="flex-1 py-3 rounded-lg text-white/60 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all"
+                              onClick={() => {
+                                setShowAddLeadModal(false);
+                                setLeadCreationError('');
+                              }}
+                              disabled={isCreatingLead}
+                              className="flex-1 py-3 rounded-lg text-white/60 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all disabled:opacity-50"
                             >
                               Annuler
                             </button>
                             <button
                               type="submit"
-                              className="flex-1 py-3 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-lg hover:shadow-lg hover:shadow-brand-gold/25 transition-all flex items-center justify-center gap-2"
+                              disabled={isCreatingLead}
+                              className="flex-1 py-3 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-lg hover:shadow-lg hover:shadow-brand-gold/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                              <Check size={18} />
-                              Créer le Lead
+                              {isCreatingLead ? (
+                                <>
+                                  <RefreshCw size={18} className="animate-spin" />
+                                  Création...
+                                </>
+                              ) : (
+                                <>
+                                  <Check size={18} />
+                                  Créer le Lead
+                                </>
+                              )}
                             </button>
                           </div>
                         </form>
