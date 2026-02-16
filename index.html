@@ -225,22 +225,35 @@
       }
 
       /* ============================================
-         HOVER EFFECTS - Premium 2026
+         HOVER EFFECTS - Premium 2026 (GPU Optimized)
          ============================================ */
       .hover-lift {
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        /* GPU-optimized: specific properties only */
+        transition:
+          transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          box-shadow 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        transform: translateZ(0);
+        backface-visibility: hidden;
       }
 
       .hover-lift:hover {
-        transform: translateY(-8px) scale(1.01);
+        transform: translateY(-6px) translateZ(0) scale(1.01);
         box-shadow:
-          0 40px 80px -20px rgba(0, 0, 0, 0.4),
-          0 0 60px -10px var(--tiffany-glow);
+          0 30px 60px -15px rgba(0, 0, 0, 0.35),
+          0 0 50px -10px var(--tiffany-glow);
+      }
+
+      .hover-lift:active {
+        transform: translateY(-2px) translateZ(0) scale(0.99);
+        transition-duration: 0.15s;
       }
 
       .hover-glow {
         position: relative;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition:
+          transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          box-shadow 0.35s ease;
+        transform: translateZ(0);
       }
 
       .hover-glow::after {
@@ -251,12 +264,13 @@
         background: linear-gradient(135deg, var(--tiffany), #06D6A0, var(--tiffany));
         opacity: 0;
         z-index: -1;
-        filter: blur(15px);
-        transition: opacity 0.4s ease;
+        filter: blur(12px);
+        transition: opacity 0.3s ease;
+        pointer-events: none;
       }
 
       .hover-glow:hover::after {
-        opacity: 0.5;
+        opacity: 0.4;
       }
 
       /* ============================================
@@ -344,7 +358,7 @@
       }
 
       /* ============================================
-         CARD STYLES - 2026
+         CARD STYLES - 2026 (GPU Optimized)
          ============================================ */
       .card-2026 {
         background: linear-gradient(
@@ -357,7 +371,15 @@
         border-radius: 24px;
         position: relative;
         overflow: hidden;
-        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        /* GPU-optimized transitions - specific properties only */
+        transition:
+          transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          border-color 0.3s ease;
+        /* Force GPU layer for smooth 60fps */
+        transform: translateZ(0);
+        will-change: transform;
+        contain: layout style paint;
       }
 
       .card-2026::before {
@@ -368,14 +390,20 @@
         right: 0;
         height: 1px;
         background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        pointer-events: none;
       }
 
       .card-2026:hover {
         border-color: rgba(10, 186, 181, 0.3);
-        transform: translateY(-4px);
+        transform: translateY(-6px) translateZ(0) scale(1.01);
         box-shadow:
-          0 20px 50px -15px rgba(0, 0, 0, 0.4),
-          0 0 50px -10px var(--tiffany-glow);
+          0 25px 50px -12px rgba(0, 0, 0, 0.35),
+          0 0 40px -8px var(--tiffany-glow);
+      }
+
+      .card-2026:active {
+        transform: translateY(-2px) translateZ(0) scale(0.99);
+        transition-duration: 0.15s;
       }
 
       /* ============================================
@@ -621,6 +649,56 @@
         .orb {
           opacity: 0.1;
           filter: blur(100px);
+        }
+
+        /* GPU-optimized cards on mobile - reduce complexity */
+        .card-2026 {
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          will-change: auto; /* Disable on mobile to save memory */
+        }
+
+        .card-2026:hover {
+          transform: translateY(-4px) translateZ(0);
+        }
+
+        /* Faster transitions on mobile for responsiveness */
+        .hover-lift,
+        .card-2026 {
+          transition-duration: 0.25s !important;
+        }
+      }
+
+      /* ============================================
+         PERFORMANCE - Content Visibility
+         ============================================ */
+      /* Lazy render off-screen sections */
+      section {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 500px;
+      }
+
+      /* GPU layer hints for animated elements */
+      .animate-float,
+      .animate-pulse-glow {
+        will-change: transform;
+        transform: translateZ(0);
+      }
+
+      /* Optimize image containers */
+      img {
+        content-visibility: auto;
+      }
+
+      /* Reduce motion for better battery on mobile */
+      @media (prefers-reduced-motion: reduce), (hover: none) {
+        .card-2026,
+        .hover-lift {
+          transition-duration: 0.15s !important;
+        }
+
+        .orb {
+          animation: none !important;
         }
       }
 

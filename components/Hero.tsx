@@ -15,6 +15,15 @@ const fadeInUpReduced = {
   visible: { opacity: 1, y: 0 }
 };
 
+// Static data - extracted to avoid re-creation on render
+const QUICK_FILTER_TAGS = ['Vente', 'Location', 'Neuf', 'Luxe'] as const;
+
+const HERO_STATS = [
+  { value: '822+', label: 'Biens disponibles' },
+  { value: '15+', label: 'Années d\'expertise' },
+  { value: '98%', label: 'Clients satisfaits' },
+] as const;
+
 const Hero: React.FC = () => {
   const prefersReducedMotion = useReducedMotion();
   const animationVariants = prefersReducedMotion ? fadeInUpReduced : fadeInUp;
@@ -149,7 +158,7 @@ const Hero: React.FC = () => {
             transition={{ duration: 0.5, delay: 0.4 }}
             className="flex flex-wrap justify-center gap-2 sm:gap-3"
           >
-            {['Vente', 'Location', 'Neuf', 'Luxe'].map((tag) => (
+            {QUICK_FILTER_TAGS.map((tag) => (
               <button
                 key={tag}
                 onClick={scrollToListings}
@@ -174,11 +183,7 @@ const Hero: React.FC = () => {
       >
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           <div className="flex items-center justify-center gap-6 sm:gap-12 md:gap-20">
-            {[
-              { value: '822+', label: 'Biens disponibles' },
-              { value: '15+', label: 'Années d\'expertise' },
-              { value: '98%', label: 'Clients satisfaits' },
-            ].map((stat, i) => (
+            {HERO_STATS.map((stat, i) => (
               <div key={i} className="text-center">
                 <div className="text-2xl sm:text-3xl font-display font-bold text-white mb-1">
                   {stat.value}

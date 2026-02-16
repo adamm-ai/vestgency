@@ -3,6 +3,31 @@ import { SectionId } from '../types';
 import { ArrowRight, Facebook, Instagram, Linkedin, Twitter, MapPin, Phone, Mail, Shield } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
+// Static data - extracted to avoid re-creation on render
+const FOOTER_NAVIGATION = [
+  { label: 'Accueil', id: SectionId.HOME },
+  { label: 'Nos Biens', id: SectionId.LISTINGS },
+  { label: 'Services', id: SectionId.SERVICES },
+  { label: 'Actualités', id: SectionId.BLOG },
+  { label: 'Contact', id: SectionId.CONTACT },
+] as const;
+
+const FOOTER_SERVICES = [
+  'Vente Immobilière',
+  'Location & Gestion',
+  'Conseil Investissement',
+  'Estimation Gratuite',
+  'Accompagnement Juridique',
+  'Programmes Neufs',
+] as const;
+
+const SOCIAL_LINKS = [
+  { icon: Facebook, href: '#', label: 'Facebook' },
+  { icon: Instagram, href: '#', label: 'Instagram' },
+  { icon: Linkedin, href: '#', label: 'LinkedIn' },
+  { icon: Twitter, href: '#', label: 'Twitter' },
+] as const;
+
 const SocialLink = memo(({ icon: Icon, href, label }: { icon: React.ElementType; href: string; label: string }) => (
   <a
     href={href}
@@ -28,30 +53,6 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
       element.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
     }
   }, [prefersReducedMotion]);
-
-  const navigation = [
-    { label: 'Accueil', id: SectionId.HOME },
-    { label: 'Nos Biens', id: SectionId.LISTINGS },
-    { label: 'Services', id: SectionId.SERVICES },
-    { label: 'Actualités', id: SectionId.BLOG },
-    { label: 'Contact', id: SectionId.CONTACT },
-  ];
-
-  const services = [
-    'Vente Immobilière',
-    'Location & Gestion',
-    'Conseil Investissement',
-    'Estimation Gratuite',
-    'Accompagnement Juridique',
-    'Programmes Neufs',
-  ];
-
-  const socialLinks = [
-    { icon: Facebook, href: '#', label: 'Facebook' },
-    { icon: Instagram, href: '#', label: 'Instagram' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn' },
-    { icon: Twitter, href: '#', label: 'Twitter' },
-  ];
 
   return (
     <footer className="relative bg-[#050608] text-white overflow-hidden">
@@ -116,7 +117,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
 
             {/* Social Links */}
             <div className="flex gap-3">
-              {socialLinks.map((social, i) => (
+              {SOCIAL_LINKS.map((social, i) => (
                 <SocialLink key={i} {...social} />
               ))}
             </div>
@@ -126,7 +127,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           <div>
             <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-5 sm:mb-7">Navigation</h4>
             <ul className="space-y-1 sm:space-y-2">
-              {navigation.map((item, i) => (
+              {FOOTER_NAVIGATION.map((item, i) => (
                 <li key={i}>
                   <button
                     onClick={() => scrollTo(item.id)}
@@ -144,7 +145,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           <div>
             <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-5 sm:mb-7">Nos Services</h4>
             <ul className="space-y-1 sm:space-y-2">
-              {services.map((service, i) => (
+              {FOOTER_SERVICES.map((service, i) => (
                 <li key={i}>
                   <a
                     href="#"

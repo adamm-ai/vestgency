@@ -111,6 +111,13 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
   const [isLiked, setIsLiked] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scrollRAFRef = useRef<number | null>(null);
+  const currentImageIndexRef = useRef(currentImageIndex);
+
+  // Keep ref in sync
+  useEffect(() => {
+    currentImageIndexRef.current = currentImageIndex;
+  }, [currentImageIndex]);
 
   // Get all images (use images array if available, fallback to single image)
   const allImages = useMemo(() => {
@@ -144,18 +151,46 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
     setCurrentImageIndex(index);
   }, []);
 
-  // Handle horizontal scroll/swipe
+  // Handle horizontal scroll/swipe - RAF throttled for 60fps
   const handleScroll = useCallback(() => {
-    if (scrollContainerRef.current) {
+    if (!scrollContainerRef.current || scrollRAFRef.current) return;
+
+    scrollRAFRef.current = requestAnimationFrame(() => {
+      scrollRAFRef.current = null;
       const container = scrollContainerRef.current;
+      if (!container) return;
+
       const scrollLeft = container.scrollLeft;
       const imageWidth = container.offsetWidth;
       const newIndex = Math.round(scrollLeft / imageWidth);
-      if (newIndex !== currentImageIndex && newIndex >= 0 && newIndex < allImages.length) {
+
+      if (newIndex !== currentImageIndexRef.current && newIndex >= 0 && newIndex < allImages.length) {
         setCurrentImageIndex(newIndex);
       }
-    }
-  }, [currentImageIndex, allImages.length]);
+    });
+  }, [allImages.length]);
+
+  // Cleanup RAF on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollRAFRef.current) {
+        cancelAnimationFrame(scrollRAFRef.current);
+      }
+    };
+  }, []);
+
+  // Preload adjacent images for smooth carousel
+  useEffect(() => {
+    const preloadIndices = [
+      currentImageIndex - 1,
+      currentImageIndex + 1
+    ].filter(i => i >= 0 && i < allImages.length);
+
+    preloadIndices.forEach(i => {
+      const img = new Image();
+      img.src = allImages[i];
+    });
+  }, [currentImageIndex, allImages]);
 
   // Scroll to current image when index changes (for arrow navigation)
   useEffect(() => {
@@ -480,6 +515,48 @@ const Pagination = memo(({ page, totalPages, onPageChange }: PaginationProps) =>
 Pagination.displayName = 'Pagination';
 
 // ============================================================================
+// ANIMATION VARIANTS - GPU Accelerated
+// ============================================================================
+
+const cardVariants = {
+  hidden: {
+    opacity: 0,
+    y: 20,
+    scale: 0.97
+  },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      delay: i * 0.05, // 50ms stagger for smooth cascade
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94] // ease-out-quad
+    }
+  }),
+  exit: {
+    opacity: 0,
+    scale: 0.97,
+    transition: { duration: 0.2 }
+  }
+};
+
+const gridVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05,
+      delayChildren: 0.1
+    }
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.15 }
+  }
+};
+
+// ============================================================================
 // MAIN LISTINGS COMPONENT
 // ============================================================================
 
@@ -595,7 +672,7 @@ const Listings: React.FC = () => {
       setSearchExplanation('');
       loadProperties();
     }
-  }, []);
+  }, [loadProperties]);
 
   // Handle quick select from suggestions
   const handleQuickSelect = useCallback((result: SearchResult) => {
@@ -633,7 +710,7 @@ const Listings: React.FC = () => {
     setSearchExplanation('');
     setSearchQuery('');
     loadProperties();
-  }, []);
+  }, [loadProperties]);
 
   return (
     <section id={SectionId.LISTINGS} className="py-16 sm:py-20 md:py-24 relative bg-[#FAFAF9] dark:bg-[#050608] overflow-hidden transition-colors duration-300">
@@ -779,16 +856,35 @@ const Listings: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {properties.map((property) => (
-                <ListingCard
-                  key={property.id}
-                  property={property}
-                  onView={handleViewProperty}
-                />
-              ))}
-            </div>
+            {/* Cards Grid - Staggered Entrance Animation */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`grid-${activeTab}-${activeType}-${page}`}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+                variants={prefersReducedMotion ? undefined : gridVariants}
+                initial={prefersReducedMotion ? false : "hidden"}
+                animate="visible"
+                exit="exit"
+              >
+                {properties.map((property, index) => (
+                  <motion.div
+                    key={property.id}
+                    custom={index}
+                    variants={prefersReducedMotion ? undefined : cardVariants}
+                    initial={prefersReducedMotion ? false : "hidden"}
+                    animate="visible"
+                    exit="exit"
+                    layout
+                    style={{ willChange: 'transform, opacity' }}
+                  >
+                    <ListingCard
+                      property={property}
+                      onView={handleViewProperty}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
 
             {/* Empty State */}
             {properties.length === 0 && (
@@ -820,4 +916,4 @@ const Listings: React.FC = () => {
   );
 };
 
-export default Listings;
+export default memo(Listings);

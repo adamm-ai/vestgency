@@ -4,6 +4,14 @@ import { Menu, X, ShieldCheck, Moon, Sun, ArrowRight, Sparkles } from 'lucide-re
 import { SectionId } from '../types';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
+// Static data - extracted to avoid re-creation on render
+const NAV_LINKS = [
+  { label: 'Biens', id: SectionId.LISTINGS },
+  { label: 'Services', id: SectionId.SERVICES },
+  { label: 'Blog', id: SectionId.BLOG },
+  { label: 'Contact', id: SectionId.CONTACT },
+] as const;
+
 const Navbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -72,13 +80,6 @@ const Navbar: React.FC = () => {
     }
   }, [isMobileMenuOpen, location.pathname, navigate, prefersReducedMotion]);
 
-  const navLinks = [
-    { label: 'Biens', id: SectionId.LISTINGS },
-    { label: 'Services', id: SectionId.SERVICES },
-    { label: 'Blog', id: SectionId.BLOG },
-    { label: 'Contact', id: SectionId.CONTACT },
-  ];
-
   return (
     <>
       {/* Dynamic Island Navigation */}
@@ -141,7 +142,7 @@ const Navbar: React.FC = () => {
             hidden lg:flex items-center justify-center gap-0.5 transition-all duration-500
             ${isScrolled ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1 mx-4'}
           `}>
-            {navLinks.map((link) => (
+            {NAV_LINKS.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollTo(link.id)}
@@ -234,7 +235,7 @@ const Navbar: React.FC = () => {
 
           {/* Navigation Links */}
           <nav className="flex-1 flex flex-col items-center justify-center gap-2 px-6 sm:px-8">
-            {navLinks.map((link, i) => (
+            {NAV_LINKS.map((link, i) => (
               <button
                 key={link.id}
                 onClick={() => scrollTo(link.id)}
