@@ -17,7 +17,7 @@ import {
   Settings, Plus, Search, Edit3, Trash2, X, Check,
   TrendingUp, DollarSign, MapPin, Calendar, Download,
   ChevronLeft, ChevronRight, RefreshCw, Bell, Moon, Sun, Menu,
-  Save, Target, Mail,
+  Save, Target, Mail, AlertCircle,
   Clock, Star, UserPlus, Activity, Archive,
   ExternalLink, MoreVertical, Award, Zap, Eye, EyeOff
 } from 'lucide-react';
@@ -3723,6 +3723,18 @@ const AdminPortal: React.FC<AdminPortalProps> = ({ onClose }) => {
     const interval = setInterval(checkSession, 60000);
     return () => clearInterval(interval);
   }, [user]);
+
+  // Listen for auth:expired event from API layer (401 responses)
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setUser(null);
+      setSessionExpired(true);
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+    return () => window.removeEventListener('auth:expired', handleAuthExpired);
+  }, []);
 
   return (
     <AnimatePresence mode="wait">
