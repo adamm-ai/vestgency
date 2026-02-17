@@ -3794,8 +3794,8 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                   </button>
                 </div>
 
-                {/* Matches List */}
-                <div className="space-y-4">
+                {/* Matches List - Comprehensive View */}
+                <div className="space-y-6">
                   {filteredMatches.length === 0 ? (
                     <div className="p-12 text-center bg-white/[0.02] border border-white/[0.06] rounded-2xl">
                       <Link2 size={48} className="text-white/10 mx-auto mb-4" />
@@ -3813,179 +3813,545 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                   ) : (
                     filteredMatches.map((match) => {
                       const statusConfig = {
-                        pending: { label: 'En attente', color: 'bg-blue-500/20 text-blue-400', icon: Clock },
-                        notified: { label: 'Notifié', color: 'bg-purple-500/20 text-purple-400', icon: Bell },
-                        contacted: { label: 'Contacté', color: 'bg-cyan-500/20 text-cyan-400', icon: MessageSquare },
-                        successful: { label: 'Réussi', color: 'bg-green-500/20 text-green-400', icon: Check },
-                        rejected: { label: 'Rejeté', color: 'bg-red-500/20 text-red-400', icon: X },
+                        pending: { label: 'En attente', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: Clock },
+                        notified: { label: 'Notifié', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: Bell },
+                        contacted: { label: 'Contacté', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: MessageSquare },
+                        successful: { label: 'Réussi', color: 'bg-green-500/20 text-green-400 border-green-500/30', icon: Check },
+                        rejected: { label: 'Rejeté', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: X },
                       };
                       const config = statusConfig[match.status];
                       const StatusIcon = config.icon;
+
+                      // Helper to format budget
+                      const formatBudget = (min?: number, max?: number) => {
+                        if (!min && !max) return 'Non défini';
+                        if (min && max) return `${(min/1000000).toFixed(1)}M - ${(max/1000000).toFixed(1)}M MAD`;
+                        if (max) return `Jusqu'à ${(max/1000000).toFixed(1)}M MAD`;
+                        return `À partir de ${(min!/1000000).toFixed(1)}M MAD`;
+                      };
+
+                      // Helper to format price
+                      const formatPrice = (price?: number | string) => {
+                        if (!price) return 'Prix non défini';
+                        if (typeof price === 'string') return price;
+                        return `${(price/1000000).toFixed(2)}M MAD`;
+                      };
 
                       return (
                         <motion.div
                           key={match.id}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className={`relative p-5 bg-white/[0.02] border rounded-xl hover:border-brand-gold/30 transition-all group ${
-                            selectedMatchIds.has(match.id) ? 'border-brand-gold/50 bg-brand-gold/5' : 'border-white/[0.06]'
+                          className={`relative bg-gradient-to-br from-white/[0.03] to-white/[0.01] border rounded-2xl overflow-hidden transition-all group ${
+                            selectedMatchIds.has(match.id) ? 'border-brand-gold/50 ring-2 ring-brand-gold/20' : 'border-white/[0.08] hover:border-brand-gold/30'
                           }`}
                         >
-                          {/* Selection checkbox */}
-                          <button
-                            onClick={() => toggleMatchSelection(match.id)}
-                            className={`absolute top-4 left-4 w-5 h-5 rounded border flex items-center justify-center transition-all z-10 ${
-                              selectedMatchIds.has(match.id)
-                                ? 'bg-brand-gold border-brand-gold text-black'
-                                : 'border-white/20 hover:border-white/40 opacity-0 group-hover:opacity-100'
-                            }`}
-                          >
-                            {selectedMatchIds.has(match.id) && <Check size={12} />}
-                          </button>
+                          {/* Top Bar - Status & Score */}
+                          <div className="flex items-center justify-between px-6 py-3 bg-white/[0.02] border-b border-white/[0.06]">
+                            <div className="flex items-center gap-4">
+                              {/* Selection checkbox */}
+                              <button
+                                onClick={() => toggleMatchSelection(match.id)}
+                                className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                                  selectedMatchIds.has(match.id)
+                                    ? 'bg-brand-gold border-brand-gold text-black'
+                                    : 'border-white/30 hover:border-white/50'
+                                }`}
+                              >
+                                {selectedMatchIds.has(match.id) && <Check size={12} />}
+                              </button>
 
-                          <div className="pl-8">
-                            {/* Header */}
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex items-center gap-4">
-                                {/* Score badge */}
-                                <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center ${
-                                  match.matchScore >= 80 ? 'bg-green-500/20 border border-green-500/30' :
-                                  match.matchScore >= 60 ? 'bg-yellow-500/20 border border-yellow-500/30' :
-                                  'bg-orange-500/20 border border-orange-500/30'
+                              {/* Match Score */}
+                              <div className="flex items-center gap-3">
+                                <div className={`px-4 py-2 rounded-xl font-bold text-lg ${
+                                  match.matchScore >= 80 ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                                  match.matchScore >= 60 ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                                  'bg-orange-500/20 text-orange-400 border border-orange-500/30'
                                 }`}>
-                                  <span className={`text-2xl font-bold ${
-                                    match.matchScore >= 80 ? 'text-green-400' :
-                                    match.matchScore >= 60 ? 'text-yellow-400' :
-                                    'text-orange-400'
-                                  }`}>
-                                    {match.matchScore}%
-                                  </span>
-                                  <span className="text-[10px] text-white/40">Score</span>
+                                  {match.matchScore}% Match
                                 </div>
-
-                                <div>
-                                  <h3 className="text-lg font-semibold text-white">
-                                    {match.demand?.firstName} {match.demand?.lastName}
-                                  </h3>
-                                  <p className="text-sm text-white/50">
-                                    {match.matchType === 'demand_to_property' ? 'Recherche de bien' : 'Match vendeur/acheteur'}
-                                  </p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    {match.demand?.phone && (
-                                      <span className="text-xs text-white/40 flex items-center gap-1">
-                                        <Phone size={10} /> {match.demand.phone}
-                                      </span>
-                                    )}
-                                    {match.demand?.email && (
-                                      <span className="text-xs text-white/40 flex items-center gap-1">
-                                        <Mail size={10} /> {match.demand.email}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-2">
-                                <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${config.color} flex items-center gap-1.5`}>
+                                <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${config.color} flex items-center gap-1.5`}>
                                   <StatusIcon size={12} />
                                   {config.label}
                                 </span>
                               </div>
                             </div>
 
-                            {/* Match reasons */}
-                            <div className="flex flex-wrap gap-2 mb-4">
+                            <div className="flex items-center gap-3 text-xs text-white/40">
+                              <span>{new Date(match.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                              <span className="px-2 py-1 bg-white/[0.05] rounded text-white/50">
+                                {match.matchType === 'demand_to_property' ? 'Demande → Propriété' : 'Acheteur ↔ Vendeur'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Main Content - Two Panels */}
+                          <div className="grid lg:grid-cols-2 gap-0 lg:divide-x divide-white/[0.06]">
+
+                            {/* LEFT PANEL - DEMANDEUR */}
+                            <div className="p-6">
+                              <div className="flex items-center gap-2 mb-4">
+                                <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                                  <Users size={16} className="text-blue-400" />
+                                </div>
+                                <h4 className="text-sm font-semibold text-blue-400 uppercase tracking-wide">Demandeur</h4>
+                              </div>
+
+                              {match.demand && (
+                                <div className="space-y-4">
+                                  {/* Contact Info */}
+                                  <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl">
+                                    <h5 className="text-lg font-bold text-white mb-3">
+                                      {match.demand.firstName} {match.demand.lastName}
+                                    </h5>
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {match.demand.phone && (
+                                        <a href={`tel:${match.demand.phone}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
+                                          <Phone size={14} className="text-blue-400" />
+                                          <span className="font-medium">{match.demand.phone}</span>
+                                        </a>
+                                      )}
+                                      {match.demand.email && (
+                                        <a href={`mailto:${match.demand.email}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
+                                          <Mail size={14} className="text-blue-400" />
+                                          <span>{match.demand.email}</span>
+                                        </a>
+                                      )}
+                                      {match.demand.whatsapp && (
+                                        <a href={`https://wa.me/${match.demand.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white/70 hover:text-green-400 transition-colors">
+                                          <MessageSquare size={14} className="text-green-400" />
+                                          <span>WhatsApp: {match.demand.whatsapp}</span>
+                                        </a>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.06]">
+                                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded ${
+                                        match.demand.urgency === 'urgent' ? 'bg-red-500/20 text-red-400' :
+                                        match.demand.urgency === 'high' ? 'bg-orange-500/20 text-orange-400' :
+                                        match.demand.urgency === 'medium' ? 'bg-yellow-500/20 text-yellow-400' :
+                                        'bg-gray-500/20 text-gray-400'
+                                      }`}>
+                                        {match.demand.urgency?.toUpperCase() || 'NORMAL'}
+                                      </span>
+                                      <span className="text-[10px] text-white/40">Source: {match.demand.source}</span>
+                                    </div>
+                                  </div>
+
+                                  {/* Search Criteria (for property_search) */}
+                                  {match.demand.type === 'property_search' && match.demand.searchCriteria && (
+                                    <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                                      <h6 className="text-xs font-semibold text-white/50 uppercase mb-3 flex items-center gap-2">
+                                        <Search size={12} />
+                                        Critères de Recherche
+                                      </h6>
+                                      <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                          <span className="text-white/40 text-xs">Type</span>
+                                          <p className="text-white font-medium">
+                                            {match.demand.searchCriteria.transactionType === 'RENT' ? '🏠 Location' : '💰 Achat'}
+                                          </p>
+                                        </div>
+                                        <div>
+                                          <span className="text-white/40 text-xs">Budget</span>
+                                          <p className="text-white font-medium">
+                                            {formatBudget(match.demand.searchCriteria.budgetMin, match.demand.searchCriteria.budgetMax)}
+                                          </p>
+                                        </div>
+                                        {match.demand.searchCriteria.cities && match.demand.searchCriteria.cities.length > 0 && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Villes</span>
+                                            <p className="text-white font-medium">{match.demand.searchCriteria.cities.join(', ')}</p>
+                                          </div>
+                                        )}
+                                        {match.demand.searchCriteria.neighborhoods && match.demand.searchCriteria.neighborhoods.length > 0 && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Quartiers</span>
+                                            <p className="text-white font-medium">{match.demand.searchCriteria.neighborhoods.join(', ')}</p>
+                                          </div>
+                                        )}
+                                        {match.demand.searchCriteria.propertyType && match.demand.searchCriteria.propertyType.length > 0 && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Type de bien</span>
+                                            <p className="text-white font-medium capitalize">{match.demand.searchCriteria.propertyType.join(', ')}</p>
+                                          </div>
+                                        )}
+                                        {(match.demand.searchCriteria.bedroomsMin || match.demand.searchCriteria.bedroomsMax) && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Chambres</span>
+                                            <p className="text-white font-medium">
+                                              {match.demand.searchCriteria.bedroomsMin && match.demand.searchCriteria.bedroomsMax
+                                                ? `${match.demand.searchCriteria.bedroomsMin} - ${match.demand.searchCriteria.bedroomsMax}`
+                                                : match.demand.searchCriteria.bedroomsMin
+                                                ? `${match.demand.searchCriteria.bedroomsMin}+`
+                                                : `≤ ${match.demand.searchCriteria.bedroomsMax}`
+                                              }
+                                            </p>
+                                          </div>
+                                        )}
+                                        {(match.demand.searchCriteria.surfaceMin || match.demand.searchCriteria.surfaceMax) && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Surface</span>
+                                            <p className="text-white font-medium">
+                                              {match.demand.searchCriteria.surfaceMin && match.demand.searchCriteria.surfaceMax
+                                                ? `${match.demand.searchCriteria.surfaceMin} - ${match.demand.searchCriteria.surfaceMax} m²`
+                                                : match.demand.searchCriteria.surfaceMin
+                                                ? `${match.demand.searchCriteria.surfaceMin}+ m²`
+                                                : `≤ ${match.demand.searchCriteria.surfaceMax} m²`
+                                              }
+                                            </p>
+                                          </div>
+                                        )}
+                                      </div>
+                                      {match.demand.searchCriteria.amenities && match.demand.searchCriteria.amenities.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                                          <span className="text-white/40 text-xs">Équipements souhaités</span>
+                                          <div className="flex flex-wrap gap-1 mt-1">
+                                            {match.demand.searchCriteria.amenities.map((a, i) => (
+                                              <span key={i} className="px-2 py-0.5 text-[10px] bg-blue-500/10 text-blue-300 rounded">{a}</span>
+                                            ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                      {match.demand.searchCriteria.additionalNotes && (
+                                        <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                                          <span className="text-white/40 text-xs">Notes</span>
+                                          <p className="text-white/70 text-sm mt-1">{match.demand.searchCriteria.additionalNotes}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {/* Property Details (for sellers) */}
+                                  {(match.demand.type === 'property_sale' || match.demand.type === 'property_rental_management') && match.demand.propertyDetails && (
+                                    <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                                      <h6 className="text-xs font-semibold text-white/50 uppercase mb-3 flex items-center gap-2">
+                                        <Building2 size={12} />
+                                        Bien à {match.demand.type === 'property_sale' ? 'Vendre' : 'Gérer'}
+                                      </h6>
+                                      <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                          <span className="text-white/40 text-xs">Type</span>
+                                          <p className="text-white font-medium capitalize">{match.demand.propertyDetails.propertyType}</p>
+                                        </div>
+                                        <div>
+                                          <span className="text-white/40 text-xs">Prix</span>
+                                          <p className="text-white font-medium">{formatPrice(match.demand.propertyDetails.price)}</p>
+                                        </div>
+                                        <div>
+                                          <span className="text-white/40 text-xs">Ville</span>
+                                          <p className="text-white font-medium">{match.demand.propertyDetails.city}</p>
+                                        </div>
+                                        {match.demand.propertyDetails.neighborhood && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Quartier</span>
+                                            <p className="text-white font-medium">{match.demand.propertyDetails.neighborhood}</p>
+                                          </div>
+                                        )}
+                                        {match.demand.propertyDetails.surface && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Surface</span>
+                                            <p className="text-white font-medium">{match.demand.propertyDetails.surface} m²</p>
+                                          </div>
+                                        )}
+                                        {match.demand.propertyDetails.bedrooms && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Chambres</span>
+                                            <p className="text-white font-medium">{match.demand.propertyDetails.bedrooms}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* RIGHT PANEL - MATCHED ENTITY */}
+                            <div className="p-6 bg-white/[0.01]">
+                              <div className="flex items-center gap-2 mb-4">
+                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                                  match.matchedProperty ? 'bg-brand-gold/20' : 'bg-emerald-500/20'
+                                }`}>
+                                  {match.matchedProperty ? (
+                                    <Building2 size={16} className="text-brand-gold" />
+                                  ) : (
+                                    <Users size={16} className="text-emerald-400" />
+                                  )}
+                                </div>
+                                <h4 className={`text-sm font-semibold uppercase tracking-wide ${
+                                  match.matchedProperty ? 'text-brand-gold' : 'text-emerald-400'
+                                }`}>
+                                  {match.matchedProperty ? 'Propriété Correspondante' : 'Vendeur / Propriétaire'}
+                                </h4>
+                              </div>
+
+                              {/* Matched Property */}
+                              {match.matchedProperty && (
+                                <div className="space-y-4">
+                                  <div className={`p-4 rounded-xl border ${
+                                    match.matchedProperty.category === 'RENT'
+                                      ? 'bg-emerald-500/5 border-emerald-500/20'
+                                      : 'bg-brand-gold/5 border-brand-gold/20'
+                                  }`}>
+                                    <div className="flex items-start justify-between mb-3">
+                                      <div>
+                                        <h5 className="text-lg font-bold text-white">{match.matchedProperty.name || 'Propriété'}</h5>
+                                        <p className="text-sm text-white/50">{match.matchedProperty.location || match.matchedProperty.city}</p>
+                                      </div>
+                                      <span className={`px-3 py-1 text-xs font-bold rounded-lg ${
+                                        match.matchedProperty.category === 'RENT'
+                                          ? 'bg-emerald-500/20 text-emerald-400'
+                                          : 'bg-brand-gold/20 text-brand-gold'
+                                      }`}>
+                                        {match.matchedProperty.category === 'RENT' ? 'LOCATION' : 'VENTE'}
+                                      </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 text-sm">
+                                      <div>
+                                        <span className="text-white/40 text-xs">Prix</span>
+                                        <p className="text-xl font-bold text-white">
+                                          {match.matchedProperty.price || formatPrice(match.matchedProperty.priceNumeric)}
+                                        </p>
+                                      </div>
+                                      {match.matchedProperty.city && (
+                                        <div>
+                                          <span className="text-white/40 text-xs">Ville</span>
+                                          <p className="text-white font-medium">{match.matchedProperty.city}</p>
+                                        </div>
+                                      )}
+                                      {match.matchedProperty.type && (
+                                        <div>
+                                          <span className="text-white/40 text-xs">Type</span>
+                                          <p className="text-white font-medium capitalize">{match.matchedProperty.type}</p>
+                                        </div>
+                                      )}
+                                      {match.matchedProperty.beds && (
+                                        <div>
+                                          <span className="text-white/40 text-xs">Chambres</span>
+                                          <p className="text-white font-medium">{match.matchedProperty.beds} chambres</p>
+                                        </div>
+                                      )}
+                                      {match.matchedProperty.baths && (
+                                        <div>
+                                          <span className="text-white/40 text-xs">Salles de bain</span>
+                                          <p className="text-white font-medium">{match.matchedProperty.baths} SdB</p>
+                                        </div>
+                                      )}
+                                      {match.matchedProperty.surface && (
+                                        <div>
+                                          <span className="text-white/40 text-xs">Surface</span>
+                                          <p className="text-white font-medium">{match.matchedProperty.surface} m²</p>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {match.matchedProperty.amenities && match.matchedProperty.amenities.length > 0 && (
+                                      <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                                        <span className="text-white/40 text-xs">Équipements</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {match.matchedProperty.amenities.slice(0, 6).map((a, i) => (
+                                            <span key={i} className="px-2 py-0.5 text-[10px] bg-brand-gold/10 text-brand-gold rounded">{a}</span>
+                                          ))}
+                                          {match.matchedProperty.amenities.length > 6 && (
+                                            <span className="px-2 py-0.5 text-[10px] bg-white/10 text-white/50 rounded">
+                                              +{match.matchedProperty.amenities.length - 6}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Matched Demand (Seller) */}
+                              {match.matchedDemand && (
+                                <div className="space-y-4">
+                                  {/* Seller Contact */}
+                                  <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl">
+                                    <h5 className="text-lg font-bold text-white mb-3">
+                                      {match.matchedDemand.firstName} {match.matchedDemand.lastName}
+                                    </h5>
+                                    <div className="grid grid-cols-1 gap-2">
+                                      {match.matchedDemand.phone && (
+                                        <a href={`tel:${match.matchedDemand.phone}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
+                                          <Phone size={14} className="text-emerald-400" />
+                                          <span className="font-medium">{match.matchedDemand.phone}</span>
+                                        </a>
+                                      )}
+                                      {match.matchedDemand.email && (
+                                        <a href={`mailto:${match.matchedDemand.email}`} className="flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors">
+                                          <Mail size={14} className="text-emerald-400" />
+                                          <span>{match.matchedDemand.email}</span>
+                                        </a>
+                                      )}
+                                      {match.matchedDemand.whatsapp && (
+                                        <a href={`https://wa.me/${match.matchedDemand.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-white/70 hover:text-green-400 transition-colors">
+                                          <MessageSquare size={14} className="text-green-400" />
+                                          <span>WhatsApp: {match.matchedDemand.whatsapp}</span>
+                                        </a>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.06]">
+                                      <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 rounded">
+                                        {match.matchedDemand.type === 'property_sale' ? 'VENDEUR' : 'PROPRIÉTAIRE'}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Seller's Property */}
+                                  {match.matchedDemand.propertyDetails && (
+                                    <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl">
+                                      <h6 className="text-xs font-semibold text-white/50 uppercase mb-3">Bien Proposé</h6>
+                                      <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                          <span className="text-white/40 text-xs">Type</span>
+                                          <p className="text-white font-medium capitalize">{match.matchedDemand.propertyDetails.propertyType}</p>
+                                        </div>
+                                        <div>
+                                          <span className="text-white/40 text-xs">Prix</span>
+                                          <p className="text-xl font-bold text-white">{formatPrice(match.matchedDemand.propertyDetails.price)}</p>
+                                        </div>
+                                        <div>
+                                          <span className="text-white/40 text-xs">Ville</span>
+                                          <p className="text-white font-medium">{match.matchedDemand.propertyDetails.city}</p>
+                                        </div>
+                                        {match.matchedDemand.propertyDetails.neighborhood && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Quartier</span>
+                                            <p className="text-white font-medium">{match.matchedDemand.propertyDetails.neighborhood}</p>
+                                          </div>
+                                        )}
+                                        {match.matchedDemand.propertyDetails.surface && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Surface</span>
+                                            <p className="text-white font-medium">{match.matchedDemand.propertyDetails.surface} m²</p>
+                                          </div>
+                                        )}
+                                        {match.matchedDemand.propertyDetails.bedrooms && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">Chambres</span>
+                                            <p className="text-white font-medium">{match.matchedDemand.propertyDetails.bedrooms}</p>
+                                          </div>
+                                        )}
+                                        {match.matchedDemand.propertyDetails.bathrooms && (
+                                          <div>
+                                            <span className="text-white/40 text-xs">SdB</span>
+                                            <p className="text-white font-medium">{match.matchedDemand.propertyDetails.bathrooms}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                      {match.matchedDemand.propertyDetails.description && (
+                                        <div className="mt-3 pt-3 border-t border-white/[0.06]">
+                                          <span className="text-white/40 text-xs">Description</span>
+                                          <p className="text-white/70 text-sm mt-1 line-clamp-2">{match.matchedDemand.propertyDetails.description}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Match Reasons */}
+                          <div className="px-6 py-3 bg-purple-500/5 border-t border-white/[0.06]">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles size={14} className="text-purple-400" />
+                              <span className="text-xs font-semibold text-purple-400 uppercase">Raisons du Match</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
                               {match.matchReasons.map((reason, i) => (
                                 <span
                                   key={i}
-                                  className="px-3 py-1 text-xs bg-purple-500/10 text-purple-300 rounded-full border border-purple-500/20"
+                                  className="px-3 py-1.5 text-xs bg-purple-500/10 text-purple-300 rounded-lg border border-purple-500/20"
                                 >
-                                  {reason}
+                                  ✓ {reason}
                                 </span>
                               ))}
                             </div>
+                          </div>
 
-                            {/* Matched entity details */}
-                            {match.matchedProperty && (
-                              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg mb-4">
-                                <div className="flex items-center gap-3">
-                                  <Building2 size={16} className="text-brand-gold" />
-                                  <div>
-                                    <p className="text-sm font-medium text-white">{match.matchedProperty.name}</p>
-                                    <p className="text-xs text-white/50">
-                                      {match.matchedProperty.city} • {match.matchedProperty.category === 'RENT' ? 'Location' : 'Vente'} •
-                                      {match.matchedProperty.price}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {match.matchedDemand && (
-                              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg mb-4">
-                                <div className="flex items-center gap-3">
-                                  <Users size={16} className="text-cyan-400" />
-                                  <div>
-                                    <p className="text-sm font-medium text-white">
-                                      {match.matchedDemand.firstName} {match.matchedDemand.lastName}
-                                    </p>
-                                    <p className="text-xs text-white/50">
-                                      {match.matchedDemand.type === 'property_sale' ? 'Vendeur' : 'Gestion locative'}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Actions */}
-                            <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
-                              <span className="text-xs text-white/30">
-                                {new Date(match.createdAt).toLocaleString('fr-FR')}
-                              </span>
-
-                              <div className="flex items-center gap-2">
-                                {match.status === 'pending' && (
-                                  <>
-                                    <button
-                                      onClick={() => updateMatchStatusHandler(match.id, 'notified')}
-                                      className="px-3 py-1.5 text-xs bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-all"
-                                    >
-                                      Marquer notifié
-                                    </button>
-                                    <button
-                                      onClick={() => updateMatchStatusHandler(match.id, 'contacted')}
-                                      className="px-3 py-1.5 text-xs bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all"
-                                    >
-                                      Marquer contacté
-                                    </button>
-                                  </>
-                                )}
-                                {(match.status === 'notified' || match.status === 'contacted') && (
-                                  <>
-                                    <button
-                                      onClick={() => updateMatchStatusHandler(match.id, 'successful')}
-                                      className="px-3 py-1.5 text-xs bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all"
-                                    >
-                                      ✓ Réussi
-                                    </button>
-                                    <button
-                                      onClick={() => updateMatchStatusHandler(match.id, 'rejected')}
-                                      className="px-3 py-1.5 text-xs bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all"
-                                    >
-                                      ✗ Rejeté
-                                    </button>
-                                  </>
-                                )}
-                                <button
-                                  onClick={() => {
-                                    CRM.deleteMatch(match.id);
-                                    refreshMatches();
-                                  }}
-                                  className="p-1.5 text-white/30 hover:text-red-400 transition-all"
+                          {/* Footer Actions */}
+                          <div className="flex items-center justify-between px-6 py-4 bg-white/[0.02] border-t border-white/[0.06]">
+                            <div className="flex items-center gap-3">
+                              {/* Quick Contact Actions */}
+                              {match.demand?.phone && (
+                                <a
+                                  href={`tel:${match.demand.phone}`}
+                                  className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 text-blue-400 rounded-lg hover:bg-blue-500/20 transition-all text-sm"
                                 >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
+                                  <Phone size={14} />
+                                  Appeler
+                                </a>
+                              )}
+                              {match.demand?.whatsapp && (
+                                <a
+                                  href={`https://wa.me/${match.demand.whatsapp.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 px-3 py-2 bg-green-500/10 text-green-400 rounded-lg hover:bg-green-500/20 transition-all text-sm"
+                                >
+                                  <MessageSquare size={14} />
+                                  WhatsApp
+                                </a>
+                              )}
+                              {match.demand?.email && (
+                                <a
+                                  href={`mailto:${match.demand.email}`}
+                                  className="flex items-center gap-2 px-3 py-2 bg-purple-500/10 text-purple-400 rounded-lg hover:bg-purple-500/20 transition-all text-sm"
+                                >
+                                  <Mail size={14} />
+                                  Email
+                                </a>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {/* Status Actions */}
+                              {match.status === 'pending' && (
+                                <>
+                                  <button
+                                    onClick={() => updateMatchStatusHandler(match.id, 'notified')}
+                                    className="px-4 py-2 text-sm bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-all font-medium"
+                                  >
+                                    ✉ Notifier
+                                  </button>
+                                  <button
+                                    onClick={() => updateMatchStatusHandler(match.id, 'contacted')}
+                                    className="px-4 py-2 text-sm bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all font-medium"
+                                  >
+                                    📞 Contacté
+                                  </button>
+                                </>
+                              )}
+                              {(match.status === 'notified' || match.status === 'contacted') && (
+                                <>
+                                  <button
+                                    onClick={() => updateMatchStatusHandler(match.id, 'successful')}
+                                    className="px-4 py-2 text-sm bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all font-medium"
+                                  >
+                                    ✓ Réussi
+                                  </button>
+                                  <button
+                                    onClick={() => updateMatchStatusHandler(match.id, 'rejected')}
+                                    className="px-4 py-2 text-sm bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all font-medium"
+                                  >
+                                    ✗ Rejeté
+                                  </button>
+                                </>
+                              )}
+                              <button
+                                onClick={() => {
+                                  CRM.deleteMatch(match.id);
+                                  refreshMatches();
+                                }}
+                                className="p-2 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
+                                title="Supprimer ce match"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
                         </motion.div>
