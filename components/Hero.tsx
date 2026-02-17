@@ -23,16 +23,16 @@ const Hero: React.FC = () => {
       id={SectionId.HOME}
       className="relative min-h-[100dvh] w-full flex flex-col"
     >
-      {/* Background */}
+      {/* Background - 4K Villa with Pool */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=2400&auto=format&fit=crop"
-          alt="Luxury Property"
+          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=100&w=3840&auto=format&fit=crop"
+          alt="Villa de luxe avec piscine au Maroc"
           className="w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
         />
-        <div className="absolute inset-0 bg-black/50" />
+        <div className="absolute inset-0 bg-black/40" />
       </div>
 
       {/* Content */}
@@ -54,9 +54,9 @@ const Hero: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl font-display font-bold text-white leading-tight mb-6"
+            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-black text-white leading-tight mb-6"
           >
-            Votre Bien Idéal <span className="text-brand-gold">Vous Attend</span>
+            Votre Bien Idéal <span className="text-brand-gold font-black">Vous Attend</span>
           </motion.h1>
 
           {/* Subtitle */}
