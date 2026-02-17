@@ -16,7 +16,7 @@ import {
   Lock, LogOut, Home, Building2, Users, BarChart3,
   Settings, Plus, Search, Edit3, Trash2, X, Check,
   TrendingUp, DollarSign, MapPin, Calendar, Download,
-  ChevronLeft, ChevronRight, RefreshCw, Bell, Moon, Sun, Menu,
+  ChevronLeft, ChevronRight, ChevronDown, RefreshCw, Bell, Moon, Sun, Menu,
   Save, Target, Mail, AlertCircle,
   Clock, Star, UserPlus, Activity, Archive,
   ExternalLink, MoreVertical, Award, Zap, Eye, EyeOff,
@@ -1110,6 +1110,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   const [selectedDemandIds, setSelectedDemandIds] = useState<Set<string>>(new Set());
   const [isGeneratingData, setIsGeneratingData] = useState(false);
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState<'leads' | 'demands' | null>(null);
+  const [showDataMenu, setShowDataMenu] = useState(false);
 
   // Settings State
   const [settingsTab, setSettingsTab] = useState<'profile' | 'notifications' | 'crm' | 'theme' | 'about'>('profile');
@@ -2004,37 +2005,53 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                     </button>
 
                     {/* Synthetic Data Controls */}
-                    <div className="relative group">
+                    <div className="relative">
                       <button
+                        onClick={() => setShowDataMenu(!showDataMenu)}
                         className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-all"
                       >
                         <Sparkles size={16} />
                         Data
+                        <ChevronDown size={14} className={`transition-transform ${showDataMenu ? 'rotate-180' : ''}`} />
                       </button>
-                      <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a24] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                        <button
-                          onClick={handleGenerateSyntheticData}
-                          disabled={isGeneratingData}
-                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-all"
-                        >
-                          <Plus size={14} />
-                          {isGeneratingData ? 'Génération...' : 'Générer données test'}
-                        </button>
-                        <button
-                          onClick={selectAllLeads}
-                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-all"
-                        >
-                          <Check size={14} />
-                          Tout sélectionner
-                        </button>
-                        <button
-                          onClick={handleClearAllData}
-                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-all border-t border-white/5"
-                        >
-                          <Trash2 size={14} />
-                          Tout supprimer
-                        </button>
-                      </div>
+                      {showDataMenu && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowDataMenu(false)} />
+                          <div className="absolute right-0 top-full mt-2 w-52 bg-[#1a1a24] border border-white/10 rounded-lg shadow-xl z-50">
+                            <button
+                              onClick={() => {
+                                handleGenerateSyntheticData();
+                                setShowDataMenu(false);
+                              }}
+                              disabled={isGeneratingData}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-all rounded-t-lg"
+                            >
+                              <Plus size={16} className="text-emerald-400" />
+                              {isGeneratingData ? 'Génération...' : 'Générer 60 leads + 50 demandes'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                selectAllLeads();
+                                setShowDataMenu(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-all"
+                            >
+                              <Check size={16} className="text-blue-400" />
+                              Tout sélectionner
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleClearAllData();
+                                setShowDataMenu(false);
+                              }}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-all border-t border-white/5 rounded-b-lg"
+                            >
+                              <Trash2 size={16} />
+                              Supprimer toutes les données
+                            </button>
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     <button
