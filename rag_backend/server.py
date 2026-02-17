@@ -562,6 +562,147 @@ async def get_stats():
     }
 
 
+@app.get("/api/properties", tags=["Properties"])
+async def get_properties(
+    category: Optional[str] = Query(None, description="SALE or RENT"),
+    type: Optional[str] = Query(None, description="Property type"),
+    location: Optional[str] = Query(None, description="Location search"),
+    min_price: Optional[float] = Query(None, alias="minPrice"),
+    max_price: Optional[float] = Query(None, alias="maxPrice"),
+    min_area: Optional[float] = Query(None, alias="minArea"),
+    max_area: Optional[float] = Query(None, alias="maxArea"),
+    beds: Optional[int] = Query(None, description="Minimum bedrooms"),
+    search: Optional[str] = Query(None, description="Text search"),
+    sort: Optional[str] = Query("date_desc", description="Sort order"),
+    page: int = Query(1, ge=1),
+    limit: int = Query(12, ge=1, le=100)
+):
+    """Get properties with filtering and pagination."""
+    if not is_ready:
+        raise HTTPException(status_code=503, detail="Service not ready")
+
+    results = list(properties)
+
+    # Filter by category
+    if category:
+        results = [p for p in results if p.get("category") == category]
+
+    # Filter by type
+    if type:
+        results = [p for p in results if p.get("type") == type]
+
+    # Filter by location
+    if location:
+        location_lower = location.lower()
+        results = [p for p in results if location_lower in p.get("location", "").lower()]
+
+    # Filter by price range
+    if min_price is not None:
+        results = [p for p in results if (p.get("priceNumeric") or 0) >= min_price]
+    if max_price is not None:
+        results = [p for p in results if (p.get("priceNumeric") or 0) <= max_price]
+
+    # Filter by area range
+    if min_area is not None:
+        results = [p for p in results if (p.get("areaNumeric") or 0) >= min_area]
+    if max_area is not None:
+        results = [p for p in results if (p.get("areaNumeric") or 0) <= max_area]
+
+    # Filter by bedrooms
+    if beds is not None:
+        results = [p for p in results if (p.get("beds") or 0) >= beds]
+
+    # Text search
+    if search and len(search) >= 2:
+        search_lower = search.lower()
+        results = [p for p in results if (
+            search_lower in p.get("name", "").lower() or
+            search_lower in p.get("location", "").lower() or
+            search_lower in p.get("type", "").lower()
+        )]
+
+    # Sort
+    if sort == "price_asc":
+        results.sort(key=lambda p: p.get("priceNumeric") or 0)
+    elif sort == "price_desc":
+        results.sort(key=lambda p: p.get("priceNumeric") or 0, reverse=True)
+    elif sort == "area_desc":
+        results.sort(key=lambda p: p.get("areaNumeric") or 0, reverse=True)
+
+    # Paginate
+    total = len(results)
+    start_idx = (page - 1) * limit
+    paginated = results[start_idx:start_idx + limit]
+
+    return {
+        "success": True,
+        "data": paginated,
+        "pagination": {
+            "page": page,
+            "limit": limit,
+            "total": total,
+            "totalPages": (total + limit - 1) // limit,
+            "hasNext": start_idx + limit < total,
+            "hasPrev": page > 1
+        },
+        "filters": {
+            "category": category,
+            "type": type,
+            "location": location
+        }
+    }
+
+
+@app.get("/api/filters", tags=["Properties"])
+async def get_filters():
+    """Get available filter options."""
+    if not is_ready:
+        raise HTTPException(status_code=503, detail="Service not ready")
+
+    types_set = set()
+    locations_set = set()
+    features_set = set()
+    beds_set = set()
+
+    for p in properties:
+        if p.get("type"):
+            types_set.add(p["type"])
+        loc = p.get("location", "")
+        if loc and loc not in ("VENTE", "LOCATION"):
+            locations_set.add(loc)
+        for f in p.get("features", []):
+            features_set.add(f)
+        if p.get("beds") and p["beds"] > 0:
+            beds_set.add(p["beds"])
+
+    return {
+        "success": True,
+        "data": {
+            "categories": ["SALE", "RENT"],
+            "types": sorted(types_set),
+            "locations": sorted(locations_set),
+            "features": sorted(features_set),
+            "beds": sorted(beds_set),
+            "priceRanges": {
+                "sale": [
+                    {"label": "< 1M MAD", "min": 0, "max": 1000000},
+                    {"label": "1M - 2M MAD", "min": 1000000, "max": 2000000},
+                    {"label": "2M - 5M MAD", "min": 2000000, "max": 5000000},
+                    {"label": "5M - 10M MAD", "min": 5000000, "max": 10000000},
+                    {"label": "> 10M MAD", "min": 10000000, "max": None}
+                ],
+                "rent": [
+                    {"label": "< 5K MAD", "min": 0, "max": 5000},
+                    {"label": "5K - 10K MAD", "min": 5000, "max": 10000},
+                    {"label": "10K - 20K MAD", "min": 10000, "max": 20000},
+                    {"label": "20K - 50K MAD", "min": 20000, "max": 50000},
+                    {"label": "> 50K MAD", "min": 50000, "max": None}
+                ]
+            }
+        }
+    }
+
+
 # ============================================================================
 # CHATBOT ENDPOINT
 # ============================================================================
