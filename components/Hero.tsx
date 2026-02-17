@@ -56,11 +56,9 @@ const Hero: React.FC = () => {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white leading-[1.1] mb-6"
+            className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white leading-[1.1] mb-6"
           >
-            L'Excellence au
-            <br />
-            <span className="text-brand-gold">Maroc</span>
+            Votre Bien Idéal <span className="text-brand-gold">Vous Attend</span>
           </motion.h1>
 
           {/* Subtitle */}
