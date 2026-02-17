@@ -1458,6 +1458,29 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     });
   }, [allMatches, matchSearchQuery]);
 
+  // Match status config - memoized to avoid recreation
+  const matchStatusConfig = useMemo(() => ({
+    pending: { label: 'En attente', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: Clock },
+    notified: { label: 'Notifié', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: Bell },
+    contacted: { label: 'Contacté', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: MessageSquare },
+    successful: { label: 'Réussi', color: 'bg-green-500/20 text-green-400 border-green-500/30', icon: Check },
+    rejected: { label: 'Rejeté', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: X },
+  }), []);
+
+  // Format helpers - memoized to avoid recreation in render loop
+  const formatBudget = useCallback((min?: number, max?: number) => {
+    if (!min && !max) return 'Non défini';
+    if (min && max) return `${(min/1000000).toFixed(1)}M - ${(max/1000000).toFixed(1)}M MAD`;
+    if (max) return `Jusqu'à ${(max/1000000).toFixed(1)}M MAD`;
+    return `À partir de ${(min!/1000000).toFixed(1)}M MAD`;
+  }, []);
+
+  const formatPrice = useCallback((price?: number | string) => {
+    if (!price) return 'Prix non défini';
+    if (typeof price === 'string') return price;
+    return `${(price/1000000).toFixed(2)}M MAD`;
+  }, []);
+
   // Manual match run
   const handleManualMatchRun = useCallback(() => {
     localStorage.setItem('nourreska_properties', JSON.stringify(properties));
@@ -3831,30 +3854,8 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                     </div>
                   ) : (
                     filteredMatches.map((match) => {
-                      const statusConfig = {
-                        pending: { label: 'En attente', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: Clock },
-                        notified: { label: 'Notifié', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30', icon: Bell },
-                        contacted: { label: 'Contacté', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30', icon: MessageSquare },
-                        successful: { label: 'Réussi', color: 'bg-green-500/20 text-green-400 border-green-500/30', icon: Check },
-                        rejected: { label: 'Rejeté', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: X },
-                      };
-                      const config = statusConfig[match.status];
+                      const config = matchStatusConfig[match.status];
                       const StatusIcon = config.icon;
-
-                      // Helper to format budget
-                      const formatBudget = (min?: number, max?: number) => {
-                        if (!min && !max) return 'Non défini';
-                        if (min && max) return `${(min/1000000).toFixed(1)}M - ${(max/1000000).toFixed(1)}M MAD`;
-                        if (max) return `Jusqu'à ${(max/1000000).toFixed(1)}M MAD`;
-                        return `À partir de ${(min!/1000000).toFixed(1)}M MAD`;
-                      };
-
-                      // Helper to format price
-                      const formatPrice = (price?: number | string) => {
-                        if (!price) return 'Prix non défini';
-                        if (typeof price === 'string') return price;
-                        return `${(price/1000000).toFixed(2)}M MAD`;
-                      };
 
                       return (
                         <motion.div

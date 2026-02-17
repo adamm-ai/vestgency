@@ -1827,23 +1827,30 @@ export function getEnrichedMatches(filters?: {
   minScore?: number;
 }): EnrichedMatch[] {
   const matches = getAllMatches(filters);
+
+  // Load demands ONCE and create Map for O(1) lookups
+  const allDemands = getDemandsFromStorage();
+  const demandsMap = new Map(allDemands.map(d => [d.id, d]));
+
+  // Load properties ONCE and create Map for O(1) lookups
   const propertiesData = localStorage.getItem('nourreska_properties');
-  let properties: PropertyData[] = [];
+  let propertiesMap = new Map<string, PropertyData>();
   try {
-    properties = propertiesData ? JSON.parse(propertiesData) : [];
-  } catch (error) {
-    console.error('[CRM] Error parsing properties data:', error);
+    const properties: PropertyData[] = propertiesData ? JSON.parse(propertiesData) : [];
+    propertiesMap = new Map(properties.map(p => [p.id, p]));
+  } catch {
+    // Silent fail - empty map is fine
   }
 
   return matches.map(match => {
-    const demand = getDemandById(match.demandId);
+    const demand = demandsMap.get(match.demandId);
     let matchedProperty: PropertyData | undefined;
     let matchedDemand: Demand | undefined;
 
     if (match.matchType === 'demand_to_property') {
-      matchedProperty = properties.find(p => p.id === match.matchedEntityId);
+      matchedProperty = propertiesMap.get(match.matchedEntityId);
     } else {
-      matchedDemand = getDemandById(match.matchedEntityId);
+      matchedDemand = demandsMap.get(match.matchedEntityId);
     }
 
     return {
