@@ -68,106 +68,96 @@ const QUICK_ACTIONS = [
 ];
 
 // ============================================================================
-// PROPERTY CARD COMPONENT
+// PROPERTY CARD COMPONENT - Horizontal Premium Design
 // ============================================================================
 
 interface PropertyCardProps {
   property: ChatProperty;
+  index: number;
   onSelect: (id: string) => void;
 }
 
-const PropertyCard: React.FC<PropertyCardProps> = memo(({ property, onSelect }) => {
+const PropertyCard: React.FC<PropertyCardProps> = memo(({ property, index, onSelect }) => {
   const formatPrice = (price: string, category: string) => {
     if (price === 'Prix sur demande') return price;
-    return category === 'RENT' ? `${price}/mois` : price;
+    return price;
   };
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.1, type: "spring", stiffness: 300, damping: 25 }}
+      whileHover={{ scale: 1.01, x: 4 }}
+      whileTap={{ scale: 0.99 }}
       onClick={() => onSelect(property.id)}
-      className="group cursor-pointer bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-brand-gold/30 rounded-2xl overflow-hidden transition-all duration-300"
+      className="group cursor-pointer flex bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-brand-gold/40 rounded-xl overflow-hidden transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-brand-gold/10"
     >
-      {/* Image */}
-      <div className="relative h-28 overflow-hidden">
+      {/* Image - Left Side */}
+      <div className="relative w-24 h-20 flex-shrink-0 overflow-hidden">
         {property.image ? (
           <img
             src={property.image}
             alt={property.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
             loading="lazy"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 flex items-center justify-center">
-            <Home size={24} className="text-brand-gold/50" />
+            <Home size={20} className="text-brand-gold/40" />
           </div>
         )}
-
-        {/* Category badge */}
-        <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
-          property.category === 'RENT'
-            ? 'bg-cyan-500/90 text-white'
-            : 'bg-brand-gold/90 text-black'
-        }`}>
-          {property.category === 'RENT' ? 'Location' : 'Vente'}
-        </div>
-
-        {/* Click indicator */}
-        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <ExternalLink size={12} className="text-white" />
-        </div>
-
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-
-        {/* Price */}
-        <div className="absolute bottom-2 left-2 right-2">
-          <p className="text-white font-bold text-sm drop-shadow-lg truncate">
-            {formatPrice(property.price, property.category)}
-          </p>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/30" />
       </div>
 
-      {/* Details */}
-      <div className="p-3">
-        {/* Name & Location */}
-        <h4 className="text-white/90 font-medium text-xs truncate mb-1">
-          {property.name}
-        </h4>
-        <div className="flex items-center gap-1 text-white/40 text-[10px] mb-2">
-          <MapPin size={10} />
-          <span className="truncate">{property.location || property.city}</span>
+      {/* Content - Right Side */}
+      <div className="flex-1 p-2.5 flex flex-col justify-between min-w-0">
+        {/* Top Row: Type Badge + Price */}
+        <div className="flex items-center justify-between gap-2">
+          <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide flex-shrink-0 ${
+            property.category === 'RENT'
+              ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+              : 'bg-brand-gold/20 text-brand-gold border border-brand-gold/30'
+          }`}>
+            {property.type || (property.category === 'RENT' ? 'Location' : 'Vente')}
+          </span>
+          <span className="text-brand-gold font-bold text-xs truncate">
+            {formatPrice(property.price, property.category)}
+          </span>
         </div>
 
-        {/* Specs */}
-        <div className="flex items-center gap-3 text-white/50 text-[10px]">
-          {property.beds && (
-            <div className="flex items-center gap-1">
-              <Bed size={10} />
-              <span>{property.beds}</span>
-            </div>
-          )}
-          {property.baths && (
-            <div className="flex items-center gap-1">
-              <Bath size={10} />
-              <span>{property.baths}</span>
-            </div>
-          )}
-          {property.area && (
-            <div className="flex items-center gap-1">
-              <Ruler size={10} />
-              <span>{property.area}</span>
-            </div>
-          )}
+        {/* Middle: Location */}
+        <div className="flex items-center gap-1 text-white/50 text-[10px] my-1">
+          <MapPin size={9} className="flex-shrink-0" />
+          <span className="truncate">{property.location || property.city || 'Casablanca'}</span>
         </div>
 
-        {/* View button */}
-        <div className="mt-2 pt-2 border-t border-white/[0.06] flex items-center justify-between">
-          <span className="text-brand-gold text-[10px] font-medium">Voir détails</span>
-          <ChevronRight size={12} className="text-brand-gold group-hover:translate-x-0.5 transition-transform" />
+        {/* Bottom Row: Specs + Arrow */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-white/40 text-[9px]">
+            {property.beds && (
+              <div className="flex items-center gap-0.5">
+                <Bed size={9} />
+                <span>{property.beds}</span>
+              </div>
+            )}
+            {property.baths && (
+              <div className="flex items-center gap-0.5">
+                <Bath size={9} />
+                <span>{property.baths}</span>
+              </div>
+            )}
+            {property.area && (
+              <div className="flex items-center gap-0.5">
+                <Ruler size={9} />
+                <span className="truncate max-w-[50px]">{property.area}</span>
+              </div>
+            )}
+          </div>
+          <div className="w-5 h-5 rounded-full bg-brand-gold/10 flex items-center justify-center group-hover:bg-brand-gold/20 transition-colors">
+            <ChevronRight size={12} className="text-brand-gold group-hover:translate-x-0.5 transition-transform" />
+          </div>
         </div>
       </div>
     </motion.div>
@@ -177,7 +167,7 @@ const PropertyCard: React.FC<PropertyCardProps> = memo(({ property, onSelect }) 
 PropertyCard.displayName = 'PropertyCard';
 
 // ============================================================================
-// PROPERTY CARDS GRID
+// PROPERTY CARDS LIST - Vertical Stack by Relevance
 // ============================================================================
 
 interface PropertyCardsProps {
@@ -190,27 +180,25 @@ const PropertyCards: React.FC<PropertyCardsProps> = memo(({ properties, onSelect
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="mt-3"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: 0.05 }}
+      className="mt-3 space-y-2"
     >
-      <p className="text-[9px] text-white/30 uppercase tracking-widest mb-2 flex items-center gap-2">
-        <Sparkles size={10} className="text-brand-gold" />
-        Propriétés suggérées
-      </p>
-      <div className={`grid gap-2 ${
-        properties.length === 1 ? 'grid-cols-1' :
-        properties.length === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'
-      }`}>
-        {properties.map((property) => (
-          <PropertyCard
-            key={property.id}
-            property={property}
-            onSelect={onSelectProperty}
-          />
-        ))}
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-1 h-3 bg-brand-gold rounded-full" />
+        <p className="text-[9px] text-white/40 uppercase tracking-widest font-medium">
+          {properties.length} bien{properties.length > 1 ? 's' : ''} trouvé{properties.length > 1 ? 's' : ''}
+        </p>
       </div>
+      {properties.map((property, index) => (
+        <PropertyCard
+          key={property.id}
+          property={property}
+          index={index}
+          onSelect={onSelectProperty}
+        />
+      ))}
     </motion.div>
   );
 });
