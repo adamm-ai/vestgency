@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { preloadData } from './services/propertyService';
+import { initializeCRM } from './services/crmService';
 import ErrorBoundary from './components/ErrorBoundary';
 
 // Critical components loaded immediately
@@ -89,10 +90,13 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Preload property data when app mounts
+  // Preload property data and initialize CRM when app mounts
+  // This ensures the matching engine has access to properties data
+  // regardless of entry point (Chatbot, Form, Admin Portal)
   useEffect(() => {
     const timer = setTimeout(() => {
       preloadData();
+      initializeCRM(); // Preload properties for CRM matching engine
     }, 100);
     return () => clearTimeout(timer);
   }, []);

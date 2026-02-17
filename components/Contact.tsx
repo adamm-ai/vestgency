@@ -1,7 +1,85 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, memo, useMemo } from 'react';
 import { SectionId } from '../types';
-import { MapPin, Phone, Mail, Send, Clock, CheckCircle2, MessageSquare } from 'lucide-react';
+import { MapPin, Phone, Mail, Send, Clock, CheckCircle2, MessageSquare, Home, Building2, ChevronDown } from 'lucide-react';
 import * as CRM from '../services/crmService';
+
+// ============================================================================
+// TYPE DEFINITIONS & MAPPINGS
+// ============================================================================
+
+type ProjectType = 'achat' | 'vente' | 'location' | 'estimation' | 'gestion_locative';
+
+interface ProjectTypeConfig {
+  label: string;
+  demandType: CRM.DemandType;
+  transactionType: 'RENT' | 'SALE' | undefined;
+  urgency: CRM.LeadUrgency;
+  requiresPropertyDetails: boolean;
+  description: string;
+}
+
+/**
+ * Mapping des types de projet vers les configurations CRM
+ *
+ * LOGIQUE MÉTIER:
+ * - achat/location → Client cherchant dans le portefeuille → Lead + Demand (property_search)
+ * - vente/estimation → Propriétaire voulant vendre → Lead + Demand (property_sale)
+ * - gestion_locative → Propriétaire voulant déléguer la gestion → Lead + Demand (property_rental_management)
+ */
+const PROJECT_TYPE_CONFIG: Record<ProjectType, ProjectTypeConfig> = {
+  achat: {
+    label: 'Achat',
+    demandType: 'property_search',
+    transactionType: 'SALE',
+    urgency: 'high',
+    requiresPropertyDetails: false,
+    description: 'Je cherche un bien à acheter',
+  },
+  location: {
+    label: 'Location',
+    demandType: 'property_search',
+    transactionType: 'RENT',
+    urgency: 'high',
+    requiresPropertyDetails: false,
+    description: 'Je cherche un bien à louer',
+  },
+  vente: {
+    label: 'Vente',
+    demandType: 'property_sale',
+    transactionType: 'SALE',
+    urgency: 'medium',
+    requiresPropertyDetails: true,
+    description: 'Je souhaite vendre mon bien',
+  },
+  estimation: {
+    label: 'Estimation',
+    demandType: 'property_sale',
+    transactionType: 'SALE',
+    urgency: 'medium',
+    requiresPropertyDetails: true,
+    description: 'Je souhaite estimer mon bien',
+  },
+  gestion_locative: {
+    label: 'Gestion Locative',
+    demandType: 'property_rental_management',
+    transactionType: undefined,
+    urgency: 'medium',
+    requiresPropertyDetails: true,
+    description: 'Je souhaite confier la gestion de mon bien',
+  },
+};
+
+const PROPERTY_TYPES: { value: CRM.PropertyType; label: string }[] = [
+  { value: 'apartment', label: 'Appartement' },
+  { value: 'villa', label: 'Villa' },
+  { value: 'riad', label: 'Riad' },
+  { value: 'duplex', label: 'Duplex' },
+  { value: 'penthouse', label: 'Penthouse' },
+  { value: 'studio', label: 'Studio' },
+  { value: 'land', label: 'Terrain' },
+  { value: 'commercial', label: 'Local Commercial' },
+  { value: 'other', label: 'Autre' },
+];
 
 const ContactCard = memo(({ icon: Icon, title, children }: {
   icon: React.ElementType;
@@ -23,71 +101,169 @@ const ContactCard = memo(({ icon: Icon, title, children }: {
 
 ContactCard.displayName = 'ContactCard';
 
+// ============================================================================
+// FORM STATE INTERFACE
+// ============================================================================
+
+interface FormState {
+  // Contact Info
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  type: ProjectType;
+
+  // Property Details (for sellers/owners)
+  propertyType: CRM.PropertyType;
+  propertyCity: string;
+  propertyPrice: string;
+  propertySurface: string;
+
+  // Search Criteria (for buyers/renters)
+  searchCity: string;
+  budgetMax: string;
+}
+
+const INITIAL_FORM_STATE: FormState = {
+  name: '',
+  email: '',
+  phone: '',
+  message: '',
+  type: 'achat',
+  propertyType: 'apartment',
+  propertyCity: '',
+  propertyPrice: '',
+  propertySurface: '',
+  searchCity: '',
+  budgetMax: '',
+};
+
 const Contact: React.FC = () => {
-  const [formState, setFormState] = useState({ name: '', email: '', phone: '', message: '', type: 'achat' });
+  const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
   const [isSent, setIsSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Derived state - check if current project type requires property details
+  const currentConfig = useMemo(() => PROJECT_TYPE_CONFIG[formState.type], [formState.type]);
+  const showPropertyFields = currentConfig.requiresPropertyDetails;
+  const showSearchFields = !currentConfig.requiresPropertyDetails;
+
+  /**
+   * SUBMISSION HANDLER
+   *
+   * Creates both LEAD and DEMAND for complete CRM integration:
+   * 1. Lead → Contact tracking and follow-up
+   * 2. Demand → Service request with matching engine integration
+   */
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    const config = PROJECT_TYPE_CONFIG[formState.type];
 
     // Parse name into first/last
     const nameParts = formState.name.trim().split(/\s+/);
     const firstName = nameParts[0] || 'Visiteur';
     const lastName = nameParts.slice(1).join(' ') || '';
 
-    // Map project type to transaction type
-    const transactionType: 'RENT' | 'SALE' | undefined =
-      formState.type === 'achat' || formState.type === 'vente' ? 'SALE' :
-      formState.type === 'location' ? 'RENT' : undefined;
-
-    // Determine urgency based on project type
-    const urgency: CRM.LeadUrgency =
-      formState.type === 'achat' || formState.type === 'location' ? 'high' : 'medium';
-
-    // Create CRM lead
-    CRM.createLead({
+    // =========================================================================
+    // STEP 1: CREATE LEAD (Contact tracking)
+    // =========================================================================
+    const lead = CRM.createLead({
       firstName,
       lastName,
       email: formState.email,
       phone: formState.phone,
       source: 'website_form',
-      transactionType,
-      urgency,
-      notes: formState.message ? [{
+      transactionType: config.transactionType,
+      urgency: config.urgency,
+      notes: [{
         id: CRM.generateId(),
-        content: `Message du formulaire: ${formState.message}\n\nType de projet: ${formState.type}`,
+        content: `[Formulaire Contact]\n\nType de projet: ${config.label}\nDescription: ${config.description}\n\n${formState.message ? `Message:\n${formState.message}` : '(Pas de message)'}`,
         createdBy: 'Formulaire Contact',
         createdAt: new Date().toISOString(),
-      }] : [],
+      }],
     });
 
-    console.log('[CRM] Lead created from contact form');
+    console.log('[CRM] Lead created from contact form:', lead.id);
 
+    // =========================================================================
+    // STEP 2: CREATE DEMAND (Service request with matching)
+    // =========================================================================
+    const demandData: Parameters<typeof CRM.createDemand>[0] = {
+      type: config.demandType,
+      firstName,
+      lastName,
+      email: formState.email,
+      phone: formState.phone,
+      source: 'website_form',
+      urgency: config.urgency,
+      leadId: lead.id, // Link to the lead for bidirectional tracking
+    };
+
+    // Build search criteria for buyers/renters (property_search)
+    if (config.demandType === 'property_search') {
+      demandData.searchCriteria = {
+        transactionType: config.transactionType!,
+        cities: formState.searchCity ? [formState.searchCity.trim()] : undefined,
+        budgetMax: formState.budgetMax ? parseInt(formState.budgetMax) : undefined,
+        additionalNotes: formState.message || undefined,
+      };
+    }
+
+    // Build property details for sellers/owners (property_sale, property_rental_management)
+    if (config.demandType === 'property_sale' || config.demandType === 'property_rental_management') {
+      demandData.propertyDetails = {
+        propertyType: formState.propertyType,
+        transactionType: config.demandType === 'property_sale' ? 'SALE' : 'MANAGEMENT',
+        city: formState.propertyCity.trim() || 'Non spécifié',
+        price: formState.propertyPrice ? parseInt(formState.propertyPrice) : undefined,
+        surface: formState.propertySurface ? parseInt(formState.propertySurface) : undefined,
+        description: formState.message || undefined,
+      };
+    }
+
+    // Add note with full context
+    demandData.notes = [{
+      id: CRM.generateId(),
+      content: `Demande soumise via formulaire de contact.\n\nType: ${config.label}\n${formState.message ? `\nMessage du client:\n${formState.message}` : ''}`,
+      createdBy: 'Formulaire Contact',
+      createdAt: new Date().toISOString(),
+    }];
+
+    const demand = CRM.createDemand(demandData);
+    console.log('[CRM] Demand created from contact form:', demand.id, '| Type:', config.demandType);
+
+    // =========================================================================
+    // STEP 3: SUCCESS FEEDBACK
+    // =========================================================================
     setTimeout(() => {
       setIsLoading(false);
       setIsSent(true);
       setTimeout(() => {
         setIsSent(false);
-        setFormState({ name: '', email: '', phone: '', message: '', type: 'achat' });
+        setFormState(INITIAL_FORM_STATE);
       }, 4000);
     }, 1500);
   }, [formState]);
 
-  const handleInputChange = useCallback((field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((field: keyof FormState) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setFormState(prev => ({ ...prev, [field]: e.target.value }));
   }, []);
 
-  const handleTypeChange = useCallback((type: string) => {
+  const handleTypeChange = useCallback((type: ProjectType) => {
     setFormState(prev => ({ ...prev, type }));
   }, []);
 
-  const projectTypes = [
+  // All available project types
+  const projectTypes: { value: ProjectType; label: string }[] = [
     { value: 'achat', label: 'Achat' },
-    { value: 'vente', label: 'Vente' },
     { value: 'location', label: 'Location' },
+    { value: 'vente', label: 'Vente' },
     { value: 'estimation', label: 'Estimation' },
+    { value: 'gestion_locative', label: 'Gestion Locative' },
   ];
 
   return (
@@ -241,6 +417,129 @@ const Contact: React.FC = () => {
                       onChange={handleInputChange('phone')}
                     />
                   </div>
+
+                  {/* ================================================================= */}
+                  {/* CONDITIONAL FIELDS - Property Details (Sellers/Owners)           */}
+                  {/* ================================================================= */}
+                  {showPropertyFields && (
+                    <div className="p-4 rounded-xl bg-brand-gold/5 dark:bg-brand-gold/10 border border-brand-gold/20 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Home size={16} className="text-brand-gold" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-brand-gold">
+                          Détails de votre bien
+                        </span>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {/* Property Type */}
+                        <div>
+                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                            Type de bien
+                          </label>
+                          <div className="relative">
+                            <select
+                              value={formState.propertyType}
+                              onChange={handleInputChange('propertyType')}
+                              className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 text-brand-charcoal dark:text-white focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200 appearance-none cursor-pointer"
+                            >
+                              {PROPERTY_TYPES.map(pt => (
+                                <option key={pt.value} value={pt.value}>{pt.label}</option>
+                              ))}
+                            </select>
+                            <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-charcoal/40 dark:text-white/40 pointer-events-none" />
+                          </div>
+                        </div>
+
+                        {/* City */}
+                        <div>
+                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                            Ville
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Casablanca, Marrakech..."
+                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            value={formState.propertyCity}
+                            onChange={handleInputChange('propertyCity')}
+                          />
+                        </div>
+
+                        {/* Price (only for vente/estimation) */}
+                        {(formState.type === 'vente' || formState.type === 'estimation') && (
+                          <div>
+                            <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                              Prix estimé (DH)
+                            </label>
+                            <input
+                              type="number"
+                              placeholder="2 500 000"
+                              className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                              value={formState.propertyPrice}
+                              onChange={handleInputChange('propertyPrice')}
+                            />
+                          </div>
+                        )}
+
+                        {/* Surface */}
+                        <div>
+                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                            Surface (m²)
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="120"
+                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            value={formState.propertySurface}
+                            onChange={handleInputChange('propertySurface')}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ================================================================= */}
+                  {/* CONDITIONAL FIELDS - Search Criteria (Buyers/Renters)            */}
+                  {/* ================================================================= */}
+                  {showSearchFields && (
+                    <div className="p-4 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Building2 size={16} className="text-blue-500" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-blue-500">
+                          Critères de recherche (optionnel)
+                        </span>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        {/* Search City */}
+                        <div>
+                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                            Ville souhaitée
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Casablanca, Rabat..."
+                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            value={formState.searchCity}
+                            onChange={handleInputChange('searchCity')}
+                          />
+                        </div>
+
+                        {/* Budget Max */}
+                        <div>
+                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                            Budget max (DH)
+                          </label>
+                          <input
+                            type="number"
+                            placeholder="3 000 000"
+                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            value={formState.budgetMax}
+                            onChange={handleInputChange('budgetMax')}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Message */}
                   <div>

@@ -23,7 +23,7 @@ import {
   FileText, ClipboardList, Sparkles, Link2, MessageSquare, Phone
 } from 'lucide-react';
 import * as CRM from '../services/crmService';
-import api, { authAPI, leadsAPI, usersAPI, statsAPI, notificationsAPI, getStoredToken, getStoredUser, clearAuthData, User as APIUser, Lead as APILead, CRMStats } from '../services/api';
+import api, { authAPI, leadsAPI, usersAPI, statsAPI, notificationsAPI, propertiesAPI, getStoredToken, getStoredUser, clearAuthData, User as APIUser, Lead as APILead, CRMStats } from '../services/api';
 
 // Import extracted components
 // Note: AdminLogin, UsersManagement, AnalyticsDashboard are available as separate modules
@@ -1056,6 +1056,28 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [propertyModalMode, setPropertyModalMode] = useState<'view' | 'edit' | 'add'>('view');
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
+  const [propertyFormLoading, setPropertyFormLoading] = useState(false);
+  const [propertyFormError, setPropertyFormError] = useState<string | null>(null);
+
+  // Property form data state
+  const [propertyFormData, setPropertyFormData] = useState({
+    name: '',
+    type: 'Appartement',
+    category: 'SALE' as 'SALE' | 'RENT',
+    price: '',
+    priceNumeric: 0,
+    location: '',
+    city: 'Casablanca',
+    beds: 0,
+    baths: 0,
+    area: '',
+    areaNumeric: 0,
+    image: '',
+    images: [] as string[],
+    features: [] as string[],
+    description: '',
+    isFeatured: false,
+  });
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
@@ -1187,21 +1209,172 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     confirmPassword: ''
   });
 
-  // Load properties
-  useEffect(() => {
-    const loadProperties = async () => {
-      try {
-        const response = await fetch('/data/properties.json');
-        const data = await response.json();
-        setProperties(data.properties || []);
-      } catch (error) {
-        console.error('Failed to load properties:', error);
-      } finally {
-        setIsLoading(false);
+  // Load properties from API (with fallback to static JSON)
+  const loadProperties = useCallback(async () => {
+    try {
+      // Try API first
+      const response = await propertiesAPI.getAll();
+      if (response.properties && response.properties.length > 0) {
+        setProperties(response.properties);
+        return;
       }
-    };
-    loadProperties();
+    } catch (apiError) {
+      console.warn('[Admin] API unavailable, falling back to static JSON');
+    }
+
+    // Fallback to static JSON
+    try {
+      const response = await fetch('/data/properties.json');
+      const data = await response.json();
+      setProperties(data.properties || []);
+    } catch (error) {
+      console.error('Failed to load properties:', error);
+    }
   }, []);
+
+  useEffect(() => {
+    loadProperties().finally(() => setIsLoading(false));
+  }, [loadProperties]);
+
+  // Reset property form when modal opens
+  useEffect(() => {
+    if (showPropertyModal) {
+      setPropertyFormError(null);
+      if (propertyModalMode === 'add') {
+        // Reset to empty form
+        setPropertyFormData({
+          name: '',
+          type: 'Appartement',
+          category: 'SALE',
+          price: '',
+          priceNumeric: 0,
+          location: '',
+          city: 'Casablanca',
+          beds: 0,
+          baths: 0,
+          area: '',
+          areaNumeric: 0,
+          image: '',
+          images: [],
+          features: [],
+          description: '',
+          isFeatured: false,
+        });
+      } else if (propertyModalMode === 'edit' && selectedProperty) {
+        // Populate with selected property
+        setPropertyFormData({
+          name: selectedProperty.name || '',
+          type: selectedProperty.type || 'Appartement',
+          category: selectedProperty.category || 'SALE',
+          price: selectedProperty.price || '',
+          priceNumeric: selectedProperty.priceNumeric || 0,
+          location: selectedProperty.location || '',
+          city: selectedProperty.city || 'Casablanca',
+          beds: selectedProperty.beds || 0,
+          baths: selectedProperty.baths || 0,
+          area: selectedProperty.area || '',
+          areaNumeric: selectedProperty.areaNumeric || 0,
+          image: selectedProperty.image || '',
+          images: selectedProperty.images || [],
+          features: selectedProperty.features || [],
+          description: selectedProperty.description || '',
+          isFeatured: false,
+        });
+      }
+    }
+  }, [showPropertyModal, propertyModalMode, selectedProperty]);
+
+  // Create property
+  const handleCreateProperty = async () => {
+    if (!propertyFormData.name) {
+      setPropertyFormError('Le nom est requis');
+      return;
+    }
+
+    setPropertyFormLoading(true);
+    setPropertyFormError(null);
+
+    try {
+      const response = await propertiesAPI.create({
+        name: propertyFormData.name,
+        type: propertyFormData.type,
+        category: propertyFormData.category,
+        price: propertyFormData.price || 'Prix sur demande',
+        priceNumeric: propertyFormData.priceNumeric,
+        location: propertyFormData.location,
+        city: propertyFormData.city,
+        beds: propertyFormData.beds,
+        baths: propertyFormData.baths,
+        area: propertyFormData.area,
+        areaNumeric: propertyFormData.areaNumeric,
+        image: propertyFormData.image,
+        images: propertyFormData.images,
+        features: propertyFormData.features,
+        description: propertyFormData.description,
+      });
+
+      // Add to local state
+      setProperties(prev => [response.property, ...prev]);
+      setShowPropertyModal(false);
+      console.log('[Admin] Property created:', response.property.id);
+    } catch (error: any) {
+      console.error('[Admin] Failed to create property:', error);
+      setPropertyFormError(error.message || 'Erreur lors de la création');
+    } finally {
+      setPropertyFormLoading(false);
+    }
+  };
+
+  // Update property
+  const handleUpdateProperty = async () => {
+    if (!selectedProperty) return;
+
+    setPropertyFormLoading(true);
+    setPropertyFormError(null);
+
+    try {
+      const response = await propertiesAPI.update(selectedProperty.id, {
+        name: propertyFormData.name,
+        type: propertyFormData.type,
+        category: propertyFormData.category,
+        price: propertyFormData.price,
+        priceNumeric: propertyFormData.priceNumeric,
+        location: propertyFormData.location,
+        city: propertyFormData.city,
+        beds: propertyFormData.beds,
+        baths: propertyFormData.baths,
+        area: propertyFormData.area,
+        areaNumeric: propertyFormData.areaNumeric,
+        image: propertyFormData.image,
+        images: propertyFormData.images,
+        features: propertyFormData.features,
+        description: propertyFormData.description,
+      });
+
+      // Update local state
+      setProperties(prev => prev.map(p => p.id === selectedProperty.id ? response.property : p));
+      setShowPropertyModal(false);
+      console.log('[Admin] Property updated:', selectedProperty.id);
+    } catch (error: any) {
+      console.error('[Admin] Failed to update property:', error);
+      setPropertyFormError(error.message || 'Erreur lors de la mise à jour');
+    } finally {
+      setPropertyFormLoading(false);
+    }
+  };
+
+  // Delete property
+  const handleDeleteProperty = async (propertyId: string) => {
+    try {
+      await propertiesAPI.delete(propertyId);
+      setProperties(prev => prev.filter(p => p.id !== propertyId));
+      setDeletePropertyId(null);
+      console.log('[Admin] Property deleted:', propertyId);
+    } catch (error) {
+      console.error('[Admin] Failed to delete property:', error);
+      alert('Erreur lors de la suppression');
+    }
+  };
 
   // Load CRM data
   const refreshCRM = useCallback(async () => {
@@ -4702,88 +4875,198 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                             <form
                               onSubmit={(e) => {
                                 e.preventDefault();
-                                // For now, just close the modal (API would handle actual save)
-                                setShowPropertyModal(false);
+                                if (propertyModalMode === 'add') {
+                                  handleCreateProperty();
+                                } else {
+                                  handleUpdateProperty();
+                                }
                               }}
                               className="space-y-4"
                             >
-                              <p className="text-sm text-white/50 mb-4">
-                                {propertyModalMode === 'add'
-                                  ? 'Cette fonctionnalité sera connectée à l\'API pour créer de nouvelles propriétés.'
-                                  : 'Cette fonctionnalité sera connectée à l\'API pour modifier les propriétés existantes.'
-                                }
-                              </p>
-
-                              {selectedProperty && (
-                                <>
-                                  <div>
-                                    <label className="block text-xs text-white/50 mb-1.5">Nom de la propriété</label>
-                                    <input
-                                      type="text"
-                                      defaultValue={selectedProperty.name}
-                                      className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
-                                    />
-                                  </div>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                      <label className="block text-xs text-white/50 mb-1.5">Type</label>
-                                      <input
-                                        type="text"
-                                        defaultValue={selectedProperty.type}
-                                        className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
-                                      />
-                                    </div>
-                                    <div>
-                                      <label className="block text-xs text-white/50 mb-1.5">Catégorie</label>
-                                      <select
-                                        defaultValue={selectedProperty.category}
-                                        className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none transition-all"
-                                      >
-                                        <option value="SALE">Vente</option>
-                                        <option value="RENT">Location</option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs text-white/50 mb-1.5">Prix</label>
-                                    <input
-                                      type="text"
-                                      defaultValue={selectedProperty.price}
-                                      className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
-                                    />
-                                  </div>
-                                  <div>
-                                    <label className="block text-xs text-white/50 mb-1.5">Localisation</label>
-                                    <input
-                                      type="text"
-                                      defaultValue={selectedProperty.location}
-                                      className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
-                                    />
-                                  </div>
-                                </>
-                              )}
-
-                              {propertyModalMode === 'add' && (
-                                <div className="text-center py-8 text-white/40">
-                                  <Building2 size={48} className="mx-auto mb-4 opacity-50" />
-                                  <p>Formulaire d'ajout de propriété</p>
-                                  <p className="text-xs mt-2">Sera connecté à l'API de gestion des biens</p>
+                              {/* Error message */}
+                              {propertyFormError && (
+                                <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm flex items-center gap-2">
+                                  <AlertCircle size={16} />
+                                  {propertyFormError}
                                 </div>
                               )}
 
+                              {/* Nom */}
+                              <div>
+                                <label className="block text-xs text-white/50 mb-1.5">Nom de la propriété *</label>
+                                <input
+                                  type="text"
+                                  value={propertyFormData.name}
+                                  onChange={(e) => setPropertyFormData(prev => ({ ...prev, name: e.target.value }))}
+                                  placeholder="Ex: Villa moderne avec piscine"
+                                  className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  required
+                                />
+                              </div>
+
+                              {/* Type & Catégorie */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Type de bien</label>
+                                  <select
+                                    value={propertyFormData.type}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, type: e.target.value }))}
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none transition-all"
+                                  >
+                                    <option value="Appartement">Appartement</option>
+                                    <option value="Villa">Villa</option>
+                                    <option value="Riad">Riad</option>
+                                    <option value="Duplex">Duplex</option>
+                                    <option value="Studio">Studio</option>
+                                    <option value="Bureau">Bureau</option>
+                                    <option value="Magasin">Magasin</option>
+                                    <option value="Terrain">Terrain</option>
+                                    <option value="Immeuble">Immeuble</option>
+                                    <option value="Autre">Autre</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Catégorie *</label>
+                                  <select
+                                    value={propertyFormData.category}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, category: e.target.value as 'SALE' | 'RENT' }))}
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:border-brand-gold/50 outline-none transition-all"
+                                  >
+                                    <option value="SALE">Vente</option>
+                                    <option value="RENT">Location</option>
+                                  </select>
+                                </div>
+                              </div>
+
+                              {/* Prix */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Prix affiché</label>
+                                  <input
+                                    type="text"
+                                    value={propertyFormData.price}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, price: e.target.value }))}
+                                    placeholder="Ex: 2 500 000 DH"
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Prix numérique (DH)</label>
+                                  <input
+                                    type="number"
+                                    value={propertyFormData.priceNumeric || ''}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, priceNumeric: parseInt(e.target.value) || 0 }))}
+                                    placeholder="2500000"
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Localisation */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Quartier/Zone</label>
+                                  <input
+                                    type="text"
+                                    value={propertyFormData.location}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, location: e.target.value }))}
+                                    placeholder="Ex: Anfa, Racine"
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Ville</label>
+                                  <input
+                                    type="text"
+                                    value={propertyFormData.city}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, city: e.target.value }))}
+                                    placeholder="Casablanca"
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Caractéristiques */}
+                              <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Chambres</label>
+                                  <input
+                                    type="number"
+                                    value={propertyFormData.beds || ''}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, beds: parseInt(e.target.value) || 0 }))}
+                                    placeholder="0"
+                                    min="0"
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Salles de bain</label>
+                                  <input
+                                    type="number"
+                                    value={propertyFormData.baths || ''}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, baths: parseInt(e.target.value) || 0 }))}
+                                    placeholder="0"
+                                    min="0"
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-white/50 mb-1.5">Surface (m²)</label>
+                                  <input
+                                    type="number"
+                                    value={propertyFormData.areaNumeric || ''}
+                                    onChange={(e) => setPropertyFormData(prev => ({ ...prev, areaNumeric: parseInt(e.target.value) || 0, area: e.target.value ? `${e.target.value} m²` : '' }))}
+                                    placeholder="120"
+                                    min="0"
+                                    className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                  />
+                                </div>
+                              </div>
+
+                              {/* Image principale */}
+                              <div>
+                                <label className="block text-xs text-white/50 mb-1.5">URL de l'image principale</label>
+                                <input
+                                  type="url"
+                                  value={propertyFormData.image}
+                                  onChange={(e) => setPropertyFormData(prev => ({ ...prev, image: e.target.value }))}
+                                  placeholder="https://example.com/image.jpg"
+                                  className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                                />
+                              </div>
+
+                              {/* Description */}
+                              <div>
+                                <label className="block text-xs text-white/50 mb-1.5">Description</label>
+                                <textarea
+                                  value={propertyFormData.description}
+                                  onChange={(e) => setPropertyFormData(prev => ({ ...prev, description: e.target.value }))}
+                                  placeholder="Décrivez le bien..."
+                                  rows={3}
+                                  className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all resize-none"
+                                />
+                              </div>
+
+                              {/* Actions */}
                               <div className="flex gap-3 pt-4 border-t border-white/[0.06]">
                                 <button
                                   type="button"
                                   onClick={() => setShowPropertyModal(false)}
-                                  className="flex-1 py-3 rounded-lg text-white/60 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all"
+                                  disabled={propertyFormLoading}
+                                  className="flex-1 py-3 rounded-lg text-white/60 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all disabled:opacity-50"
                                 >
                                   Annuler
                                 </button>
                                 <button
                                   type="submit"
-                                  className="flex-1 py-3 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-lg hover:shadow-lg hover:shadow-brand-gold/25 transition-all flex items-center justify-center gap-2"
+                                  disabled={propertyFormLoading}
+                                  className="flex-1 py-3 bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold rounded-lg hover:shadow-lg hover:shadow-brand-gold/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                  <Save size={18} />
+                                  {propertyFormLoading ? (
+                                    <RefreshCw size={18} className="animate-spin" />
+                                  ) : (
+                                    <Save size={18} />
+                                  )}
                                   Enregistrer
                                 </button>
                               </div>

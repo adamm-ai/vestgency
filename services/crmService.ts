@@ -323,7 +323,164 @@ const STORAGE_KEYS = {
   CHAT_SESSIONS: 'athome_crm_chat_sessions',
   DEMANDS: 'athome_crm_demands',
   DEMAND_MATCHES: 'athome_crm_demand_matches',
+  PROPERTIES_CACHE: 'athome_properties',
+  PROPERTIES_CACHE_TIMESTAMP: 'athome_properties_timestamp',
 };
+
+// ============================================================================
+// PROPERTIES CACHE & FETCHING
+// ============================================================================
+
+// Cache expiry: 5 minutes (properties don't change often)
+const PROPERTIES_CACHE_EXPIRY_MS = 5 * 60 * 1000;
+
+// RAG API URL for fetching properties
+const getRAGApiUrl = (): string => {
+  // Check if we're in a browser environment with import.meta
+  if (typeof window !== 'undefined') {
+    // Try to get from Vite env, fallback to common ports
+    const envUrl = (import.meta as any)?.env?.VITE_RAG_API_URL;
+    if (envUrl) return envUrl;
+  }
+  // Default fallback - try production URL first, then localhost
+  return 'https://athome-rag.onrender.com';
+};
+
+/**
+ * Fetches properties from the RAG API and caches them in localStorage.
+ * This ensures the matching engine always has access to properties data,
+ * regardless of which entry point created the Demand (Chatbot, Form, or Admin).
+ *
+ * @returns Promise<PropertyData[]> - Array of properties
+ */
+export async function fetchAndCacheProperties(): Promise<PropertyData[]> {
+  const cached = localStorage.getItem(STORAGE_KEYS.PROPERTIES_CACHE);
+  const timestamp = localStorage.getItem(STORAGE_KEYS.PROPERTIES_CACHE_TIMESTAMP);
+
+  // Check if cache is valid
+  if (cached && timestamp) {
+    const cacheAge = Date.now() - parseInt(timestamp, 10);
+    if (cacheAge < PROPERTIES_CACHE_EXPIRY_MS) {
+      try {
+        const properties = JSON.parse(cached);
+        console.log(`[CRM] Using cached properties (${properties.length} items, age: ${Math.round(cacheAge / 1000)}s)`);
+        return properties;
+      } catch {
+        // Cache corrupted, will refetch
+      }
+    }
+  }
+
+  // Fetch fresh data from RAG API
+  const ragUrl = getRAGApiUrl();
+  const endpoints = [
+    `${ragUrl}/api/properties?limit=500`,
+    `${ragUrl}/properties`,
+  ];
+
+  for (const endpoint of endpoints) {
+    try {
+      console.log(`[CRM] Fetching properties from: ${endpoint}`);
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' },
+      });
+
+      if (!response.ok) continue;
+
+      const data = await response.json();
+
+      // Handle different response formats
+      let properties: PropertyData[] = [];
+      if (Array.isArray(data)) {
+        properties = data;
+      } else if (data.results && Array.isArray(data.results)) {
+        properties = data.results;
+      } else if (data.data && Array.isArray(data.data)) {
+        properties = data.data;
+      } else if (data.properties && Array.isArray(data.properties)) {
+        properties = data.properties;
+      }
+
+      // Map to PropertyData format
+      properties = properties.map((p: any) => ({
+        id: p.id || p._id || generateId(),
+        name: p.name || p.title,
+        type: p.type,
+        category: p.category || 'SALE',
+        price: p.price,
+        priceNumeric: p.priceNumeric || (typeof p.price === 'number' ? p.price : parseInt(String(p.price).replace(/\D/g, '')) || undefined),
+        location: p.location || p.neighborhood,
+        city: p.city,
+        beds: p.beds || p.bedrooms,
+        baths: p.baths || p.bathrooms,
+        surface: p.areaNumeric || p.surface || p.area,
+        amenities: p.features || p.amenities || [],
+      }));
+
+      // Cache the results
+      if (properties.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.PROPERTIES_CACHE, JSON.stringify(properties));
+        localStorage.setItem(STORAGE_KEYS.PROPERTIES_CACHE_TIMESTAMP, Date.now().toString());
+        console.log(`[CRM] Cached ${properties.length} properties from API`);
+      }
+
+      return properties;
+    } catch (error) {
+      console.warn(`[CRM] Failed to fetch from ${endpoint}:`, error);
+      continue;
+    }
+  }
+
+  // If all fetches fail, try to return stale cache
+  if (cached) {
+    try {
+      const properties = JSON.parse(cached);
+      console.log(`[CRM] Using stale cache (${properties.length} properties)`);
+      return properties;
+    } catch {
+      // Cache corrupted
+    }
+  }
+
+  console.warn('[CRM] No properties available for matching');
+  return [];
+}
+
+/**
+ * Gets cached properties synchronously (for immediate access).
+ * Falls back to empty array if cache doesn't exist.
+ */
+export function getCachedProperties(): PropertyData[] {
+  try {
+    const cached = localStorage.getItem(STORAGE_KEYS.PROPERTIES_CACHE);
+    return cached ? JSON.parse(cached) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Invalidates the properties cache, forcing a fresh fetch on next access.
+ */
+export function invalidatePropertiesCache(): void {
+  localStorage.removeItem(STORAGE_KEYS.PROPERTIES_CACHE_TIMESTAMP);
+  console.log('[CRM] Properties cache invalidated');
+}
+
+/**
+ * Initializes the CRM service by preloading properties.
+ * Call this on app startup to ensure matching works immediately.
+ */
+export async function initializeCRM(): Promise<void> {
+  console.log('[CRM] Initializing CRM service...');
+  try {
+    const properties = await fetchAndCacheProperties();
+    console.log(`[CRM] CRM initialized with ${properties.length} properties`);
+  } catch (error) {
+    console.error('[CRM] Failed to initialize:', error);
+  }
+}
 
 // ============================================================================
 // UTILITY FUNCTIONS
@@ -1339,8 +1496,17 @@ export function createDemand(data: Partial<Demand>): Demand {
     message: `${newDemand.firstName} ${newDemand.lastName} - ${newDemand.type === 'property_search' ? 'Recherche de bien' : newDemand.type === 'property_sale' ? 'Vente de bien' : 'Gestion locative'}`,
   });
 
-  // Trigger matching check
-  setTimeout(() => runMatchingEngine(newDemand.id), 1000);
+  // Trigger async matching check - ensures properties are fetched first
+  // Uses async version to guarantee fresh properties data for accurate matching
+  setTimeout(() => {
+    runMatchingEngineAsync(newDemand.id)
+      .then(result => {
+        if (result.newMatches > 0) {
+          console.log(`[CRM] Matching completed for demand ${newDemand.id}: ${result.newMatches} matches found`);
+        }
+      })
+      .catch(err => console.error('[CRM] Matching failed for demand:', err));
+  }, 500);
 
   console.log('[CRM] Created demand:', newDemand.id);
   return newDemand;
@@ -1669,19 +1835,22 @@ export function matchSellerWithBuyers(demandId: string): DemandMatch[] {
   return matches.sort((a, b) => b.matchScore - a.matchScore);
 }
 
-export function runMatchingEngine(demandId?: string): { newMatches: number; totalChecked: number } {
+/**
+ * Runs the matching engine for a specific demand or all active demands.
+ * This is the ASYNC version that ensures properties are fetched before matching.
+ *
+ * @param demandId - Optional specific demand to match. If omitted, runs for all active demands.
+ * @returns Promise with match results
+ */
+export async function runMatchingEngineAsync(demandId?: string): Promise<{ newMatches: number; totalChecked: number }> {
   const existingMatches = getMatchesFromStorage();
   let newMatches: DemandMatch[] = [];
   let totalChecked = 0;
 
-  // Get properties from localStorage or a global state
-  const propertiesData = localStorage.getItem('athome_properties');
-  let properties: PropertyData[] = [];
-  try {
-    properties = propertiesData ? JSON.parse(propertiesData) : [];
-  } catch (error) {
-    console.error('[CRM] Error parsing properties data:', error);
-  }
+  // CRITICAL: Fetch and cache properties before matching
+  // This ensures matching works regardless of entry point (Chatbot, Form, Admin)
+  const properties = await fetchAndCacheProperties();
+  console.log(`[CRM Matching] Running with ${properties.length} properties`);
 
   if (demandId) {
     // Match specific demand
@@ -1762,6 +1931,70 @@ export function runMatchingEngine(demandId?: string): { newMatches: number; tota
   }
 
   return { newMatches: newMatches.length, totalChecked };
+}
+
+/**
+ * Synchronous wrapper for backward compatibility.
+ * Triggers the async matching engine and returns immediately.
+ * Use runMatchingEngineAsync() for awaitable results.
+ *
+ * @param demandId - Optional specific demand to match
+ * @returns Immediate result based on cached properties
+ */
+export function runMatchingEngine(demandId?: string): { newMatches: number; totalChecked: number } {
+  // First, try with cached properties for immediate response
+  const cachedProperties = getCachedProperties();
+
+  if (cachedProperties.length > 0) {
+    // Run sync with cached data
+    const existingMatches = getMatchesFromStorage();
+    let newMatches: DemandMatch[] = [];
+    let totalChecked = 0;
+
+    if (demandId) {
+      const demand = getDemandById(demandId);
+      if (demand) {
+        if (demand.type === 'property_search') {
+          const matches = findMatchesForDemand(demandId, cachedProperties);
+          newMatches = matches.filter(m =>
+            !existingMatches.some(e =>
+              e.demandId === m.demandId && e.matchedEntityId === m.matchedEntityId
+            )
+          );
+          totalChecked = cachedProperties.length;
+        } else {
+          const matches = matchSellerWithBuyers(demandId);
+          newMatches = matches.filter(m =>
+            !existingMatches.some(e =>
+              e.demandId === m.demandId && e.matchedEntityId === m.matchedEntityId
+            )
+          );
+          totalChecked = getDemands({ type: 'property_search' }).length;
+        }
+
+        if (newMatches.length > 0) {
+          updateDemand(demandId, {
+            status: 'matched',
+            matchedPropertyIds: newMatches.map(m => m.matchedEntityId),
+            matchScore: newMatches[0]?.matchScore,
+            lastMatchCheck: formatDate(new Date()),
+          });
+          saveMatchesToStorage([...existingMatches, ...newMatches]);
+          console.log(`[CRM Matching] Found ${newMatches.length} matches (sync with cache)`);
+        }
+      }
+    }
+
+    return { newMatches: newMatches.length, totalChecked };
+  }
+
+  // No cache - trigger async fetch and matching
+  console.log('[CRM Matching] No cached properties, triggering async fetch...');
+  runMatchingEngineAsync(demandId).catch(err =>
+    console.error('[CRM Matching] Async matching failed:', err)
+  );
+
+  return { newMatches: 0, totalChecked: 0 };
 }
 
 export function getMatchesForDemand(demandId: string): DemandMatch[] {
@@ -2361,10 +2594,10 @@ export function clearAllSyntheticData(): { leadsDeleted: number; demandsDeleted:
 }
 
 // ============================================================================
-// INITIALIZATION
+// INITIALIZATION (Synchronous - for basic setup)
 // ============================================================================
 
-export function initializeCRM(): void {
+function initializeCRMSync(): void {
   // Ensure default agent exists
   getAgentsFromStorage();
 
@@ -2386,10 +2619,10 @@ export function initializeCRM(): void {
     });
   }
 
-  console.log('[CRM] At Home CRM initialized with Demands & Matching Engine');
+  console.log('[CRM] At Home CRM initialized (sync)');
 }
 
-// Auto-initialize
+// Auto-initialize sync part
 if (typeof window !== 'undefined') {
-  initializeCRM();
+  initializeCRMSync();
 }
