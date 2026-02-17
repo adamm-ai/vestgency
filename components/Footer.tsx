@@ -97,23 +97,23 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
 
       {/* Main Footer */}
       <div className="container mx-auto px-4 sm:px-6 py-10 sm:py-12 md:py-16">
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-8 lg:gap-8">
 
           {/* Brand - 2026 */}
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-4 mb-8">
+          <div className="sm:col-span-2 lg:col-span-1 text-center sm:text-left">
+            <div className="flex items-center justify-center sm:justify-start gap-4 mb-6 sm:mb-8">
               <img
                 src="/logo-athome.png"
                 alt="At Home Real Estate Agency"
-                className="h-[60px] object-contain"
+                className="h-[50px] sm:h-[60px] object-contain"
               />
             </div>
-            <p className="text-white/60 text-sm font-light leading-relaxed mb-8">
+            <p className="text-white/60 text-sm font-light leading-relaxed mb-6 sm:mb-8 max-w-xs mx-auto sm:mx-0">
               Votre partenaire de confiance pour tous vos projets immobiliers à Casablanca et dans tout le Maroc.
             </p>
 
             {/* Social Links */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 justify-center sm:justify-start">
               {SOCIAL_LINKS.map((social, i) => (
                 <SocialLink key={i} {...social} />
               ))}
@@ -121,16 +121,16 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           </div>
 
           {/* Navigation - 2026 */}
-          <div>
-            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-5 sm:mb-7">Navigation</h4>
-            <ul className="space-y-1 sm:space-y-2">
+          <div className="text-center sm:text-left">
+            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-4 sm:mb-7">Navigation</h4>
+            <ul className="space-y-1">
               {FOOTER_NAVIGATION.map((item, i) => (
                 <li key={i}>
                   <button
                     onClick={() => scrollTo(item.id)}
-                    className="text-sm text-white/60 hover:text-white active:text-brand-primary hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group py-2 min-h-[44px]"
+                    className="text-sm text-white/60 hover:text-white active:text-brand-primary sm:hover:translate-x-2 transition-all duration-300 flex items-center justify-center sm:justify-start gap-3 group py-2.5 sm:py-2 min-h-[44px] w-full touch-manipulation"
                   >
-                    <span className="w-2 h-2 bg-brand-primary/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300" />
+                    <span className="w-2 h-2 bg-brand-primary/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300 hidden sm:block" />
                     {item.label}
                   </button>
                 </li>
@@ -139,16 +139,16 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           </div>
 
           {/* Services - 2026 */}
-          <div>
-            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-5 sm:mb-7">Nos Services</h4>
-            <ul className="space-y-1 sm:space-y-2">
+          <div className="text-center sm:text-left">
+            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-4 sm:mb-7">Nos Services</h4>
+            <ul className="space-y-1">
               {FOOTER_SERVICES.map((service, i) => (
                 <li key={i}>
                   <a
                     href="#"
-                    className="text-sm text-white/60 hover:text-white active:text-brand-primary hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group py-2 min-h-[44px]"
+                    className="text-sm text-white/60 hover:text-white active:text-brand-primary sm:hover:translate-x-2 transition-all duration-300 flex items-center justify-center sm:justify-start gap-3 group py-2.5 sm:py-2 min-h-[44px] touch-manipulation"
                   >
-                    <span className="w-2 h-2 bg-brand-primary/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300" />
+                    <span className="w-2 h-2 bg-brand-primary/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300 hidden sm:block" />
                     {service}
                   </a>
                 </li>
@@ -157,34 +157,34 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           </div>
 
           {/* Contact - 2026 */}
-          <div>
-            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-7">Contact</h4>
-            <div className="space-y-5">
-              <div className="flex items-start gap-4 group">
-                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 transition-all duration-300">
-                  <MapPin size={16} className="text-brand-primary" />
+          <div className="sm:col-span-2 lg:col-span-1">
+            <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-4 sm:mb-7 text-center sm:text-left">Contact</h4>
+            <div className="space-y-4 sm:space-y-5">
+              <div className="flex items-start gap-4 group justify-center sm:justify-start">
+                <div className="w-11 h-11 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px] rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 transition-all duration-300">
+                  <MapPin size={18} className="text-brand-primary sm:w-4 sm:h-4" />
                 </div>
-                <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors">
+                <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors text-left">
                   Boulevard Anfa, Quartier Racine<br />
                   Casablanca, Maroc
                 </p>
               </div>
-              <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 transition-all duration-300">
-                  <Phone size={16} className="text-brand-primary" />
+              <a href="tel:+212522000000" className="flex items-center gap-4 group justify-center sm:justify-start min-h-[44px] touch-manipulation">
+                <div className="w-11 h-11 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px] rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 group-active:border-brand-primary/30 transition-all duration-300">
+                  <Phone size={18} className="text-brand-primary sm:w-4 sm:h-4" />
                 </div>
-                <a href="tel:+212522000000" className="text-sm text-white/60 hover:text-white transition-colors duration-300">
+                <span className="text-sm text-white/60 group-hover:text-white group-active:text-brand-primary transition-colors duration-300">
                   +212 5 22 00 00 00
-                </a>
-              </div>
-              <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 transition-all duration-300">
-                  <Mail size={16} className="text-brand-primary" />
+                </span>
+              </a>
+              <a href="mailto:contact@athome.com" className="flex items-center gap-4 group justify-center sm:justify-start min-h-[44px] touch-manipulation">
+                <div className="w-11 h-11 sm:w-10 sm:h-10 min-w-[44px] min-h-[44px] sm:min-w-[40px] sm:min-h-[40px] rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 group-active:border-brand-primary/30 transition-all duration-300">
+                  <Mail size={18} className="text-brand-primary sm:w-4 sm:h-4" />
                 </div>
-                <a href="mailto:contact@athome.com" className="text-sm text-white/60 hover:text-white transition-colors duration-300">
+                <span className="text-sm text-white/60 group-hover:text-white group-active:text-brand-primary transition-colors duration-300">
                   contact@athome.com
-                </a>
-              </div>
+                </span>
+              </a>
             </div>
           </div>
 
@@ -193,31 +193,34 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
 
       {/* Bottom Bar - 2026 */}
       <div className="border-t border-white/[0.06]">
-        <div className="container mx-auto px-6 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <p className="text-xs text-white/50 font-medium">
-              &copy; {new Date().getFullYear()} At Home Real Estate Agency. Tous droits réservés.
-            </p>
-
-            <div className="flex items-center gap-4 sm:gap-8 flex-wrap justify-center">
-              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="flex flex-col items-center gap-6 sm:gap-4 md:flex-row md:justify-between">
+            {/* Legal links - Stack vertically on mobile */}
+            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-6 order-2 md:order-1">
+              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300 touch-manipulation">
                 Mentions légales
               </a>
-              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300">
+              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300 touch-manipulation">
                 Confidentialité
               </a>
-              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300">
+              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300 touch-manipulation">
                 CGV
               </a>
             </div>
 
-            <div className="flex items-center gap-5">
+            {/* Copyright */}
+            <p className="text-xs text-white/50 font-medium text-center order-3 md:order-2">
+              &copy; {new Date().getFullYear()} At Home Real Estate Agency. Tous droits réservés.
+            </p>
+
+            {/* Admin and tagline */}
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 order-1 md:order-3">
               <button
                 onClick={onAdminClick}
-                className="liquid-glass flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-white/60 hover:text-brand-primary hover:border-brand-primary/30 active:scale-95 active:text-brand-primary transition-all duration-300 group"
+                className="liquid-glass flex items-center gap-2 px-5 sm:px-4 py-3 sm:py-2.5 min-h-[48px] sm:min-h-[44px] rounded-xl text-white/60 hover:text-brand-primary hover:border-brand-primary/30 active:scale-95 active:text-brand-primary transition-all duration-300 group touch-manipulation"
               >
-                <Shield size={16} className="group-hover:text-brand-primary transition-colors" />
-                <span className="text-xs sm:text-sm font-semibold">Admin</span>
+                <Shield size={18} className="group-hover:text-brand-primary transition-colors sm:w-4 sm:h-4" />
+                <span className="text-sm font-semibold">Admin</span>
               </button>
               <div className="flex items-center gap-2 text-xs text-white/50">
                 <span>Conçu avec</span>

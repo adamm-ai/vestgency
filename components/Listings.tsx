@@ -207,17 +207,17 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
 
   return (
     <div
-      className="card-2026 relative overflow-hidden h-full flex flex-col group hover-lift cursor-pointer"
+      className="card-2026 relative overflow-hidden h-full flex flex-col group hover-lift cursor-pointer touch-manipulation"
       onClick={handleClick}
     >
-      {/* Image Area */}
-      <div className="relative h-48 overflow-hidden rounded-t-[24px]">
-        {/* Scrollable Image Container */}
+      {/* Image Area - Taller on mobile for better visual impact */}
+      <div className="relative h-56 sm:h-48 md:h-52 overflow-hidden rounded-t-[20px] sm:rounded-t-[24px]">
+        {/* Scrollable Image Container - Optimized for touch swipe on mobile */}
         <div
           ref={scrollContainerRef}
           onScroll={handleScroll}
-          className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide touch-pan-x"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' }}
         >
           {allImages.map((img, index) => (
             <div key={index} className="flex-shrink-0 w-full h-full snap-center">
@@ -230,9 +230,9 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
           ))}
         </div>
 
-        {/* Category Badge - Top Left */}
-        <div className="absolute top-3 left-3 z-20">
-          <span className={`px-3 py-1.5 rounded-full text-white text-[11px] font-bold uppercase tracking-wide shadow-lg ${
+        {/* Category Badge - Top Left - Larger on mobile for visibility */}
+        <div className="absolute top-3 left-3 sm:top-3 sm:left-3 z-20">
+          <span className={`px-3.5 py-2 sm:px-3 sm:py-1.5 rounded-full text-white text-xs sm:text-[11px] font-bold uppercase tracking-wide shadow-lg ${
             isRent
               ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
               : 'bg-gradient-to-r from-brand-primary to-cyan-400'
@@ -241,121 +241,122 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
           </span>
         </div>
 
-        {/* Like Button - Top Right */}
+        {/* Like Button - Top Right - Touch-friendly size on mobile (min 44x44) */}
         <button
           onClick={handleLike}
-          className={`absolute top-3 right-3 z-20 w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-90 ${
+          className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-20 w-11 h-11 sm:w-9 sm:h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-90 ${
             isLiked ? 'bg-red-500 text-white' : 'bg-black/40 text-white hover:bg-black/60'
           }`}
           aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         >
-          <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+          <Heart size={18} className="sm:w-4 sm:h-4" fill={isLiked ? 'currentColor' : 'none'} />
         </button>
 
-        {/* Navigation Arrows (only show if multiple images) */}
+        {/* Navigation Arrows (only show if multiple images) - Touch-friendly on mobile */}
         {allImages.length > 1 && (
           <>
             <button
               onClick={handlePrevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation"
               aria-label="Image précédente"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={20} className="sm:w-4 sm:h-4" />
             </button>
             <button
               onClick={handleNextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation"
               aria-label="Image suivante"
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={20} className="sm:w-4 sm:h-4" />
             </button>
           </>
         )}
 
-        {/* Dot Indicators */}
+        {/* Dot Indicators - Larger touch targets on mobile */}
         {allImages.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 items-center">
+          <div className="absolute bottom-3 sm:bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-1.5 items-center px-2 py-1.5 sm:p-0 rounded-full bg-black/20 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none">
             {allImages.slice(0, 5).map((_, index) => (
               <button
                 key={index}
                 onClick={(e) => handleDotClick(e, index)}
-                className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                className={`rounded-full transition-all duration-200 touch-manipulation ${
                   index === currentImageIndex
-                    ? 'bg-white w-4'
-                    : 'bg-white/50 hover:bg-white/70'
+                    ? 'bg-white w-5 h-2 sm:w-4 sm:h-1.5'
+                    : 'bg-white/50 hover:bg-white/70 w-2 h-2 sm:w-1.5 sm:h-1.5'
                 }`}
+                style={{ minWidth: '8px', minHeight: '8px' }}
               />
             ))}
             {allImages.length > 5 && (
-              <span className="text-white/70 text-[10px] ml-1">+{allImages.length - 5}</span>
+              <span className="text-white/80 text-xs sm:text-[10px] ml-1 font-medium">+{allImages.length - 5}</span>
             )}
           </div>
         )}
       </div>
 
-      {/* Content Area */}
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Price - Prominent */}
-        <div className="flex items-baseline justify-between mb-2">
-          <span className="text-xl font-display font-bold text-brand-gold">
+      {/* Content Area - Enhanced padding and spacing for mobile */}
+      <div className="p-4 sm:p-4 flex-1 flex flex-col">
+        {/* Price - Prominent and larger on mobile */}
+        <div className="flex items-baseline justify-between mb-2 sm:mb-2">
+          <span className="text-2xl sm:text-xl font-display font-bold text-brand-gold">
             {displayPrice}
           </span>
           {isRent && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">/mois</span>
+            <span className="text-sm sm:text-xs text-gray-500 dark:text-gray-400 font-medium">/mois</span>
           )}
         </div>
 
-        {/* Property Type & Name */}
-        <div className="mb-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-primary/80 dark:text-brand-primary">
+        {/* Property Type Badge - More prominent on mobile */}
+        <div className="mb-2 sm:mb-2">
+          <span className="inline-block px-2.5 py-1 sm:px-0 sm:py-0 rounded-md sm:rounded-none bg-brand-primary/10 sm:bg-transparent text-xs sm:text-[10px] font-semibold uppercase tracking-wider text-brand-primary dark:text-brand-primary">
             {property.type}
           </span>
-          <h3 className="text-sm font-semibold text-brand-charcoal dark:text-white leading-tight line-clamp-2 group-hover:text-brand-gold transition-colors mt-0.5">
+          <h3 className="text-base sm:text-sm font-semibold text-brand-charcoal dark:text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-gold transition-colors mt-1.5 sm:mt-0.5">
             {property.name}
           </h3>
         </div>
 
-        {/* Location */}
-        <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 mb-3">
-          <MapPin size={12} className="text-brand-gold shrink-0" />
-          <span className="text-xs truncate">
+        {/* Location - Better readability on mobile */}
+        <div className="flex items-center gap-2 sm:gap-1.5 text-gray-600 dark:text-gray-400 mb-3 sm:mb-3">
+          <MapPin size={14} className="sm:w-3 sm:h-3 text-brand-gold shrink-0" />
+          <span className="text-sm sm:text-xs truncate">
             {property.location}{property.city ? `, ${property.city}` : ''}
           </span>
         </div>
 
-        {/* Stats - Beds, Baths, Area */}
-        <div className="flex items-center gap-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.08] mt-auto">
+        {/* Stats - Beds, Baths, Area - Larger and clearer on mobile */}
+        <div className="flex items-center gap-5 sm:gap-4 pt-3 sm:pt-3 border-t border-black/[0.06] dark:border-white/[0.08] mt-auto">
           {property.beds !== undefined && property.beds > 0 && (
-            <div className="flex items-center gap-1.5">
-              <Bed size={14} className="text-brand-gold" />
-              <span className="text-xs font-medium text-brand-charcoal dark:text-white">
+            <div className="flex items-center gap-2 sm:gap-1.5">
+              <Bed size={16} className="sm:w-3.5 sm:h-3.5 text-brand-gold" />
+              <span className="text-sm sm:text-xs font-semibold sm:font-medium text-brand-charcoal dark:text-white">
                 {property.beds} <span className="text-gray-500 dark:text-gray-400 font-normal">ch.</span>
               </span>
             </div>
           )}
           {property.baths !== undefined && property.baths > 0 && (
-            <div className="flex items-center gap-1.5">
-              <Bath size={14} className="text-brand-gold" />
-              <span className="text-xs font-medium text-brand-charcoal dark:text-white">
+            <div className="flex items-center gap-2 sm:gap-1.5">
+              <Bath size={16} className="sm:w-3.5 sm:h-3.5 text-brand-gold" />
+              <span className="text-sm sm:text-xs font-semibold sm:font-medium text-brand-charcoal dark:text-white">
                 {property.baths} <span className="text-gray-500 dark:text-gray-400 font-normal">sdb.</span>
               </span>
             </div>
           )}
           {(property.area || property.areaNumeric) && (
-            <div className="flex items-center gap-1.5">
-              <Maximize size={14} className="text-brand-gold" />
-              <span className="text-xs font-medium text-brand-charcoal dark:text-white">
+            <div className="flex items-center gap-2 sm:gap-1.5">
+              <Maximize size={16} className="sm:w-3.5 sm:h-3.5 text-brand-gold" />
+              <span className="text-sm sm:text-xs font-semibold sm:font-medium text-brand-charcoal dark:text-white">
                 {property.area || `${property.areaNumeric} m²`}
               </span>
             </div>
           )}
         </div>
 
-        {/* Features Tags */}
+        {/* Features Tags - Better touch targets on mobile */}
         {property.features && property.features.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-3">
+          <div className="flex flex-wrap gap-2 sm:gap-1.5 mt-3 sm:mt-3">
             {property.features.slice(0, 3).map((feature, i) => (
-              <span key={i} className="px-2 py-1 rounded-md bg-brand-gold/10 text-brand-gold text-[9px] font-semibold uppercase">
+              <span key={i} className="px-2.5 py-1.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-md bg-brand-gold/10 text-brand-gold text-[10px] sm:text-[9px] font-semibold uppercase">
                 {feature}
               </span>
             ))}
@@ -718,44 +719,99 @@ const Listings: React.FC = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-white/[0.01] to-transparent rounded-full blur-[100px] pointer-events-none dark:block hidden" />
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        {/* Header - 2026 */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-12 gap-8">
+        {/* Primary Category Tabs - VENTE / LOCATION - Prominent Toggle */}
+        <div className="mb-8 sm:mb-10">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-0">
+            {/* Vente Tab */}
+            <button
+              onClick={() => handleTabChange('SALE')}
+              className={`relative group w-full sm:w-auto px-8 sm:px-12 py-4 sm:py-5 rounded-2xl sm:rounded-l-2xl sm:rounded-r-none transition-all duration-400 touch-manipulation ${
+                activeTab === 'SALE'
+                  ? 'bg-gradient-to-br from-brand-primary via-brand-primary to-cyan-500 text-white shadow-2xl shadow-brand-primary/40 scale-[1.02] z-10'
+                  : 'bg-white/60 dark:bg-white/5 text-brand-charcoal/60 dark:text-white/50 hover:bg-white dark:hover:bg-white/10 hover:text-brand-charcoal dark:hover:text-white border border-gray-200/50 dark:border-white/10'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+                <Home size={24} className={`sm:w-7 sm:h-7 ${activeTab === 'SALE' ? 'text-white' : 'text-brand-primary'}`} />
+                <span className="text-base sm:text-lg font-display font-bold tracking-wide">Vente</span>
+                <span className={`text-[10px] sm:text-xs font-medium ${activeTab === 'SALE' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                  Biens a vendre
+                </span>
+              </div>
+              {activeTab === 'SALE' && (
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-brand-primary rotate-45 hidden sm:block" />
+              )}
+            </button>
+
+            {/* Location Tab */}
+            <button
+              onClick={() => handleTabChange('RENT')}
+              className={`relative group w-full sm:w-auto px-8 sm:px-12 py-4 sm:py-5 rounded-2xl sm:rounded-r-2xl sm:rounded-l-none transition-all duration-400 touch-manipulation ${
+                activeTab === 'RENT'
+                  ? 'bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-400 text-white shadow-2xl shadow-emerald-500/40 scale-[1.02] z-10'
+                  : 'bg-white/60 dark:bg-white/5 text-brand-charcoal/60 dark:text-white/50 hover:bg-white dark:hover:bg-white/10 hover:text-brand-charcoal dark:hover:text-white border border-gray-200/50 dark:border-white/10'
+              }`}
+            >
+              <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+                <Building2 size={24} className={`sm:w-7 sm:h-7 ${activeTab === 'RENT' ? 'text-white' : 'text-emerald-500'}`} />
+                <span className="text-base sm:text-lg font-display font-bold tracking-wide">Location</span>
+                <span className={`text-[10px] sm:text-xs font-medium ${activeTab === 'RENT' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
+                  Biens a louer
+                </span>
+              </div>
+              {activeTab === 'RENT' && (
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-emerald-500 rotate-45 hidden sm:block" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Header with Category Context */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
           <div>
-            <span className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.35em] mb-4 block">
-              {total} Annonces
-            </span>
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-display text-brand-charcoal dark:text-white mb-3">
-              Nos <span className="text-gradient-2026 italic font-serif">Biens</span>
+            {/* Category Badge */}
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 ${
+              activeTab === 'SALE'
+                ? 'bg-brand-primary/10 text-brand-primary'
+                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+            }`}>
+              {activeTab === 'SALE' ? <Home size={16} /> : <Building2 size={16} />}
+              <span className="text-xs font-bold uppercase tracking-wider">
+                {activeTab === 'SALE' ? 'Vente' : 'Location'}
+              </span>
+              <span className="text-xs font-medium opacity-70">
+                - {total} annonces
+              </span>
+            </div>
+
+            <h2 className="text-2xl md:text-4xl lg:text-5xl font-display text-brand-charcoal dark:text-white mb-2">
+              {activeTab === 'SALE' ? (
+                <>Biens a <span className="text-gradient-2026 italic font-serif">Vendre</span></>
+              ) : (
+                <>Biens en <span className="text-emerald-500 italic font-serif">Location</span></>
+              )}
             </h2>
             <p className="text-brand-charcoal/60 dark:text-white/60 text-sm md:text-base font-light max-w-lg">
-              Découvrez notre sélection de {activeTab === 'SALE' ? 'biens à vendre' : 'locations'} à Casablanca
+              {activeTab === 'SALE'
+                ? 'Decouvrez notre selection de proprietes a vendre a Casablanca et ses environs'
+                : 'Trouvez votre location ideale parmi nos appartements, villas et locaux commerciaux'
+              }
             </p>
           </div>
 
-          {/* Category Tabs - 2026 Glass */}
-          <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            <div className="liquid-glass-2 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl flex relative">
-              <div
-                className={`absolute top-1 sm:top-1.5 bottom-1 sm:bottom-1.5 bg-gradient-to-r from-brand-primary to-cyan-400 rounded-lg sm:rounded-xl shadow-lg shadow-brand-primary/30 transition-all duration-400 ease-out ${
-                  activeTab === 'SALE' ? 'left-1 sm:left-1.5 w-[calc(50%-4px)] sm:w-[calc(50%-6px)]' : 'left-[50%] w-[calc(50%-4px)] sm:w-[calc(50%-6px)]'
-                }`}
-              />
-              <button
-                onClick={() => handleTabChange('SALE')}
-                className={`relative z-10 px-6 sm:px-8 py-3.5 sm:py-3 min-h-[44px] text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg sm:rounded-xl active:scale-95 ${
-                  activeTab === 'SALE' ? 'text-black' : 'text-gray-500 dark:text-white/60 hover:text-brand-charcoal dark:hover:text-white'
-                }`}
-              >
-                Vente
-              </button>
-              <button
-                onClick={() => handleTabChange('RENT')}
-                className={`relative z-10 px-6 sm:px-8 py-3.5 sm:py-3 min-h-[44px] text-xs font-bold uppercase tracking-wider transition-all duration-300 rounded-lg sm:rounded-xl active:scale-95 ${
-                  activeTab === 'RENT' ? 'text-black' : 'text-gray-500 dark:text-white/60 hover:text-brand-charcoal dark:hover:text-white'
-                }`}
-              >
-                Location
-              </button>
+          {/* Quick Stats */}
+          <div className="flex gap-4">
+            <div className={`px-5 py-3 rounded-xl ${
+              activeTab === 'SALE'
+                ? 'bg-brand-primary/5 border border-brand-primary/20'
+                : 'bg-emerald-500/5 border border-emerald-500/20'
+            }`}>
+              <span className={`text-2xl font-bold ${
+                activeTab === 'SALE' ? 'text-brand-primary' : 'text-emerald-500'
+              }`}>{total}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 block">
+                {activeTab === 'SALE' ? 'A vendre' : 'A louer'}
+              </span>
             </div>
           </div>
         </div>
@@ -854,11 +910,11 @@ const Listings: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Cards Grid - Staggered Entrance Animation */}
+            {/* Cards Grid - Full-width single column on mobile, responsive layout on larger screens */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={`grid-${activeTab}-${activeType}-${page}`}
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 md:gap-6"
                 variants={prefersReducedMotion ? undefined : gridVariants}
                 initial={prefersReducedMotion ? false : "hidden"}
                 animate="visible"
