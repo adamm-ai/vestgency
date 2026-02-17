@@ -1646,11 +1646,11 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
           <div className="p-6 border-b border-white/[0.06]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-gold to-cyan-400 flex items-center justify-center">
-                  <span className="text-black font-bold">V</span>
-                </div>
                 <div>
-                  <h1 className="text-white font-display font-bold">Vestate AI</h1>
+                  <h1 className="text-xl font-tt-commons font-bold tracking-tight">
+                    <span className="text-white">Vestate</span>
+                    <span className="text-white/60 ml-1">AI</span>
+                  </h1>
                   <span className="text-[10px] text-white/40 uppercase tracking-wider">Admin Portal</span>
                 </div>
               </div>
@@ -5228,13 +5228,13 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                           <p className="text-sm text-white/50">Informations sur l'application</p>
                         </div>
 
-                        <div className="flex items-center gap-4 p-6 bg-gradient-to-br from-brand-gold/10 to-cyan-400/10 rounded-xl border border-brand-gold/20">
-                          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-gold to-cyan-400 flex items-center justify-center">
-                            <span className="text-black font-bold text-2xl">V</span>
-                          </div>
+                        <div className="flex items-center gap-4 p-6 bg-white/[0.03] rounded-xl border border-white/[0.08]">
                           <div>
-                            <h4 className="text-xl font-bold text-white">Vestate AI</h4>
-                            <p className="text-sm text-white/60">Admin Portal</p>
+                            <h4 className="text-2xl font-tt-commons font-bold tracking-tight">
+                              <span className="text-white">Vestate</span>
+                              <span className="text-white/60 ml-1">AI</span>
+                            </h4>
+                            <p className="text-sm text-white/50 mt-1">Admin Portal</p>
                           </div>
                         </div>
 
@@ -5256,8 +5256,8 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                         </div>
 
                         <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.06]">
-                          <p className="text-sm text-white/50 text-center">
-                            Powered by Vestate AI
+                          <p className="text-sm text-white/50 text-center font-tt-commons">
+                            Powered by <span className="font-bold text-white">Vestate</span> <span className="text-white/40">AI</span>
                           </p>
                         </div>
                       </motion.div>
