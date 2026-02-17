@@ -54,9 +54,9 @@ const Hero: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-black text-white leading-tight mb-6"
+            className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-black text-white leading-tight mb-6 whitespace-nowrap"
           >
-            Votre Bien Idéal <span className="text-brand-gold font-black">Vous Attend</span>
+            Votre Bien Idéal <span className="text-brand-gold">Vous Attend</span>
           </motion.h1>
 
           {/* Subtitle */}
