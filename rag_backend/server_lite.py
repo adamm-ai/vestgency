@@ -60,6 +60,9 @@ property_ids: List[str] = []
 openai_client = None
 is_ready = False
 
+# Conversation memory for session tracking
+conversations: Dict[str, List[Dict[str, str]]] = {}
+
 # ============================================================================
 # REQUEST/RESPONSE MODELS
 # ============================================================================
@@ -319,6 +322,53 @@ def detect_intent(query: str) -> Dict[str, Any]:
     return {"intent": intent, "confidence": confidence}
 
 
+def analyze_conversation_urgency(conversation_history: List[Dict[str, str]]) -> Dict[str, Any]:
+    """Use AI to analyze conversation and detect urgency level."""
+    global openai_client
+
+    if not openai_client or len(conversation_history) < 2:
+        return {"urgency": "medium", "reason": "default"}
+
+    try:
+        conv_text = "\n".join([
+            f"{msg['role'].upper()}: {msg['content']}"
+            for msg in conversation_history[-10:]
+        ])
+
+        analysis_prompt = f"""Analyze this real estate conversation and determine the client's urgency level.
+
+CONVERSATION:
+{conv_text}
+
+Based on the conversation, determine:
+1. URGENCY: low, medium, high, or critical
+2. REASON: Brief explanation (max 20 words)
+
+Consider: explicit urgency mentions, time constraints, emotional tone, decision readiness.
+
+Respond ONLY with valid JSON:
+{{"urgency": "low|medium|high|critical", "reason": "brief explanation"}}"""
+
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": analysis_prompt}],
+            max_tokens=100,
+            temperature=0.3
+        )
+
+        result_text = response.choices[0].message.content.strip()
+        result = json.loads(result_text)
+
+        if result.get("urgency") not in ["low", "medium", "high", "critical"]:
+            result["urgency"] = "medium"
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Urgency analysis error: {e}")
+        return {"urgency": "medium", "reason": "analysis_failed"}
+
+
 # ============================================================================
 # LIFECYCLE
 # ============================================================================
@@ -389,8 +439,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Nourreska RAG API",
-    description="Semantic property search using pre-computed FAISS index",
-    version="2.0.0-production",
+    description="Semantic property search with conversation memory",
+    version="2.1.0-memory",
     default_response_class=ORJSONResponse,
     lifespan=lifespan
 )
@@ -413,7 +463,7 @@ async def health_check():
     """Health check endpoint."""
     return HealthResponse(
         status="healthy",
-        version="2.0.0-production",
+        version="2.1.0-memory",
         index_loaded=is_ready,
         total_properties=len(properties),
         embedding_model="openai/text-embedding-3-small",
@@ -654,15 +704,31 @@ async def get_filters():
 
 @app.post("/api/chat", tags=["Chatbot"])
 async def chat(message: str = "", conversation_id: str = "default", stream: bool = False):
-    """Chatbot using OpenAI."""
+    """Chatbot using OpenAI with conversation memory and urgency detection."""
+    global conversations
+
+    logger.info(f"Chat: conv={conversation_id}, msg_len={len(message)}")
+
     if not openai_client:
         return {
             "success": False,
             "response": "Chatbot non disponible. Clé OpenAI manquante.",
-            "conversation_id": conversation_id
+            "conversation_id": conversation_id,
+            "analysis": {"urgency": "medium", "reason": "default"}
         }
 
     try:
+        # Initialize conversation history if needed
+        if conversation_id not in conversations:
+            conversations[conversation_id] = []
+            logger.info(f"New conversation: {conversation_id}")
+
+        # Add user message to history
+        conversations[conversation_id].append({
+            "role": "user",
+            "content": message
+        })
+
         # Search for relevant properties
         relevant = semantic_search(message, 5)
         context = json.dumps(relevant, ensure_ascii=False) if relevant else "Aucun bien trouvé."
@@ -674,26 +740,43 @@ Voici les biens pertinents pour la requête du client:
 
 Réponds de manière professionnelle et aide le client à trouver le bien idéal."""
 
+        # Build messages with conversation history (last 6 messages for context)
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(conversations[conversation_id][-6:])
+
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message}
-            ],
+            messages=messages,
             max_tokens=500
         )
 
+        assistant_response = response.choices[0].message.content
+
+        # Add assistant response to history
+        conversations[conversation_id].append({
+            "role": "assistant",
+            "content": assistant_response
+        })
+
+        # Analyze conversation urgency (every 3+ messages)
+        urgency_analysis = {"urgency": "medium", "reason": "default"}
+        if len(conversations[conversation_id]) >= 3:
+            urgency_analysis = analyze_conversation_urgency(conversations[conversation_id])
+
         return {
             "success": True,
-            "response": response.choices[0].message.content,
-            "conversation_id": conversation_id
+            "response": assistant_response,
+            "conversation_id": conversation_id,
+            "analysis": urgency_analysis,
+            "message_count": len(conversations[conversation_id])
         }
     except Exception as e:
         logger.error(f"Chat error: {e}")
         return {
             "success": False,
             "response": f"Erreur: {str(e)}",
-            "conversation_id": conversation_id
+            "conversation_id": conversation_id,
+            "analysis": {"urgency": "medium", "reason": "error"}
         }
 
 
@@ -703,8 +786,54 @@ async def chat_status():
     return {
         "ready": openai_client is not None,
         "agent_name": "NOUR",
-        "capabilities": ["property_search", "property_details"],
+        "capabilities": ["property_search", "property_details", "urgency_detection"],
         "model": "gpt-4o-mini"
+    }
+
+
+@app.post("/api/chat/clear", tags=["Chatbot"])
+async def clear_chat(conversation_id: str = "default"):
+    """Clear conversation history for a session."""
+    global conversations
+
+    if conversation_id in conversations:
+        final_analysis = {"urgency": "medium", "reason": "session_cleared"}
+        if len(conversations[conversation_id]) >= 2:
+            final_analysis = analyze_conversation_urgency(conversations[conversation_id])
+
+        del conversations[conversation_id]
+
+        return {
+            "success": True,
+            "message": "Conversation cleared",
+            "final_analysis": final_analysis
+        }
+
+    return {
+        "success": True,
+        "message": "No conversation to clear",
+        "final_analysis": {"urgency": "medium", "reason": "no_history"}
+    }
+
+
+@app.get("/api/chat/analyze/{conversation_id}", tags=["Chatbot"])
+async def analyze_chat(conversation_id: str):
+    """Get urgency analysis for a specific conversation."""
+    global conversations
+
+    if conversation_id not in conversations or len(conversations[conversation_id]) < 2:
+        return {
+            "success": False,
+            "analysis": {"urgency": "medium", "reason": "insufficient_data"}
+        }
+
+    analysis = analyze_conversation_urgency(conversations[conversation_id])
+
+    return {
+        "success": True,
+        "conversation_id": conversation_id,
+        "message_count": len(conversations[conversation_id]),
+        "analysis": analysis
     }
 
 
