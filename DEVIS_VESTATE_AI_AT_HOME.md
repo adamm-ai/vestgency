@@ -1,12 +1,12 @@
 # DEVIS COMMERCIAL
-## Solution Vestate AI pour Nourreska
+## Solution Vestate AI pour At Home
 
 ---
 
 **Date:** 16 Février 2026
 **Validité:** 30 jours
 **Référence:** VESTATE-2026-NRK-001
-**Client:** Agence Immobilière Nourreska
+**Client:** Agence Immobilière At Home
 
 ---
 
@@ -293,7 +293,7 @@ Transformer l'expérience immobilière grâce à l'IA, en offrant aux agences un
 
 ---
 
-## 4.4 Récapitulatif Offre Complète Nourreska
+## 4.4 Récapitulatif Offre Complète At Home
 
 ### Option A: Abonnement Professional + Bundle Modules
 
@@ -384,7 +384,7 @@ Transformer l'expérience immobilière grâce à l'IA, en offrant aux agences un
 
 # 7. RECOMMANDATION
 
-Pour l'Agence Nourreska, nous recommandons:
+Pour l'Agence At Home, nous recommandons:
 
 ## **Option B: Pack Professional Lifetime + Bundle Modules**
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Transform scraped Nourreska data into website-ready format
+ * Transform scraped At Home data into website-ready format
  */
 
 const fs = require('fs');
 const path = require('path');
 
 // Read the scraped data
-const scrapedDataPath = path.join(__dirname, '../../scraper/output/nourreska_all_properties.json');
+const scrapedDataPath = path.join(__dirname, '../../scraper/output/athome_all_properties.json');
 const scrapedData = JSON.parse(fs.readFileSync(scrapedDataPath, 'utf8'));
 
 // Transform properties
@@ -114,7 +114,7 @@ const output = {
     saleCount: properties.filter(p => p.category === 'SALE').length,
     rentCount: properties.filter(p => p.category === 'RENT').length,
     generatedAt: new Date().toISOString(),
-    source: 'nourreska.com'
+    source: 'athome.com'
   },
   properties
 };

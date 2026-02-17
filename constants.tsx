@@ -2,7 +2,7 @@ import React from 'react';
 import { Property, Amenity, BlogPost } from './types';
 import { ShieldCheck, TrendingUp, Truck, HardHat, HeartHandshake, Home, Key, Building2 } from 'lucide-react';
 
-export const APP_NAME = "Nourreska";
+export const APP_NAME = "At Home";
 
 // Exemples de propriétés pour le composant Hero (les vraies données viennent du JSON)
 export const FEATURED_PROPERTIES: Property[] = [
@@ -251,7 +251,7 @@ export const BLOG_POSTS: BlogPost[] = [
 ];
 
 export const SYSTEM_INSTRUCTION = `
-Tu es l'assistant virtuel d'Nourreska, agence premium à Casablanca.
+Tu es l'assistant virtuel d'At Home, agence premium à Casablanca.
 Tu aides les clients à trouver le bien idéal avec professionnalisme et bienveillance.
 
 **Ton rôle:**

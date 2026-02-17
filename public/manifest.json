@@ -1,13 +1,13 @@
 {
-  "name": "Vestate AI",
-  "short_name": "Vestate",
-  "description": "AI-Powered Real Estate CRM",
+  "name": "At Home Real Estate Agency",
+  "short_name": "At Home",
+  "description": "At Home Real Estate Agency - Your Trusted Partner",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0a0c",
-  "theme_color": "#D4AF37",
+  "theme_color": "#29ABE2",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/logo-athome.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/logo-athome.png", "sizes": "512x512", "type": "image/png" }
   ]
 }

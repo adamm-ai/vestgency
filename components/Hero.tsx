@@ -59,7 +59,7 @@ const Hero: React.FC = () => {
 
       {/* Ambient Glow Effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-brand-tiffany/20 rounded-full blur-[180px]" />
+        <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-brand-gold/20 rounded-full blur-[180px]" />
         <div className="absolute bottom-[20%] right-[5%] w-[350px] h-[350px] bg-blue-500/15 rounded-full blur-[150px]" />
       </div>
 
@@ -100,7 +100,7 @@ const Hero: React.FC = () => {
             <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display text-white tracking-tight leading-[1.1]">
               Trouvez le bien
             </span>
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display tracking-tight leading-[1.1] bg-gradient-to-r from-brand-tiffany via-cyan-300 to-brand-tiffany bg-clip-text text-transparent">
+            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display tracking-tight leading-[1.1] bg-gradient-to-r from-brand-gold via-brand-primary-light to-brand-gold bg-clip-text text-transparent">
               de vos rêves
             </span>
           </motion.h1>
@@ -126,7 +126,7 @@ const Hero: React.FC = () => {
           >
             <div className="relative group">
               {/* Glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-tiffany/40 via-cyan-400/30 to-brand-tiffany/40 rounded-xl sm:rounded-2xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-gold/40 via-brand-primary-light/30 to-brand-gold/40 rounded-xl sm:rounded-2xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
 
               {/* Search Container */}
               <div className="relative flex items-center bg-white/[0.06] backdrop-blur-2xl rounded-xl sm:rounded-2xl border border-white/[0.1] p-1 sm:p-1.5">
@@ -141,7 +141,7 @@ const Hero: React.FC = () => {
                 </div>
                 <button
                   onClick={scrollToListings}
-                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3.5 min-h-[44px] min-w-[44px] bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-brand-tiffany/30 active:scale-95 transition-all duration-300"
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3.5 min-h-[44px] min-w-[44px] bg-gradient-to-r from-brand-gold to-brand-primary-light text-black font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-brand-gold/30 active:scale-95 transition-all duration-300"
                 >
                   <span className="hidden sm:inline">Rechercher</span>
                   <ArrowRight size={18} />
@@ -162,7 +162,7 @@ const Hero: React.FC = () => {
               <button
                 key={tag}
                 onClick={scrollToListings}
-                className="px-5 sm:px-6 py-3 sm:py-2.5 min-h-[44px] rounded-full bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-white/70 text-sm font-medium hover:bg-white/[0.1] hover:text-white hover:border-brand-tiffany/30 active:scale-95 transition-all duration-300"
+                className="px-5 sm:px-6 py-3 sm:py-2.5 min-h-[44px] rounded-full bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-white/70 text-sm font-medium hover:bg-white/[0.1] hover:text-white hover:border-brand-gold/30 active:scale-95 transition-all duration-300"
               >
                 {tag}
               </button>

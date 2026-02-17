@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# Nourreska RAG Search Server Startup Script
+# At Home RAG Search Server Startup Script
 # =============================================================================
 
 set -e
@@ -13,7 +13,7 @@ NC='\033[0m'
 
 echo -e "${BLUE}"
 echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║          NOURRESKA RAG SEARCH SYSTEM                        ║"
+echo "║          AT HOME RAG SEARCH SYSTEM                          ║"
 echo "║   FAISS + Sentence Transformers + LangChain + LangGraph     ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"

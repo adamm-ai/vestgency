@@ -104,37 +104,18 @@ const Navbar: React.FC = () => {
             href="#home"
             onClick={(e) => { e.preventDefault(); scrollTo(SectionId.HOME); }}
             className="cursor-pointer flex items-center gap-2 sm:gap-2.5 group shrink-0 min-h-[44px] py-1 active:opacity-80 transition-opacity"
-            aria-label="Nourreska - Retour à l'accueil"
+            aria-label="At Home Real Estate Agency - Retour à l'accueil"
           >
-            {/* Logo Icon */}
-            <div className={`
-              relative flex items-center justify-center
-              bg-gradient-to-br from-brand-tiffany via-cyan-400 to-brand-tiffany
-              transition-all duration-500 ease-out
-              ${isScrolled
-                ? 'w-8 h-8 rounded-xl'
-                : 'w-10 h-10 md:w-11 md:h-11 rounded-2xl'}
-              group-hover:scale-105 group-hover:shadow-lg group-hover:shadow-brand-tiffany/40
-            `}>
-              <span className={`font-display font-bold text-black transition-all duration-300 ${isScrolled ? 'text-sm' : 'text-base md:text-lg'}`}>
-                N
-              </span>
-              {/* Shine overlay */}
-              <div className="absolute inset-0 rounded-[inherit] bg-gradient-to-tr from-white/40 via-white/10 to-transparent" />
-            </div>
-
-            {/* Logo Text - Hidden when compact */}
-            <div className={`
-              flex flex-col overflow-hidden transition-all duration-500 ease-out
-              ${isScrolled ? 'w-0 opacity-0' : 'w-auto opacity-100'}
-            `}>
-              <span className="text-white font-display font-bold tracking-wide text-base md:text-lg whitespace-nowrap">
-                Nourreska
-              </span>
-              <span className="text-white/40 text-[8px] md:text-[9px] tracking-[0.12em] uppercase whitespace-nowrap">
-                Immobilier
-              </span>
-            </div>
+            {/* Logo Image */}
+            <img
+              src="/logo-athome.png"
+              alt="At Home Real Estate Agency"
+              className={`
+                transition-all duration-500 ease-out object-contain
+                ${isScrolled ? 'h-8' : 'h-10 md:h-12'}
+                group-hover:scale-105
+              `}
+            />
           </a>
 
           {/* Center - Navigation Links (Desktop) */}
@@ -174,9 +155,9 @@ const Navbar: React.FC = () => {
               onClick={() => scrollTo(SectionId.CONTACT)}
               className={`
                 hidden md:flex items-center justify-center gap-2
-                bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold
+                bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold
                 transition-all duration-500 ease-out min-h-[44px]
-                hover:shadow-lg hover:shadow-brand-tiffany/30 hover:scale-[1.02]
+                hover:shadow-lg hover:shadow-brand-gold/30 hover:scale-[1.02]
                 active:scale-[0.98]
                 ${isScrolled
                   ? 'px-4 py-2.5 text-xs rounded-full min-w-[44px]'
@@ -193,8 +174,8 @@ const Navbar: React.FC = () => {
               className={`
                 flex items-center justify-center
                 bg-white/[0.06] hover:bg-white/[0.12]
-                text-white/80 hover:text-brand-tiffany
-                border border-white/[0.08] hover:border-brand-tiffany/30
+                text-white/80 hover:text-brand-gold
+                border border-white/[0.08] hover:border-brand-gold/30
                 transition-all duration-300 active:scale-95
                 ${isScrolled ? 'w-10 h-10 min-w-[44px] min-h-[44px] rounded-full' : 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl'}
               `}
@@ -231,7 +212,7 @@ const Navbar: React.FC = () => {
           aria-modal="true"
         >
           {/* Ambient glow */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-brand-tiffany/10 rounded-full blur-[150px] pointer-events-none" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-brand-gold/10 rounded-full blur-[150px] pointer-events-none" />
 
           {/* Navigation Links */}
           <nav className="flex-1 flex flex-col items-center justify-center gap-2 px-6 sm:px-8">
@@ -242,7 +223,7 @@ const Navbar: React.FC = () => {
                 className="group w-full max-w-sm py-4 sm:py-5 text-center min-h-[56px] active:bg-white/[0.05] rounded-2xl transition-colors"
                 style={{ animationDelay: `${i * 50}ms` }}
               >
-                <span className="text-2xl sm:text-3xl font-display text-white/90 group-hover:text-brand-tiffany group-active:text-brand-tiffany transition-colors duration-300">
+                <span className="text-2xl sm:text-3xl font-display text-white/90 group-hover:text-brand-gold group-active:text-brand-gold transition-colors duration-300">
                   {link.label}
                 </span>
               </button>
@@ -253,7 +234,7 @@ const Navbar: React.FC = () => {
           <div className="px-6 sm:px-8 mt-auto safe-area-bottom">
             <button
               onClick={() => scrollTo(SectionId.CONTACT)}
-              className="w-full py-4 min-h-[56px] bg-gradient-to-r from-brand-tiffany to-cyan-400 text-black font-bold text-base sm:text-lg rounded-2xl shadow-lg shadow-brand-tiffany/25 active:scale-[0.98] transition-transform"
+              className="w-full py-4 min-h-[56px] bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold text-base sm:text-lg rounded-2xl shadow-lg shadow-brand-gold/25 active:scale-[0.98] transition-transform"
             >
               Estimer mon bien
             </button>

@@ -7,7 +7,7 @@ services:
   # RAG Backend (Python + FastAPI + FAISS)
   # ============================================
   - type: web
-    name: nourreska-rag
+    name: athome-rag
     runtime: python
     region: frankfurt
     plan: free
@@ -80,7 +80,7 @@ services:
       - key: VITE_API_URL
         value: https://vestate-api-fisw.onrender.com
       - key: VITE_RAG_API_URL
-        value: https://nourreska-rag.onrender.com
+        value: https://athome-rag.onrender.com
 
 # ============================================
 # PostgreSQL Database

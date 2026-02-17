@@ -132,8 +132,8 @@ const Contact: React.FC = () => {
             </ContactCard>
 
             <ContactCard icon={Mail} title="Email">
-              <a href="mailto:contact@nourreska.com" className="text-brand-charcoal/60 dark:text-white/50 text-sm hover:text-brand-gold transition-colors duration-200">
-                contact@nourreska.com
+              <a href="mailto:contact@athome.com" className="text-brand-charcoal/60 dark:text-white/50 text-sm hover:text-brand-gold transition-colors duration-200">
+                contact@athome.com
               </a>
             </ContactCard>
 

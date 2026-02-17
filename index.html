@@ -6,13 +6,13 @@
     <meta name="theme-color" content="#D4AF37" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <title>Nourreska | Immobilier de Prestige au Maroc</title>
+    <title>At Home Real Estate Agency</title>
     <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="apple-touch-icon" href="/logo-athome.png" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Outfit:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+      @import url('https://fonts.cdnfonts.com/css/tt-commons-pro');
+    </style>
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -24,24 +24,24 @@
                 sand: '#E6DCC3',
                 olive: '#556B2F',
                 charcoal: '#0A0A0C', // Nearly black
-                gold: '#0ABAB5', // Tiffany Blue
-                tiffany: '#0ABAB5', // Tiffany Blue primary
-                'tiffany-light': '#81D8D0', // Lighter Tiffany
-                'tiffany-dark': '#088F8F', // Darker Tiffany
+                gold: '#29ABE2', // At Home Blue (primary)
+                primary: '#29ABE2', // At Home Blue
+                'primary-light': '#5BC4F0', // Lighter At Home Blue
+                'primary-dark': '#1E8FBC', // Darker At Home Blue
                 cream: '#F2F0E9', // Warmer, richer cream
                 void: '#050608', // True black base
                 glass: 'rgba(255, 255, 255, 0.05)',
               }
             },
             fontFamily: {
-              serif: ['"Playfair Display"', 'serif'],
-              sans: ['"Outfit"', 'sans-serif'],
-              display: ['"Cinzel"', 'serif'],
-              'tt-commons': ['"TT Commons Pro"', '"Outfit"', 'sans-serif'],
+              serif: ['"TT Commons Pro"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+              sans: ['"TT Commons Pro"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+              display: ['"TT Commons Pro"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+              'tt-commons': ['"TT Commons Pro"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
             },
             boxShadow: {
               'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
-              'neon-gold': '0 0 15px rgba(10, 186, 181, 0.15)',
+              'neon-gold': '0 0 15px rgba(41, 171, 226, 0.15)',
               'glow': '0 0 40px -10px rgba(255,255,255,0.1)',
             },
             backgroundImage: {
@@ -62,8 +62,8 @@
         --glass-border: rgba(255, 255, 255, 0.08);
         --glass-highlight: rgba(255, 255, 255, 0.15);
         --glass-shadow: rgba(0, 0, 0, 0.4);
-        --tiffany: #0ABAB5;
-        --tiffany-glow: rgba(10, 186, 181, 0.3);
+        --primary: #29ABE2;
+        --primary-glow: rgba(41, 171, 226, 0.3);
         --depth-1: 0 2px 8px rgba(0,0,0,0.15);
         --depth-2: 0 8px 32px rgba(0,0,0,0.25);
         --depth-3: 0 24px 64px rgba(0,0,0,0.35);
@@ -105,7 +105,7 @@
       .orb-1 {
         top: -25%; left: -15%;
         width: 70vw; height: 70vw;
-        background: linear-gradient(135deg, #0ABAB5 0%, #065f5c 50%, #032e2d 100%);
+        background: linear-gradient(135deg, #29ABE2 0%, #1E8FBC 50%, #0d4a6b 100%);
         animation-delay: 0s;
       }
       .orb-2 {
@@ -117,7 +117,7 @@
       .orb-3 {
         top: 40%; left: 50%;
         width: 35vw; height: 35vw;
-        background: radial-gradient(circle, rgba(10,186,181,0.15) 0%, transparent 70%);
+        background: radial-gradient(circle, rgba(41,171,226,0.15) 0%, transparent 70%);
         animation-delay: -25s;
       }
 
@@ -168,7 +168,7 @@
           145deg,
           rgba(255, 255, 255, 0.08) 0%,
           rgba(255, 255, 255, 0.02) 30%,
-          rgba(10, 186, 181, 0.03) 70%,
+          rgba(41, 171, 226, 0.03) 70%,
           rgba(255, 255, 255, 0.05) 100%
         );
         backdrop-filter: blur(40px) saturate(160%) brightness(1.05);
@@ -178,7 +178,7 @@
           var(--depth-3),
           inset 0 2px 0 rgba(255, 255, 255, 0.15),
           inset 0 -2px 0 rgba(0, 0, 0, 0.15),
-          0 0 80px -20px var(--tiffany-glow);
+          0 0 80px -20px var(--primary-glow);
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
@@ -188,7 +188,7 @@
           160deg,
           rgba(255, 255, 255, 0.1) 0%,
           rgba(255, 255, 255, 0.03) 25%,
-          rgba(10, 186, 181, 0.05) 50%,
+          rgba(41, 171, 226, 0.05) 50%,
           rgba(255, 255, 255, 0.02) 75%,
           rgba(255, 255, 255, 0.08) 100%
         );
@@ -199,7 +199,7 @@
           var(--depth-4),
           inset 0 2px 0 rgba(255, 255, 255, 0.2),
           inset 0 -1px 0 rgba(0, 0, 0, 0.2),
-          0 0 120px -30px var(--tiffany-glow);
+          0 0 120px -30px var(--primary-glow);
         position: relative;
         overflow: hidden;
       }
@@ -241,7 +241,7 @@
         transform: translateY(-6px) translateZ(0) scale(1.01);
         box-shadow:
           0 30px 60px -15px rgba(0, 0, 0, 0.35),
-          0 0 50px -10px var(--tiffany-glow);
+          0 0 50px -10px var(--primary-glow);
       }
 
       .hover-lift:active {
@@ -262,7 +262,7 @@
         position: absolute;
         inset: -2px;
         border-radius: inherit;
-        background: linear-gradient(135deg, var(--tiffany), #06D6A0, var(--tiffany));
+        background: linear-gradient(135deg, var(--primary), #5BC4F0, var(--primary));
         opacity: 0;
         z-index: -1;
         filter: blur(12px);
@@ -300,13 +300,13 @@
         background: linear-gradient(180deg, #050608 0%, #0a0a0c 100%);
       }
       ::-webkit-scrollbar-thumb {
-        background: linear-gradient(180deg, rgba(10, 186, 181, 0.3) 0%, rgba(255,255,255,0.1) 100%);
+        background: linear-gradient(180deg, rgba(41, 171, 226, 0.3) 0%, rgba(255,255,255,0.1) 100%);
         border-radius: 10px;
         border: 2px solid transparent;
         background-clip: padding-box;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(180deg, rgba(10, 186, 181, 0.6) 0%, rgba(255,255,255,0.2) 100%);
+        background: linear-gradient(180deg, rgba(41, 171, 226, 0.6) 0%, rgba(255,255,255,0.2) 100%);
       }
 
       .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -316,7 +316,7 @@
          BUTTON SYSTEM - 2026
          ============================================ */
       .btn-primary-2026 {
-        background: linear-gradient(135deg, #0ABAB5 0%, #06D6A0 50%, #0ABAB5 100%);
+        background: linear-gradient(135deg, #29ABE2 0%, #5BC4F0 50%, #29ABE2 100%);
         background-size: 200% 200%;
         color: #000;
         font-weight: 600;
@@ -325,7 +325,7 @@
         overflow: hidden;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         box-shadow:
-          0 4px 15px rgba(10, 186, 181, 0.3),
+          0 4px 15px rgba(41, 171, 226, 0.3),
           inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
 
@@ -333,7 +333,7 @@
         background-position: 100% 100%;
         transform: translateY(-2px) scale(1.02);
         box-shadow:
-          0 8px 30px rgba(10, 186, 181, 0.4),
+          0 8px 30px rgba(41, 171, 226, 0.4),
           inset 0 1px 0 rgba(255, 255, 255, 0.4);
       }
 
@@ -345,7 +345,7 @@
          TEXT GRADIENT - Premium
          ============================================ */
       .text-gradient-2026 {
-        background: linear-gradient(135deg, #0ABAB5 0%, #06D6A0 30%, #0ABAB5 60%, #81D8D0 100%);
+        background: linear-gradient(135deg, #29ABE2 0%, #5BC4F0 30%, #29ABE2 60%, #7DD3F8 100%);
         background-size: 300% 300%;
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -395,11 +395,11 @@
       }
 
       .card-2026:hover {
-        border-color: rgba(10, 186, 181, 0.3);
+        border-color: rgba(41, 171, 226, 0.3);
         transform: translateY(-6px) translateZ(0) scale(1.01);
         box-shadow:
           0 25px 50px -12px rgba(0, 0, 0, 0.35),
-          0 0 40px -8px var(--tiffany-glow);
+          0 0 40px -8px var(--primary-glow);
       }
 
       .card-2026:active {
@@ -436,8 +436,8 @@
       }
 
       @keyframes pulse-glow {
-        0%, 100% { box-shadow: 0 0 20px rgba(10, 186, 181, 0.2); }
-        50% { box-shadow: 0 0 40px rgba(10, 186, 181, 0.4); }
+        0%, 100% { box-shadow: 0 0 20px rgba(41, 171, 226, 0.2); }
+        50% { box-shadow: 0 0 40px rgba(41, 171, 226, 0.4); }
       }
 
       .animate-float { animation: float-gentle 6s ease-in-out infinite; }
@@ -539,10 +539,10 @@
       /* Inner glow on hover */
       .dynamic-island:hover {
         box-shadow:
-          0 0 0 1px rgba(10, 186, 181, 0.2),
+          0 0 0 1px rgba(41, 171, 226, 0.2),
           0 4px 30px rgba(0, 0, 0, 0.5),
           0 10px 60px rgba(0, 0, 0, 0.4),
-          0 0 40px rgba(10, 186, 181, 0.1),
+          0 0 40px rgba(41, 171, 226, 0.1),
           inset 0 1px 0 rgba(255, 255, 255, 0.12);
       }
 
@@ -557,10 +557,10 @@
         }
         50% {
           box-shadow:
-            0 0 0 1px rgba(10, 186, 181, 0.15),
+            0 0 0 1px rgba(41, 171, 226, 0.15),
             0 4px 30px rgba(0, 0, 0, 0.5),
             0 10px 60px rgba(0, 0, 0, 0.4),
-            0 0 30px rgba(10, 186, 181, 0.08),
+            0 0 30px rgba(41, 171, 226, 0.08),
             inset 0 1px 0 rgba(255, 255, 255, 0.1);
         }
       }
@@ -629,7 +629,7 @@
 
         /* Fix tap highlight */
         * {
-          -webkit-tap-highlight-color: rgba(10, 186, 181, 0.1);
+          -webkit-tap-highlight-color: rgba(41, 171, 226, 0.1);
         }
 
         /* Better scrolling */
@@ -734,7 +734,7 @@
       a:focus-visible,
       input:focus-visible,
       textarea:focus-visible {
-        outline: 2px solid var(--tiffany);
+        outline: 2px solid var(--primary);
         outline-offset: 2px;
       }
 
@@ -753,7 +753,7 @@
 
         .card-2026:active {
           transform: translateY(-2px);
-          border-color: rgba(10, 186, 181, 0.3);
+          border-color: rgba(41, 171, 226, 0.3);
         }
       }
 

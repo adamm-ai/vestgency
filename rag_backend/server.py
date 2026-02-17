@@ -443,7 +443,7 @@ async def lifespan(app: FastAPI):
 # ============================================================================
 
 app = FastAPI(
-    title="Nourreska RAG API",
+    title="At Home RAG API",
     description="Semantic property search with conversation memory",
     version="2.1.0-memory",
     default_response_class=ORJSONResponse,
@@ -600,7 +600,7 @@ async def chat(request: ChatRequest):
         relevant = semantic_search(message, 5)
         context = json.dumps(relevant, ensure_ascii=False) if relevant else "Aucun bien trouvé."
 
-        system_prompt = f"""Tu es NOUR, l'assistante immobilière d'élite de Nourreska.
+        system_prompt = f"""Tu es NOUR, l'assistante immobilière d'élite d'At Home.
 Tu parles français principalement et tu es experte du marché immobilier marocain.
 Voici les biens pertinents pour la requête du client:
 {context}

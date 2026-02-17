@@ -1,5 +1,5 @@
 /**
- * Smart Description Generator for Nourreska Properties
+ * Smart Description Generator for At Home Properties
  * Generates adapted descriptions based on property attributes
  */
 

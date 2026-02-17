@@ -128,7 +128,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = memo(({ leads, crm
       { metric: 'Statut: Gagnes', value: crmStats.leadsByStatus.won },
       { metric: 'Statut: Perdus', value: crmStats.leadsByStatus.lost },
     ];
-    exportToCSV(reportData, 'nourreska_analytics_report');
+    exportToCSV(reportData, 'athome_analytics_report');
   };
 
   if (!crmStats) {

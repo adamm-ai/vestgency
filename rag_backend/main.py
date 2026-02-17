@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Nourreska RAG Search System
+At Home RAG Search System
 ===========================
 Entry point for the intelligent property search system.
 
@@ -114,7 +114,7 @@ def start_server():
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Nourreska RAG Search System")
+    parser = argparse.ArgumentParser(description="At Home RAG Search System")
     parser.add_argument("--build", action="store_true", help="Build index only")
     parser.add_argument("--test", action="store_true", help="Run test queries")
     parser.add_argument("--port", type=int, default=8001, help="Server port")

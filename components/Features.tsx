@@ -15,7 +15,7 @@ const Features: React.FC = () => {
     <section id={SectionId.SERVICES} className="py-16 sm:py-24 md:py-32 relative overflow-hidden bg-[#F5F5F0] dark:bg-[#050608] transition-colors duration-300">
 
       {/* Background Elements - 2026 Mesh */}
-      <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-gradient-radial from-brand-tiffany/10 via-brand-tiffany/5 to-transparent rounded-full blur-[180px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-[700px] h-[700px] bg-gradient-radial from-brand-primary/10 via-brand-primary/5 to-transparent rounded-full blur-[180px] pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-radial from-blue-500/8 via-blue-600/3 to-transparent rounded-full blur-[150px] pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-white/[0.02] to-transparent rounded-full blur-[100px] pointer-events-none dark:block hidden" />
 
@@ -37,8 +37,8 @@ const Features: React.FC = () => {
           {/* Highlights - 2026 Glass Cards */}
           <div className="grid grid-cols-2 gap-3">
             {highlights.map((item, i) => (
-              <div key={i} className="liquid-glass dark:liquid-glass-2 flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-brand-charcoal/80 dark:text-white/80 hover:border-brand-tiffany/30 transition-all duration-300">
-                <CheckCircle2 size={18} className="text-brand-tiffany shrink-0" />
+              <div key={i} className="liquid-glass dark:liquid-glass-2 flex items-center gap-3 px-4 py-3 rounded-xl text-sm text-brand-charcoal/80 dark:text-white/80 hover:border-brand-primary/30 transition-all duration-300">
+                <CheckCircle2 size={18} className="text-brand-primary shrink-0" />
                 <span className="font-medium">{item}</span>
               </div>
             ))}
@@ -46,7 +46,7 @@ const Features: React.FC = () => {
         </div>
 
         {/* Divider - 2026 */}
-        <div className="h-[2px] bg-gradient-to-r from-transparent via-brand-tiffany/40 to-transparent mb-16 rounded-full" />
+        <div className="h-[2px] bg-gradient-to-r from-transparent via-brand-primary/40 to-transparent mb-16 rounded-full" />
 
         {/* Services Grid - 2026 Glass Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -56,15 +56,15 @@ const Features: React.FC = () => {
               className="card-2026 group relative p-5 sm:p-8 hover-lift cursor-default"
             >
               {/* Background Gradient on Hover */}
-              <div className="absolute inset-0 bg-gradient-to-br from-brand-tiffany/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-3xl" />
 
               {/* Arrow Icon */}
               <div className="absolute top-7 right-7 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-3 group-hover:translate-x-0">
-                <ArrowUpRight size={22} className="text-brand-tiffany" />
+                <ArrowUpRight size={22} className="text-brand-primary" />
               </div>
 
               {/* Icon - 2026 */}
-              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-tiffany/20 via-brand-tiffany/10 to-transparent flex items-center justify-center text-brand-tiffany mb-6 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand-tiffany/20 transition-all duration-300">
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-primary/20 via-brand-primary/10 to-transparent flex items-center justify-center text-brand-primary mb-6 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-brand-primary/20 transition-all duration-300">
                 {item.icon}
                 {/* Shine */}
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/20 via-transparent to-transparent opacity-50" />
@@ -79,7 +79,7 @@ const Features: React.FC = () => {
               </p>
 
               {/* Bottom Line - 2026 */}
-              <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-gradient-to-r from-brand-tiffany via-cyan-400 to-brand-tiffany transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-full" />
+              <div className="absolute bottom-0 left-4 right-4 h-[3px] bg-gradient-to-r from-brand-primary via-cyan-400 to-brand-primary transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left rounded-full" />
             </div>
           ))}
         </div>
@@ -108,10 +108,10 @@ const Features: React.FC = () => {
           </div>
 
           {/* Decorative Elements - 2026 */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-radial from-brand-tiffany/15 to-transparent rounded-full blur-[100px] pointer-events-none" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-radial from-brand-primary/15 to-transparent rounded-full blur-[100px] pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-60 h-60 bg-gradient-radial from-blue-500/10 to-transparent rounded-full blur-[80px] pointer-events-none" />
           {/* Border glow */}
-          <div className="absolute inset-0 rounded-[32px] border border-brand-tiffany/20 pointer-events-none" />
+          <div className="absolute inset-0 rounded-[32px] border border-brand-primary/20 pointer-events-none" />
         </div>
 
       </div>

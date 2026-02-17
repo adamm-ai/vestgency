@@ -1,6 +1,6 @@
 /**
- * Admin Portal - Vestate AI Backoffice
- * =====================================
+ * Admin Portal - At Home Backoffice
+ * ==================================
  * Complete admin dashboard with authentication and CRM
  *
  * Components have been modularized into:
@@ -193,9 +193,11 @@ const AdminLogin: React.FC<{ onLogin: (user: AdminUser, rememberMe: boolean) => 
 
             {/* Logo */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-brand-gold to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-gold/30 mb-4">
-                <Lock size={28} className="text-black" />
-              </div>
+              <img
+                src="/logo-athome.png"
+                alt="At Home Real Estate Agency"
+                className="h-16 mx-auto object-contain mb-4"
+              />
               <h2 className="text-2xl font-display font-bold text-white">Admin Portal</h2>
               <p className="text-white/50 text-sm mt-1">Connectez-vous pour accéder au backoffice</p>
             </div>
@@ -213,7 +215,7 @@ const AdminLogin: React.FC<{ onLogin: (user: AdminUser, rememberMe: boolean) => 
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@vestate.ai"
+                    placeholder="admin@athome.com"
                     className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all"
                     required
                   />
@@ -303,7 +305,7 @@ const AdminLogin: React.FC<{ onLogin: (user: AdminUser, rememberMe: boolean) => 
             {/* Hint */}
             <div className="mt-6 p-3 bg-white/[0.02] rounded-xl border border-white/[0.05]">
               <p className="text-[11px] text-white/40 text-center">
-                Credentials: admin@vestate.ai / vestate2024
+                Contactez l'administrateur pour obtenir vos identifiants
               </p>
             </div>
           </div>
@@ -855,7 +857,7 @@ const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = memo(({ leads, crm
               { metric: 'Statut: Gagnes', value: crmStats.leadsByStatus.won },
               { metric: 'Statut: Perdus', value: crmStats.leadsByStatus.lost },
             ];
-            exportToCSV(reportData, 'nourreska_analytics_report');
+            exportToCSV(reportData, 'athome_analytics_report');
           }}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-white hover:border-white/20 transition-all"
         >
@@ -1323,7 +1325,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     }
 
     // Store properties for matching
-    localStorage.setItem('nourreska_properties', JSON.stringify(properties));
+    localStorage.setItem('athome_properties', JSON.stringify(properties));
 
     // Set interval and start
     CRM.setAutoMatchInterval(autoMatchInterval);
@@ -1345,7 +1347,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     setIsRunningMatching(true);
     try {
       // Store properties for matching
-      localStorage.setItem('nourreska_properties', JSON.stringify(properties));
+      localStorage.setItem('athome_properties', JSON.stringify(properties));
       CRM.runMatchingEngine(demandId);
       refreshDemands();
       if (demandId) {
@@ -1483,7 +1485,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
 
   // Manual match run
   const handleManualMatchRun = useCallback(() => {
-    localStorage.setItem('nourreska_properties', JSON.stringify(properties));
+    localStorage.setItem('athome_properties', JSON.stringify(properties));
     CRM.runAutoMatch();
     refreshMatches();
     refreshDemands();
@@ -1690,13 +1692,11 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
           <div className="p-6 border-b border-white/[0.06]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div>
-                  <h1 className="text-xl font-tt-commons font-bold tracking-tight">
-                    <span className="text-white">Vestate</span>
-                    <span className="text-white/60 ml-1">AI</span>
-                  </h1>
-                  <span className="text-[10px] text-white/40 uppercase tracking-wider">Admin Portal</span>
-                </div>
+                <img
+                  src="/logo-athome.png"
+                  alt="At Home Real Estate Agency"
+                  className="h-10 object-contain"
+                />
               </div>
               {/* Close button for mobile drawer */}
               {isMobile && (
@@ -4414,7 +4414,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                   </div>
 
                   <button
-                    onClick={() => exportToCSV(filteredProperties, 'nourreska_properties')}
+                    onClick={() => exportToCSV(filteredProperties, 'athome_properties')}
                     className="flex items-center gap-2 px-4 py-3 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-white hover:border-white/20 transition-all"
                   >
                     <Download size={18} />
@@ -4859,7 +4859,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                 {/* Settings Header */}
                 <div>
                   <h2 className="text-2xl font-bold text-white">Parametres</h2>
-                  <p className="text-white/50 text-sm">Configurez votre espace admin Vestate AI</p>
+                  <p className="text-white/50 text-sm">Configurez votre espace admin At Home</p>
                 </div>
 
                 <div className="flex gap-6">
@@ -5247,13 +5247,11 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                         </div>
 
                         <div className="flex items-center gap-4 p-6 bg-white/[0.03] rounded-xl border border-white/[0.08]">
-                          <div>
-                            <h4 className="text-2xl font-tt-commons font-bold tracking-tight">
-                              <span className="text-white">Vestate</span>
-                              <span className="text-white/60 ml-1">AI</span>
-                            </h4>
-                            <p className="text-sm text-white/50 mt-1">Admin Portal</p>
-                          </div>
+                          <img
+                            src="/logo-athome.png"
+                            alt="At Home Real Estate Agency"
+                            className="h-12 object-contain"
+                          />
                         </div>
 
                         <div className="space-y-3">
@@ -5275,7 +5273,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
 
                         <div className="p-4 bg-white/[0.02] rounded-xl border border-white/[0.06]">
                           <p className="text-sm text-white/50 text-center font-tt-commons">
-                            Powered by <span className="font-bold text-white">Vestate</span> <span className="text-white/40">AI</span>
+                            Powered by <span className="font-bold text-white">At Home</span> <span className="text-white/40">Real Estate</span>
                           </p>
                         </div>
                       </motion.div>

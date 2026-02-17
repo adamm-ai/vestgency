@@ -31,7 +31,7 @@ const SOCIAL_LINKS = [
 const SocialLink = memo(({ icon: Icon, href, label }: { icon: React.ElementType; href: string; label: string }) => (
   <a
     href={href}
-    className="liquid-glass w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-white/60 hover:text-brand-tiffany hover:bg-brand-tiffany/10 hover:border-brand-tiffany/30 hover:scale-110 hover:-translate-y-1 hover:shadow-lg hover:shadow-brand-tiffany/20 active:scale-95 active:text-brand-tiffany transition-all duration-300"
+    className="liquid-glass w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-white/60 hover:text-brand-primary hover:bg-brand-primary/10 hover:border-brand-primary/30 hover:scale-110 hover:-translate-y-1 hover:shadow-lg hover:shadow-brand-primary/20 active:scale-95 active:text-brand-primary transition-all duration-300"
     aria-label={label}
   >
     <Icon size={20} aria-hidden="true" />
@@ -58,7 +58,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
     <footer className="relative bg-[#050608] text-white overflow-hidden">
 
       {/* Background Gradients - 2026 */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-radial from-brand-tiffany/8 to-transparent rounded-full blur-[200px] pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-gradient-radial from-brand-primary/8 to-transparent rounded-full blur-[200px] pointer-events-none" />
       <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-gradient-radial from-blue-500/5 to-transparent rounded-full blur-[150px] pointer-events-none" />
 
       {/* Newsletter Section - 2026 Glass */}
@@ -80,7 +80,7 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
                   <input
                     type="email"
                     placeholder="Votre adresse email"
-                    className="flex-1 lg:w-80 px-4 sm:px-6 py-3.5 sm:py-4 min-h-[48px] rounded-xl liquid-glass text-white placeholder-white/50 text-sm sm:text-base focus:border-brand-tiffany/50 focus:ring-2 focus:ring-brand-tiffany/20 outline-none transition-all duration-300"
+                    className="flex-1 lg:w-80 px-4 sm:px-6 py-3.5 sm:py-4 min-h-[48px] rounded-xl liquid-glass text-white placeholder-white/50 text-sm sm:text-base focus:border-brand-primary/50 focus:ring-2 focus:ring-brand-primary/20 outline-none transition-all duration-300"
                   />
                   <button
                     className="btn-primary-2026 px-6 sm:px-8 py-3.5 sm:py-4 min-h-[48px] rounded-xl flex items-center justify-center gap-2 whitespace-nowrap text-sm sm:text-base active:scale-[0.98] transition-transform"
@@ -102,14 +102,11 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
           {/* Brand - 2026 */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-4 mb-8">
-              <div className="relative w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-tiffany via-cyan-400 to-brand-tiffany flex items-center justify-center shadow-xl shadow-brand-tiffany/30">
-                <span className="text-black font-display font-bold text-xl">N</span>
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-white/30 via-transparent to-transparent opacity-60" />
-              </div>
-              <div>
-                <h2 className="text-xl font-display font-bold text-gradient-2026">Nourreska</h2>
-                <span className="text-white/50 text-[10px] tracking-[0.15em] uppercase">Immobilier de prestige</span>
-              </div>
+              <img
+                src="/logo-athome.png"
+                alt="At Home Real Estate Agency"
+                className="h-[60px] object-contain"
+              />
             </div>
             <p className="text-white/60 text-sm font-light leading-relaxed mb-8">
               Votre partenaire de confiance pour tous vos projets immobiliers à Casablanca et dans tout le Maroc.
@@ -131,9 +128,9 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
                 <li key={i}>
                   <button
                     onClick={() => scrollTo(item.id)}
-                    className="text-sm text-white/60 hover:text-white active:text-brand-tiffany hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group py-2 min-h-[44px]"
+                    className="text-sm text-white/60 hover:text-white active:text-brand-primary hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group py-2 min-h-[44px]"
                   >
-                    <span className="w-2 h-2 bg-brand-tiffany/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300" />
+                    <span className="w-2 h-2 bg-brand-primary/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300" />
                     {item.label}
                   </button>
                 </li>
@@ -149,9 +146,9 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
                 <li key={i}>
                   <a
                     href="#"
-                    className="text-sm text-white/60 hover:text-white active:text-brand-tiffany hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group py-2 min-h-[44px]"
+                    className="text-sm text-white/60 hover:text-white active:text-brand-primary hover:translate-x-2 transition-all duration-300 flex items-center gap-3 group py-2 min-h-[44px]"
                   >
-                    <span className="w-2 h-2 bg-brand-tiffany/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300" />
+                    <span className="w-2 h-2 bg-brand-primary/50 rounded-full scale-0 group-hover:scale-100 group-active:scale-100 transition-transform duration-300" />
                     {service}
                   </a>
                 </li>
@@ -164,8 +161,8 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             <h4 className="text-gradient-2026 text-xs font-bold uppercase tracking-[0.25em] mb-7">Contact</h4>
             <div className="space-y-5">
               <div className="flex items-start gap-4 group">
-                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-tiffany/30 transition-all duration-300">
-                  <MapPin size={16} className="text-brand-tiffany" />
+                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 transition-all duration-300">
+                  <MapPin size={16} className="text-brand-primary" />
                 </div>
                 <p className="text-sm text-white/60 group-hover:text-white/80 transition-colors">
                   Boulevard Anfa, Quartier Racine<br />
@@ -173,19 +170,19 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
                 </p>
               </div>
               <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-tiffany/30 transition-all duration-300">
-                  <Phone size={16} className="text-brand-tiffany" />
+                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 transition-all duration-300">
+                  <Phone size={16} className="text-brand-primary" />
                 </div>
                 <a href="tel:+212522000000" className="text-sm text-white/60 hover:text-white transition-colors duration-300">
                   +212 5 22 00 00 00
                 </a>
               </div>
               <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-tiffany/30 transition-all duration-300">
-                  <Mail size={16} className="text-brand-tiffany" />
+                <div className="w-10 h-10 rounded-xl liquid-glass flex items-center justify-center shrink-0 group-hover:border-brand-primary/30 transition-all duration-300">
+                  <Mail size={16} className="text-brand-primary" />
                 </div>
-                <a href="mailto:contact@nourreska.com" className="text-sm text-white/60 hover:text-white transition-colors duration-300">
-                  contact@nourreska.com
+                <a href="mailto:contact@athome.com" className="text-sm text-white/60 hover:text-white transition-colors duration-300">
+                  contact@athome.com
                 </a>
               </div>
             </div>
@@ -199,17 +196,17 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
         <div className="container mx-auto px-6 py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <p className="text-xs text-white/50 font-medium">
-              &copy; {new Date().getFullYear()} Nourreska. Tous droits réservés.
+              &copy; {new Date().getFullYear()} At Home Real Estate Agency. Tous droits réservés.
             </p>
 
             <div className="flex items-center gap-4 sm:gap-8 flex-wrap justify-center">
-              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-tiffany py-2 min-h-[44px] flex items-center transition-colors duration-300">
+              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300">
                 Mentions légales
               </a>
-              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-tiffany py-2 min-h-[44px] flex items-center transition-colors duration-300">
+              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300">
                 Confidentialité
               </a>
-              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-tiffany py-2 min-h-[44px] flex items-center transition-colors duration-300">
+              <a href="#" className="text-xs text-white/50 hover:text-white active:text-brand-primary py-2 min-h-[44px] flex items-center transition-colors duration-300">
                 CGV
               </a>
             </div>
@@ -217,9 +214,9 @@ const Footer: React.FC<FooterProps> = ({ onAdminClick }) => {
             <div className="flex items-center gap-5">
               <button
                 onClick={onAdminClick}
-                className="liquid-glass flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-white/60 hover:text-brand-tiffany hover:border-brand-tiffany/30 active:scale-95 active:text-brand-tiffany transition-all duration-300 group"
+                className="liquid-glass flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-white/60 hover:text-brand-primary hover:border-brand-primary/30 active:scale-95 active:text-brand-primary transition-all duration-300 group"
               >
-                <Shield size={16} className="group-hover:text-brand-tiffany transition-colors" />
+                <Shield size={16} className="group-hover:text-brand-primary transition-colors" />
                 <span className="text-xs sm:text-sm font-semibold">Admin</span>
               </button>
               <div className="flex items-center gap-2 text-xs text-white/50">

@@ -61,7 +61,7 @@ const About: React.FC = () => {
 
           <div className="prose prose-lg text-gray-600 font-sans font-light leading-relaxed mb-10">
             <p className="mb-6">
-              <strong className="text-brand-gold font-medium">Nourreska</strong> n'est pas une simple agence immobilière; nous sommes une firme d'investissement intelligent au cœur de Casablanca.
+              <strong className="text-brand-gold font-medium">At Home</strong> n'est pas une simple agence immobilière; nous sommes une firme d'investissement intelligent au cœur de Casablanca.
             </p>
             <p>
               Located just steps from the Menara Mall, we bridge the gap between traditional Moroccan hospitality and cutting-edge asset management. Whether you are acquiring a historic Riad or developing land in Ourika, our AI-driven insights ensure your investment is secure.

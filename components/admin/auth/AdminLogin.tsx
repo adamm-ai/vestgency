@@ -129,9 +129,11 @@ const AdminLogin: React.FC<AdminLoginProps> = memo(({ onLogin, onClose }) => {
 
             {/* Logo */}
             <div className="text-center mb-8">
-              <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-brand-gold to-cyan-400 flex items-center justify-center shadow-lg shadow-brand-gold/30 mb-4">
-                <Lock size={28} className="text-black" />
-              </div>
+              <img
+                src="/logo-athome.png"
+                alt="At Home Real Estate Agency"
+                className="h-16 mx-auto object-contain mb-4"
+              />
               <h2 className="text-2xl font-display font-bold text-white">Admin Portal</h2>
               <p className="text-white/50 text-sm mt-1">Connectez-vous pour accéder au backoffice</p>
             </div>
@@ -149,7 +151,7 @@ const AdminLogin: React.FC<AdminLoginProps> = memo(({ onLogin, onClose }) => {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@vestate.ai"
+                    placeholder="admin@athome.com"
                     className="w-full pl-12 pr-4 py-4 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/20 outline-none transition-all"
                     required
                     aria-label="Adresse email"

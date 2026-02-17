@@ -1,5 +1,5 @@
 /**
- * Nourreska CRM Service
+ * At Home CRM Service
  * =====================
  * Complete CRM functionality for real estate agency
  * Adapted from Ourika Valley CRM architecture
@@ -316,13 +316,13 @@ export interface DemandStats {
 // ============================================================================
 
 const STORAGE_KEYS = {
-  LEADS: 'nourreska_crm_leads',
-  AGENTS: 'nourreska_crm_agents',
-  NOTIFICATIONS: 'nourreska_crm_notifications',
-  SETTINGS: 'nourreska_crm_settings',
-  CHAT_SESSIONS: 'nourreska_crm_chat_sessions',
-  DEMANDS: 'nourreska_crm_demands',
-  DEMAND_MATCHES: 'nourreska_crm_demand_matches',
+  LEADS: 'athome_crm_leads',
+  AGENTS: 'athome_crm_agents',
+  NOTIFICATIONS: 'athome_crm_notifications',
+  SETTINGS: 'athome_crm_settings',
+  CHAT_SESSIONS: 'athome_crm_chat_sessions',
+  DEMANDS: 'athome_crm_demands',
+  DEMAND_MATCHES: 'athome_crm_demand_matches',
 };
 
 // ============================================================================
@@ -843,9 +843,9 @@ function getAgentsFromStorage(): Agent[] {
     // Initialize with default admin
     const defaultAgent: Agent = {
       id: 'admin-default',
-      email: 'admin@nourreska.com',
+      email: 'admin@athome.com',
       firstName: 'Admin',
-      lastName: 'Nourreska',
+      lastName: 'At Home',
       role: 'admin',
       isActive: true,
       maxLeads: 100,
@@ -1232,7 +1232,7 @@ export function downloadLeadsCSV(): void {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `nourreska_leads_${new Date().toISOString().split('T')[0]}.csv`;
+  link.download = `athome_leads_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
   // Revoke the blob URL to free memory
   setTimeout(() => URL.revokeObjectURL(url), 100);
@@ -1675,7 +1675,7 @@ export function runMatchingEngine(demandId?: string): { newMatches: number; tota
   let totalChecked = 0;
 
   // Get properties from localStorage or a global state
-  const propertiesData = localStorage.getItem('nourreska_properties');
+  const propertiesData = localStorage.getItem('athome_properties');
   let properties: PropertyData[] = [];
   try {
     properties = propertiesData ? JSON.parse(propertiesData) : [];
@@ -1833,7 +1833,7 @@ export function getEnrichedMatches(filters?: {
   const demandsMap = new Map(allDemands.map(d => [d.id, d]));
 
   // Load properties ONCE and create Map for O(1) lookups
-  const propertiesData = localStorage.getItem('nourreska_properties');
+  const propertiesData = localStorage.getItem('athome_properties');
   let propertiesMap = new Map<string, PropertyData>();
   try {
     const properties: PropertyData[] = propertiesData ? JSON.parse(propertiesData) : [];
@@ -1899,7 +1899,7 @@ export function getMatchStats(): MatchStats {
       property_to_demand: matches.filter(m => m.matchType === 'property_to_demand').length,
     },
     recentMatches: matches.filter(m => new Date(m.createdAt) >= oneDayAgo).length,
-    lastMatchRun: localStorage.getItem('nourreska_last_match_run') || undefined,
+    lastMatchRun: localStorage.getItem('athome_last_match_run') || undefined,
   };
 
   return stats;
@@ -1927,8 +1927,8 @@ export function bulkDeleteMatches(matchIds: string[]): number {
 }
 
 // Auto-matching configuration
-const AUTO_MATCH_INTERVAL_KEY = 'nourreska_auto_match_interval';
-const LAST_MATCH_RUN_KEY = 'nourreska_last_match_run';
+const AUTO_MATCH_INTERVAL_KEY = 'athome_auto_match_interval';
+const LAST_MATCH_RUN_KEY = 'athome_last_match_run';
 
 let autoMatchTimer: ReturnType<typeof setInterval> | null = null;
 let autoMatchCallbacks: ((result: { newMatches: number; totalChecked: number }) => void)[] = [];
@@ -2386,7 +2386,7 @@ export function initializeCRM(): void {
     });
   }
 
-  console.log('[CRM] Nourreska CRM initialized with Demands & Matching Engine');
+  console.log('[CRM] At Home CRM initialized with Demands & Matching Engine');
 }
 
 // Auto-initialize

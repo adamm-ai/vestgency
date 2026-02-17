@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vestate AI - Présentation</title>
+  <style>
+    @import url('https://fonts.cdnfonts.com/css/tt-commons-pro');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 210mm;
+      background: #fff;
+    }
+
+    body {
+      font-family: 'TT Commons Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #000;
+      line-height: 1.5;
+      font-size: 14px;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .page {
+      width: 210mm;
+      height: 297mm;
+      padding: 18mm 20mm;
+      position: relative;
+      overflow: hidden;
+      page-break-after: always;
+      page-break-inside: avoid;
+    }
+
+    .page:last-child {
+      page-break-after: avoid;
+    }
+
+    /* ========== PAGE 1: COVER ========== */
+    .cover {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cover-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .logo span {
+      font-weight: 300;
+    }
+
+    .badge {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border: 1px solid #000;
+    }
+
+    .cover-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .cover-title {
+      font-size: 64px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 28px;
+    }
+
+    .cover-title .light {
+      font-weight: 200;
+      font-style: italic;
+    }
+
+    .cover-subtitle {
+      font-size: 17px;
+      font-weight: 300;
+      color: #525252;
+      max-width: 420px;
+      line-height: 1.6;
+    }
+
+    .cover-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-top: 24px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .cover-bottom-left {
+      font-size: 10px;
+      font-weight: 500;
+      color: #737373;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      line-height: 1.6;
+    }
+
+    .cover-bottom-right {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    /* ========== SECTION STYLES ========== */
+    .section-num {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #a3a3a3;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 36px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 32px;
+    }
+
+    .section-title .light {
+      font-weight: 300;
+    }
+
+    .page-num {
+      position: absolute;
+      bottom: 18mm;
+      right: 20mm;
+      font-size: 11px;
+      font-weight: 600;
+      color: #a3a3a3;
+    }
+
+    /* ========== PAGE 2: PROBLÈME ========== */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .problem-card {
+      background: #f5f5f5;
+      padding: 22px;
+      border-left: 3px solid #000;
+    }
+
+    .problem-num {
+      font-size: 42px;
+      font-weight: 900;
+      color: #d4d4d4;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .problem-stat {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .problem-text {
+      font-size: 12px;
+      font-weight: 400;
+      color: #525252;
+      line-height: 1.5;
+    }
+
+    .quote-box {
+      background: #f5f5f5;
+      padding: 32px 36px;
+      position: relative;
+    }
+
+    .quote-mark {
+      font-size: 80px;
+      font-weight: 900;
+      color: #d4d4d4;
+      position: absolute;
+      top: 10px;
+      left: 20px;
+      line-height: 1;
+    }
+
+    .quote-text {
+      font-size: 20px;
+      font-weight: 500;
+      font-style: italic;
+      line-height: 1.5;
+      position: relative;
+      z-index: 1;
+      padding-left: 16px;
+    }
+
+    /* ========== PAGE 3 & 4: SOLUTIONS ========== */
+    .solution-card {
+      border: 1px solid #e5e5e5;
+      padding: 24px;
+      margin-bottom: 18px;
+    }
+
+    .solution-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: #000;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .solution-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      letter-spacing: -0.01em;
+    }
+
+    .solution-desc {
+      font-size: 13px;
+      font-weight: 400;
+      color: #525252;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+
+    .solution-result {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 10px 14px;
+      background: #f5f5f5;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+    }
+
+    .feature-list {
+      list-style: none;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: #f5f5f5;
+      margin-bottom: 10px;
+    }
+
+    .feature-check {
+      width: 22px;
+      height: 22px;
+      background: #000;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .feature-text {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .features-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 16px;
+      color: #000;
+    }
+
+    /* ========== PAGE 5: IMPACT ========== */
+    .table-wrap {
+      margin-bottom: 24px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 2px solid #000;
+      background: #fff;
+    }
+
+    table th:last-child {
+      background: #000;
+      color: #fff;
+    }
+
+    table td {
+      font-size: 13px;
+      font-weight: 400;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+
+    table td:first-child {
+      font-weight: 500;
+    }
+
+    table td:last-child {
+      font-weight: 600;
+      background: #f5f5f5;
+    }
+
+    table tr:last-child td {
+      border-bottom: 2px solid #000;
+    }
+
+    .roi-box {
+      background: #000;
+      color: #fff;
+      padding: 28px;
+    }
+
+    .roi-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #737373;
+      margin-bottom: 20px;
+    }
+
+    .roi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .roi-value {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .roi-desc {
+      font-size: 10px;
+      font-weight: 400;
+      color: #a3a3a3;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 4px;
+    }
+
+    .roi-total {
+      border-top: 1px solid #404040;
+      padding-top: 24px;
+      text-align: center;
+    }
+
+    .roi-total-value {
+      font-size: 44px;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .roi-total-label {
+      font-size: 12px;
+      font-weight: 400;
+      color: #a3a3a3;
+      margin-top: 6px;
+    }
+
+    /* ========== PAGE 6: CTA ========== */
+    .cta-page {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .cta-title {
+      font-size: 52px;
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 20px;
+    }
+
+    .cta-title .light {
+      display: block;
+      font-weight: 200;
+      font-style: italic;
+    }
+
+    .cta-subtitle {
+      font-size: 16px;
+      font-weight: 400;
+      color: #525252;
+      max-width: 400px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    .cta-btn {
+      display: inline-block;
+      padding: 18px 44px;
+      background: #000;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      text-decoration: none;
+    }
+
+    .cta-footer {
+      position: absolute;
+      bottom: 18mm;
+      left: 20mm;
+      right: 20mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 20px;
+      border-top: 1px solid #e5e5e5;
+    }
+
+    .cta-footer-left {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .cta-footer-right {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    /* ========== PRINT ========== */
+    @media print {
+      .page {
+        margin: 0;
+        box-shadow: none;
+      }
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== PAGE 1: COVER ==================== -->
+<div class="page">
+  <div class="cover">
+    <div class="cover-top">
+      <div class="logo">Vestate <span>AI</span></div>
+      <div class="badge">Confidentiel</div>
+    </div>
+
+    <div class="cover-center">
+      <h1 class="cover-title">
+        L'Intelligence<br>
+        Artificielle au<br>
+        Service de<br>
+        <span class="light">l'Immobilier</span>
+      </h1>
+      <p class="cover-subtitle">
+        Une plateforme complète qui transforme la façon dont les agences immobilières gèrent leurs leads, leurs biens et leurs ventes.
+      </p>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="cover-bottom-left">
+        Présentation Solution<br>
+        2024 — 2025
+      </div>
+      <div class="cover-bottom-right">
+        vestate.ai
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== PAGE 2: LE PROBLÈME ==================== -->
+<div class="page">
+  <div class="section-num">01 — Le Constat</div>
+  <h2 class="section-title">
+    Votre agence perd<br>
+    de l'argent <span class="light">chaque jour</span>
+  </h2>
+
+  <div class="problem-grid">
+    <div class="problem-card">
+      <div class="problem-num">80%</div>
+      <div class="problem-stat">Leads Perdus</div>
+      <p class="problem-text">de vos leads ne sont jamais rappelés à temps. La concurrence répond plus vite.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">4h</div>
+      <div class="problem-stat">Par Jour</div>
+      <p class="problem-text">Vos agents passent à chercher manuellement des biens pour leurs clients.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">0</div>
+      <div class="problem-stat">Centralisation</div>
+      <p class="problem-text">Données éparpillées entre WhatsApp, Excel, et la mémoire de vos agents.</p>
+    </div>
+    <div class="problem-card">
+      <div class="problem-num">100%</div>
+      <div class="problem-stat">Risque</div>
+      <p class="problem-text">Quand un agent part, il emporte ses contacts et son historique avec lui.</p>
+    </div>
+  </div>
+
+  <div class="quote-box">
+    <div class="quote-mark">"</div>
+    <p class="quote-text">
+      Le problème n'est pas le manque de leads.<br>
+      C'est l'incapacité à les traiter efficacement.
+    </p>
+  </div>
+
+  <div class="page-num">02</div>
+</div>
+
+<!-- ==================== PAGE 3: SOLUTION PART 1 ==================== -->
+<div class="page">
+  <div class="section-num">02 — La Solution</div>
+  <h2 class="section-title">
+    Vestate AI<br>
+    <span class="light">Plateforme Complète</span>
+  </h2>
+
+  <div class="solution-card">
+    <div class="solution-num">01</div>
+    <h3 class="solution-title">Recherche Intelligente (RAG AI)</h3>
+    <p class="solution-desc">
+      Vos clients décrivent ce qu'ils cherchent en langage naturel: <em>"Villa 4 chambres Anfa avec piscine moins de 8 millions"</em>. L'IA comprend, analyse et retourne les biens correspondants instantanément.
+    </p>
+    <div class="solution-result">Résultat → 20 minutes réduites à 3 secondes</div>
+  </div>
+
+  <div class="solution-card">
+    <div class="solution-num">02</div>
+    <h3 class="solution-title">Matching Automatique</h3>
+    <p class="solution-desc">
+      Quand un nouveau bien entre dans votre portefeuille, l'IA scanne instantanément toutes vos demandes clients, identifie les matchs parfaits et notifie l'agent responsable en temps réel.
+    </p>
+    <div class="solution-result">Résultat → Plus jamais d'opportunité manquée</div>
+  </div>
+
+  <div class="solution-card">
+    <div class="solution-num">03</div>
+    <h3 class="solution-title">CRM Intelligent</h3>
+    <p class="solution-desc">
+      Portail admin complet: gestion des leads avec scoring automatique, pipeline visuel, historique complet de chaque interaction, demandes structurées et dashboard temps réel.
+    </p>
+    <div class="solution-result">Résultat → Chaque agent sait quoi faire et quand</div>
+  </div>
+
+  <div class="page-num">03</div>
+</div>
+
+<!-- ==================== PAGE 4: SOLUTION PART 2 ==================== -->
+<div class="page">
+  <div class="section-num">02 — La Solution (suite)</div>
+  <h2 class="section-title">
+    Fonctionnalités<br>
+    <span class="light">Clés en Main</span>
+  </h2>
+
+  <div class="two-col">
+    <div>
+      <div class="solution-card" style="margin-bottom: 16px;">
+        <div class="solution-num">04</div>
+        <h3 class="solution-title">Catalogue Dynamique</h3>
+        <p class="solution-desc">
+          Scraping automatisé des annonces du marché. Enrichissement IA avec smart tags, scoring et catégorisation automatique.
+        </p>
+      </div>
+
+      <div class="solution-card" style="margin-bottom: 0;">
+        <div class="solution-num">05</div>
+        <h3 class="solution-title">Site Web Premium</h3>
+        <p class="solution-desc">
+          Design 2026 ultra-moderne. Mobile-first, dark/light mode, performance optimisée et SEO intégré.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <div class="features-title">Ce qui est inclus</div>
+      <ul class="feature-list">
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">Plateforme web complète</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">CRM leads & demandes</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">Moteur de recherche IA</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">Matching automatique</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">Dashboard analytics</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">Hébergement cloud</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">Support technique</span>
+        </li>
+        <li class="feature-item">
+          <span class="feature-check">✓</span>
+          <span class="feature-text">Formation équipe</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-num">04</div>
+</div>
+
+<!-- ==================== PAGE 5: IMPACT ==================== -->
+<div class="page">
+  <div class="section-num">03 — L'Impact</div>
+  <h2 class="section-title">
+    Avant / Après<br>
+    <span class="light">Les Chiffres</span>
+  </h2>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Métrique</th>
+          <th>Sans Vestate</th>
+          <th>Avec Vestate AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Temps de réponse lead</td>
+          <td>24 - 48 heures</td>
+          <td>&lt; 5 minutes</td>
+        </tr>
+        <tr>
+          <td>Matching bien / client</td>
+          <td>Manuel (20 min)</td>
+          <td>Auto (0.2 sec)</td>
+        </tr>
+        <tr>
+          <td>Leads non traités</td>
+          <td>60 - 70%</td>
+          <td>&lt; 15%</td>
+        </tr>
+        <tr>
+          <td>Temps recherche / jour</td>
+          <td>3 - 4 heures</td>
+          <td>30 minutes</td>
+        </tr>
+        <tr>
+          <td>Données centralisées</td>
+          <td>Non</td>
+          <td>Oui, 100%</td>
+        </tr>
+        <tr>
+          <td>Historique préservé</td>
+          <td>Partiel</td>
+          <td>Complet</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="roi-box">
+    <div class="roi-label">Retour sur Investissement — Scénario Réaliste</div>
+    <div class="roi-grid">
+      <div>
+        <div class="roi-value">+1</div>
+        <div class="roi-desc">Vente / Mois</div>
+      </div>
+      <div>
+        <div class="roi-value">2.5M</div>
+        <div class="roi-desc">Prix Moyen MAD</div>
+      </div>
+      <div>
+        <div class="roi-value">2.5%</div>
+        <div class="roi-desc">Commission</div>
+      </div>
+    </div>
+    <div class="roi-total">
+      <div class="roi-total-value">750,000 MAD</div>
+      <div class="roi-total-label">Revenus additionnels par an</div>
+    </div>
+  </div>
+
+  <div class="page-num">05</div>
+</div>
+
+<!-- ==================== PAGE 6: CTA ==================== -->
+<div class="page">
+  <div class="cta-page">
+    <h1 class="cta-title">
+      Prêt à<br>
+      <span class="light">Transformer</span><br>
+      Votre Agence?
+    </h1>
+
+    <p class="cta-subtitle">
+      Dans 2 ans, il y aura deux types d'agences immobilières au Maroc: celles qui utilisent l'IA, et celles qui auront fermé.
+    </p>
+
+    <a href="#" class="cta-btn">Demander une Démo</a>
+  </div>
+
+  <div class="cta-footer">
+    <div class="cta-footer-left">contact@vestate.ai</div>
+    <div class="cta-footer-right">Vestate AI</div>
+  </div>
+</div>
+
+</body>
+</html>

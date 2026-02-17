@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Nourreska API Server
+ * At Home API Server
  * Express REST API for property listings
  */
 
@@ -358,7 +358,7 @@ app.get('/api/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║              NOURRESKA API SERVER                            ║
+║              AT HOME API SERVER                              ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Server running on http://localhost:${PORT}                    ║
 ║  Properties loaded: ${propertiesData.properties.length}                              ║

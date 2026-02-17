@@ -1,5 +1,5 @@
 """
-Nourreska RAG Search Backend
+At Home RAG Search Backend
 ============================
 Intelligent property search using:
 - FAISS vector store

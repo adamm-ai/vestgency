@@ -1,16 +1,15 @@
 /**
- * Vestate AI - Service Worker
- * ============================
+ * At Home Real Estate Agency - Service Worker
+ * ============================================
  * Basic caching strategy for PWA support
  */
 
-const CACHE_NAME = 'vestate-ai-v1';
+const CACHE_NAME = 'athome-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+  '/logo-athome.png'
 ];
 
 // Install event - cache static assets
