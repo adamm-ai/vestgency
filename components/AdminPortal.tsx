@@ -1105,6 +1105,12 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   const [demandMatches, setDemandMatches] = useState<CRM.DemandMatch[]>([]);
   const [isRunningMatching, setIsRunningMatching] = useState(false);
 
+  // Bulk Selection State
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
+  const [selectedDemandIds, setSelectedDemandIds] = useState<Set<string>>(new Set());
+  const [isGeneratingData, setIsGeneratingData] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState<'leads' | 'demands' | null>(null);
+
   // Settings State
   const [settingsTab, setSettingsTab] = useState<'profile' | 'notifications' | 'crm' | 'theme' | 'about'>('profile');
   const [profileSettings, setProfileSettings] = useState({
@@ -1266,6 +1272,89 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
       setIsRunningMatching(false);
     }
   }, [properties, refreshDemands]);
+
+  // Bulk selection handlers for leads
+  const toggleLeadSelection = useCallback((leadId: string) => {
+    setSelectedLeadIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(leadId)) {
+        newSet.delete(leadId);
+      } else {
+        newSet.add(leadId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllLeads = useCallback(() => {
+    const allIds = leads.map(l => l.id);
+    setSelectedLeadIds(new Set(allIds));
+  }, [leads]);
+
+  const deselectAllLeads = useCallback(() => {
+    setSelectedLeadIds(new Set());
+  }, []);
+
+  const bulkDeleteSelectedLeads = useCallback(() => {
+    const count = CRM.bulkDeleteLeads(Array.from(selectedLeadIds), true);
+    console.log(`[CRM] Bulk deleted ${count} leads`);
+    setSelectedLeadIds(new Set());
+    setShowBulkDeleteConfirm(null);
+    refreshCRM();
+  }, [selectedLeadIds, refreshCRM]);
+
+  // Bulk selection handlers for demands
+  const toggleDemandSelection = useCallback((demandId: string) => {
+    setSelectedDemandIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(demandId)) {
+        newSet.delete(demandId);
+      } else {
+        newSet.add(demandId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllDemands = useCallback(() => {
+    const allIds = demands.map(d => d.id);
+    setSelectedDemandIds(new Set(allIds));
+  }, [demands]);
+
+  const deselectAllDemands = useCallback(() => {
+    setSelectedDemandIds(new Set());
+  }, []);
+
+  const bulkDeleteSelectedDemands = useCallback(() => {
+    const count = CRM.bulkDeleteDemands(Array.from(selectedDemandIds));
+    console.log(`[CRM] Bulk deleted ${count} demands`);
+    setSelectedDemandIds(new Set());
+    setShowBulkDeleteConfirm(null);
+    refreshDemands();
+  }, [selectedDemandIds, refreshDemands]);
+
+  // Generate synthetic data
+  const handleGenerateSyntheticData = useCallback(() => {
+    setIsGeneratingData(true);
+    try {
+      const result = CRM.populateSyntheticData(60, 50); // 60 leads, 50 demands
+      console.log(`[CRM] Generated ${result.leads.length} leads and ${result.demands.length} demands`);
+      refreshCRM();
+      refreshDemands();
+    } finally {
+      setIsGeneratingData(false);
+    }
+  }, [refreshCRM, refreshDemands]);
+
+  // Clear all data
+  const handleClearAllData = useCallback(() => {
+    const result = CRM.clearAllSyntheticData();
+    console.log(`[CRM] Cleared ${result.leadsDeleted} leads and ${result.demandsDeleted} demands`);
+    setSelectedLeadIds(new Set());
+    setSelectedDemandIds(new Set());
+    refreshCRM();
+    refreshDemands();
+  }, [refreshCRM, refreshDemands]);
 
   // Get filtered demands
   const filteredDemands = useMemo(() => {
@@ -1865,7 +1954,27 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                     <p className="text-white/50 text-sm">Pipeline commercial et suivi prospects</p>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Bulk Actions */}
+                    {selectedLeadIds.size > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/30 rounded-lg">
+                        <span className="text-sm text-red-400 font-medium">{selectedLeadIds.size} sélectionné(s)</span>
+                        <button
+                          onClick={deselectAllLeads}
+                          className="text-white/50 hover:text-white"
+                        >
+                          <X size={14} />
+                        </button>
+                        <button
+                          onClick={() => setShowBulkDeleteConfirm('leads')}
+                          className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-medium hover:bg-red-500/30"
+                        >
+                          <Trash2 size={12} />
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+
                     {/* View Toggle */}
                     <div className="flex bg-white/[0.03] rounded-lg p-1 border border-white/[0.08]">
                       <button
@@ -1893,6 +2002,40 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                       <Download size={16} />
                       Export
                     </button>
+
+                    {/* Synthetic Data Controls */}
+                    <div className="relative group">
+                      <button
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-all"
+                      >
+                        <Sparkles size={16} />
+                        Data
+                      </button>
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-[#1a1a24] border border-white/10 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                        <button
+                          onClick={handleGenerateSyntheticData}
+                          disabled={isGeneratingData}
+                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-all"
+                        >
+                          <Plus size={14} />
+                          {isGeneratingData ? 'Génération...' : 'Générer données test'}
+                        </button>
+                        <button
+                          onClick={selectAllLeads}
+                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-white/80 hover:bg-white/5 transition-all"
+                        >
+                          <Check size={14} />
+                          Tout sélectionner
+                        </button>
+                        <button
+                          onClick={handleClearAllData}
+                          className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-400 hover:bg-red-500/10 transition-all border-t border-white/5"
+                        >
+                          <Trash2 size={14} />
+                          Tout supprimer
+                        </button>
+                      </div>
+                    </div>
 
                     <button
                       onClick={() => setShowAddLeadModal(true)}
@@ -2055,27 +2198,46 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
 
                             <div className="space-y-2 max-h-[calc(100vh-450px)] overflow-y-auto pr-2">
                               {statusLeads.map(lead => (
-                                <motion.button
+                                <motion.div
                                   key={lead.id}
                                   initial={{ opacity: 0, y: 10 }}
                                   animate={{ opacity: 1, y: 0 }}
-                                  draggable
-                                  onDragStart={(e) => {
-                                    setDraggedLeadId(lead.id);
-                                    e.dataTransfer.setData('text/plain', lead.id);
-                                    e.dataTransfer.effectAllowed = 'move';
-                                  }}
-                                  onDragEnd={() => {
-                                    setDraggedLeadId(null);
-                                    setDropTargetStatus(null);
-                                  }}
-                                  onClick={() => setSelectedLead(lead)}
-                                  className={`w-full p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl text-left hover:border-brand-gold/30 hover:bg-white/[0.04] transition-all group cursor-grab active:cursor-grabbing ${
-                                    draggedLeadId === lead.id ? 'opacity-50 border-brand-gold/50' : ''
+                                  className={`relative w-full p-4 bg-white/[0.02] border rounded-xl text-left hover:border-brand-gold/30 hover:bg-white/[0.04] transition-all group ${
+                                    draggedLeadId === lead.id ? 'opacity-50 border-brand-gold/50' :
+                                    selectedLeadIds.has(lead.id) ? 'border-brand-gold/50 bg-brand-gold/5' : 'border-white/[0.06]'
                                   }`}
                                 >
+                                  {/* Selection checkbox */}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleLeadSelection(lead.id);
+                                    }}
+                                    className={`absolute top-2 left-2 w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                                      selectedLeadIds.has(lead.id)
+                                        ? 'bg-brand-gold border-brand-gold text-black'
+                                        : 'border-white/20 hover:border-white/40 opacity-0 group-hover:opacity-100'
+                                    }`}
+                                  >
+                                    {selectedLeadIds.has(lead.id) && <Check size={12} />}
+                                  </button>
+
+                                  <div
+                                    draggable
+                                    onDragStart={(e) => {
+                                      setDraggedLeadId(lead.id);
+                                      e.dataTransfer.setData('text/plain', lead.id);
+                                      e.dataTransfer.effectAllowed = 'move';
+                                    }}
+                                    onDragEnd={() => {
+                                      setDraggedLeadId(null);
+                                      setDropTargetStatus(null);
+                                    }}
+                                    onClick={() => setSelectedLead(lead)}
+                                    className="cursor-grab active:cursor-grabbing"
+                                  >
                                   <div className="flex items-start justify-between mb-2">
-                                    <p className="font-medium text-white text-sm">
+                                    <p className="font-medium text-white text-sm pl-5">
                                       {lead.firstName} {lead.lastName}
                                     </p>
                                     <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
@@ -2150,7 +2312,8 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                                       </span>
                                     </div>
                                   </div>
-                                </motion.button>
+                                  </div>
+                                </motion.div>
                               ))}
 
                               {statusLeads.length === 0 && (
@@ -2863,7 +3026,35 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                       Demandes de recherche, vente et gestion locative
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Bulk Actions for Demands */}
+                    {selectedDemandIds.size > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-red-500/10 border border-red-500/30 rounded-lg">
+                        <span className="text-sm text-red-400 font-medium">{selectedDemandIds.size} sélectionné(s)</span>
+                        <button
+                          onClick={deselectAllDemands}
+                          className="text-white/50 hover:text-white"
+                        >
+                          <X size={14} />
+                        </button>
+                        <button
+                          onClick={() => setShowBulkDeleteConfirm('demands')}
+                          className="flex items-center gap-1 px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs font-medium hover:bg-red-500/30"
+                        >
+                          <Trash2 size={12} />
+                          Supprimer
+                        </button>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={selectAllDemands}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-white hover:border-white/20 transition-all"
+                      title="Tout sélectionner"
+                    >
+                      <Check size={14} />
+                    </button>
+
                     <button
                       onClick={() => runAIMatching()}
                       disabled={isRunningMatching}
@@ -2960,14 +3151,33 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                         key={demand.id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        onClick={() => {
-                          setSelectedDemand(demand);
-                          setDemandMatches(CRM.getMatchesForDemand(demand.id));
-                        }}
-                        className="p-4 bg-white/[0.02] border border-white/[0.06] rounded-xl hover:border-brand-gold/30 hover:bg-white/[0.04] transition-all cursor-pointer"
+                        className={`relative p-4 bg-white/[0.02] border rounded-xl hover:border-brand-gold/30 hover:bg-white/[0.04] transition-all cursor-pointer group ${
+                          selectedDemandIds.has(demand.id) ? 'border-brand-gold/50 bg-brand-gold/5' : 'border-white/[0.06]'
+                        }`}
                       >
+                        {/* Selection checkbox */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDemandSelection(demand.id);
+                          }}
+                          className={`absolute top-2 left-2 w-5 h-5 rounded border flex items-center justify-center transition-all z-10 ${
+                            selectedDemandIds.has(demand.id)
+                              ? 'bg-brand-gold border-brand-gold text-black'
+                              : 'border-white/20 hover:border-white/40 opacity-0 group-hover:opacity-100'
+                          }`}
+                        >
+                          {selectedDemandIds.has(demand.id) && <Check size={12} />}
+                        </button>
+
+                        <div
+                          onClick={() => {
+                            setSelectedDemand(demand);
+                            setDemandMatches(CRM.getMatchesForDemand(demand.id));
+                          }}
+                        >
                         <div className="flex items-start justify-between mb-3">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 pl-5">
                             <div className={`w-8 h-8 rounded-lg ${config.color}/20 flex items-center justify-center`}>
                               <TypeIcon size={16} className={`${config.color.replace('bg-', 'text-')}`} />
                             </div>
@@ -3029,6 +3239,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                             {formatLeadTimestamp(demand.createdAt).relative || formatLeadTimestamp(demand.createdAt).fullDate}
                           </span>
                           <span className="text-[10px] text-white/30">{demand.source}</span>
+                        </div>
                         </div>
                       </motion.div>
                     );

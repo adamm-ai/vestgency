@@ -1840,6 +1840,304 @@ export function detectDemandIntent(message: string): DemandType | null {
 }
 
 // ============================================================================
+// BULK OPERATIONS
+// ============================================================================
+
+export function bulkDeleteLeads(ids: string[], permanent = false): number {
+  let deleted = 0;
+  for (const id of ids) {
+    if (deleteLead(id, permanent)) {
+      deleted++;
+    }
+  }
+  return deleted;
+}
+
+export function bulkDeleteDemands(ids: string[]): number {
+  let deleted = 0;
+  for (const id of ids) {
+    if (deleteDemand(id)) {
+      deleted++;
+    }
+  }
+  return deleted;
+}
+
+export function deleteAllLeads(permanent = false): number {
+  const leads = getLeads();
+  return bulkDeleteLeads(leads.map(l => l.id), permanent);
+}
+
+export function deleteAllDemands(): number {
+  const demands = getDemands();
+  return bulkDeleteDemands(demands.map(d => d.id));
+}
+
+// ============================================================================
+// SYNTHETIC DATA GENERATION
+// ============================================================================
+
+const SYNTHETIC_FIRST_NAMES = [
+  'Mohammed', 'Fatima', 'Ahmed', 'Amina', 'Youssef', 'Khadija', 'Omar', 'Aisha',
+  'Hassan', 'Zahra', 'Ibrahim', 'Nadia', 'Ali', 'Sara', 'Khalid', 'Leila',
+  'Rachid', 'Samira', 'Mehdi', 'Houda', 'Karim', 'Meryem', 'Samir', 'Hanane',
+  'Abdellah', 'Soukaina', 'Amine', 'Imane', 'Hamza', 'Loubna', 'Adil', 'Ghita',
+  'Driss', 'Karima', 'Mustapha', 'Hafsa', 'Nabil', 'Zineb', 'Reda', 'Asma',
+  'Jean', 'Marie', 'Pierre', 'Sophie', 'Laurent', 'Isabelle', 'Marc', 'Claire',
+  'David', 'Emma', 'Thomas', 'Léa', 'Nicolas', 'Julie', 'François', 'Camille'
+];
+
+const SYNTHETIC_LAST_NAMES = [
+  'Benali', 'El Amrani', 'Tazi', 'Berrada', 'Benjelloun', 'Alaoui', 'Fassi',
+  'El Idrissi', 'Lahlou', 'Bennani', 'El Mansouri', 'Chraibi', 'Kettani',
+  'El Kabbaj', 'Sebti', 'Belhaj', 'El Filali', 'Zniber', 'Bensaid', 'Tahiri',
+  'Hassani', 'El Ouali', 'Cherkaoui', 'Bouazza', 'El Baz', 'Rifai', 'Naciri',
+  'Martin', 'Bernard', 'Dubois', 'Moreau', 'Laurent', 'Simon', 'Michel',
+  'Lefebvre', 'Leroy', 'Roux', 'David', 'Bertrand', 'Morel', 'Fournier'
+];
+
+const SYNTHETIC_CITIES = [
+  'Casablanca', 'Rabat', 'Marrakech', 'Tanger', 'Fès', 'Agadir', 'Meknès',
+  'Kénitra', 'Tétouan', 'El Jadida', 'Mohammedia', 'Salé', 'Témara'
+];
+
+const SYNTHETIC_NEIGHBORHOODS: Record<string, string[]> = {
+  'Casablanca': ['Anfa', 'Californie', 'Maarif', 'Ain Diab', 'Bouskoura', 'Racine', 'Gauthier', 'CIL', 'Bourgogne', 'Palmier', 'Oasis', 'Sidi Maarouf'],
+  'Rabat': ['Agdal', 'Hay Riad', 'Souissi', 'Hassan', 'Océan', 'Les Orangers', 'Aviation'],
+  'Marrakech': ['Guéliz', 'Hivernage', 'Palmeraie', 'Médina', 'Targa', 'Amelkis'],
+  'Tanger': ['Malabata', 'Iberia', 'Marshan', 'Centre Ville', 'Cap Spartel'],
+};
+
+const SYNTHETIC_SOURCES: LeadSource[] = ['chatbot', 'website_form', 'phone', 'email', 'walk_in', 'referral', 'social_media'];
+const SYNTHETIC_STATUSES: LeadStatus[] = ['new', 'contacted', 'qualified', 'visit_scheduled', 'visit_completed', 'proposal_sent', 'negotiation', 'won', 'lost'];
+const SYNTHETIC_URGENCIES: LeadUrgency[] = ['low', 'medium', 'high', 'critical'];
+const SYNTHETIC_PROPERTY_TYPES: PropertyType[] = ['villa', 'apartment', 'riad', 'land', 'commercial', 'penthouse', 'duplex', 'studio'];
+const SYNTHETIC_AMENITIES = ['piscine', 'jardin', 'parking', 'terrasse', 'vue mer', 'meublé', 'climatisation', 'ascenseur', 'gardien', 'concierge'];
+
+function randomElement<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomElements<T>(arr: T[], min: number, max: number): T[] {
+  const count = Math.floor(Math.random() * (max - min + 1)) + min;
+  const shuffled = [...arr].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+function randomPhone(): string {
+  const prefixes = ['06', '07'];
+  const prefix = randomElement(prefixes);
+  const number = Math.floor(Math.random() * 100000000).toString().padStart(8, '0');
+  return `+212 ${prefix}${number.slice(0, 2)} ${number.slice(2, 4)} ${number.slice(4, 6)} ${number.slice(6, 8)}`;
+}
+
+function randomEmail(firstName: string, lastName: string): string {
+  const domains = ['gmail.com', 'outlook.com', 'yahoo.fr', 'hotmail.com', 'live.fr', 'protonmail.com'];
+  const cleanFirst = firstName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '');
+  const cleanLast = lastName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '').replace(/'/g, '');
+  const random = Math.floor(Math.random() * 100);
+  return `${cleanFirst}.${cleanLast}${random}@${randomElement(domains)}`;
+}
+
+function randomDate(daysBack: number): number {
+  const now = Date.now();
+  const randomDays = Math.floor(Math.random() * daysBack);
+  const randomHours = Math.floor(Math.random() * 24);
+  const randomMinutes = Math.floor(Math.random() * 60);
+  return now - (randomDays * 24 * 60 * 60 * 1000) - (randomHours * 60 * 60 * 1000) - (randomMinutes * 60 * 1000);
+}
+
+function randomBudget(category: PropertyCategory): { min: number; max: number } {
+  if (category === 'RENT') {
+    const ranges = [
+      { min: 5000, max: 10000 },
+      { min: 8000, max: 15000 },
+      { min: 12000, max: 25000 },
+      { min: 20000, max: 40000 },
+      { min: 30000, max: 60000 },
+    ];
+    return randomElement(ranges);
+  } else {
+    const ranges = [
+      { min: 500000, max: 1000000 },
+      { min: 800000, max: 1500000 },
+      { min: 1200000, max: 2500000 },
+      { min: 2000000, max: 4000000 },
+      { min: 3500000, max: 7000000 },
+      { min: 5000000, max: 12000000 },
+      { min: 8000000, max: 20000000 },
+    ];
+    return randomElement(ranges);
+  }
+}
+
+export function generateSyntheticLeads(count: number): Lead[] {
+  const generatedLeads: Lead[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const firstName = randomElement(SYNTHETIC_FIRST_NAMES);
+    const lastName = randomElement(SYNTHETIC_LAST_NAMES);
+    const city = randomElement(SYNTHETIC_CITIES);
+    const transactionType = Math.random() > 0.3 ? 'SALE' : 'RENT';
+    const budget = randomBudget(transactionType);
+    const createdAt = randomDate(60); // Last 60 days
+    const status = randomElement(SYNTHETIC_STATUSES);
+    const source = randomElement(SYNTHETIC_SOURCES);
+
+    const lead: Lead = {
+      id: generateId(),
+      firstName,
+      lastName,
+      email: randomEmail(firstName, lastName),
+      phone: randomPhone(),
+      city,
+      status,
+      source,
+      urgency: randomElement(SYNTHETIC_URGENCIES),
+      score: Math.floor(Math.random() * 60) + 20, // 20-80
+      transactionType,
+      budgetMin: budget.min,
+      budgetMax: budget.max,
+      notes: [],
+      activities: [
+        {
+          id: generateId(),
+          type: 'lead_created',
+          title: 'Lead créé',
+          description: `Lead généré via ${source}`,
+          agent: 'System',
+          createdAt: new Date(createdAt).toISOString(),
+        }
+      ],
+      createdAt,
+      updatedAt: createdAt + Math.floor(Math.random() * 3 * 24 * 60 * 60 * 1000), // Updated within 3 days
+    };
+
+    // Add some notes for random leads
+    if (Math.random() > 0.6) {
+      lead.notes = [{
+        id: generateId(),
+        content: randomElement([
+          'Client très intéressé, à recontacter rapidement',
+          'Budget flexible, peut monter jusqu\'à 20%',
+          'Recherche urgente, déménagement prévu',
+          'Investisseur, cherche plusieurs biens',
+          'Première acquisition, besoin d\'accompagnement',
+          'Connaît bien le quartier, critères précis',
+          'Disponible uniquement le weekend',
+          'Préfère les contacts par WhatsApp',
+        ]),
+        author: 'Agent',
+        createdAt: new Date(createdAt + 60000).toISOString(),
+      }];
+    }
+
+    generatedLeads.push(lead);
+  }
+
+  // Save to storage
+  const existingLeads = getLeads();
+  saveLeadsToStorage([...existingLeads, ...generatedLeads]);
+
+  console.log(`[CRM] Generated ${count} synthetic leads`);
+  return generatedLeads;
+}
+
+export function generateSyntheticDemands(count: number): Demand[] {
+  const generatedDemands: Demand[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const firstName = randomElement(SYNTHETIC_FIRST_NAMES);
+    const lastName = randomElement(SYNTHETIC_LAST_NAMES);
+    const demandType = randomElement<DemandType>(['property_search', 'property_search', 'property_search', 'property_sale', 'property_rental_management']); // More searches
+    const createdAt = new Date(randomDate(45)).toISOString(); // Last 45 days
+    const city = randomElement(SYNTHETIC_CITIES);
+    const neighborhoods = SYNTHETIC_NEIGHBORHOODS[city] || [];
+
+    const demand: Demand = {
+      id: generateId(),
+      type: demandType,
+      status: randomElement<DemandStatus>(['new', 'new', 'processing', 'matched', 'contacted', 'completed']),
+      urgency: randomElement<DemandUrgency>(['low', 'medium', 'medium', 'high', 'urgent']),
+      firstName,
+      lastName,
+      email: randomEmail(firstName, lastName),
+      phone: randomPhone(),
+      source: randomElement<DemandSource>(['chatbot', 'chatbot', 'website_form', 'phone', 'email', 'walk_in', 'manual']),
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    // Add search criteria for property seekers
+    if (demandType === 'property_search') {
+      const transactionType = Math.random() > 0.35 ? 'SALE' : 'RENT';
+      const budget = randomBudget(transactionType);
+
+      demand.searchCriteria = {
+        transactionType,
+        propertyType: randomElements(SYNTHETIC_PROPERTY_TYPES, 1, 3),
+        cities: [city],
+        neighborhoods: neighborhoods.length > 0 ? randomElements(neighborhoods, 1, 3) : undefined,
+        budgetMin: budget.min,
+        budgetMax: budget.max,
+        bedroomsMin: randomElement([1, 2, 2, 3, 3, 4, 5]),
+        surfaceMin: randomElement([50, 80, 100, 120, 150, 200, 300]),
+        amenities: Math.random() > 0.5 ? randomElements(SYNTHETIC_AMENITIES, 1, 4) : undefined,
+      };
+    }
+
+    // Add property details for sellers
+    if (demandType === 'property_sale' || demandType === 'property_rental_management') {
+      const transactionType = demandType === 'property_sale' ? 'SALE' : 'MANAGEMENT';
+      const budget = randomBudget(demandType === 'property_sale' ? 'SALE' : 'RENT');
+
+      demand.propertyDetails = {
+        propertyType: randomElement(SYNTHETIC_PROPERTY_TYPES),
+        transactionType,
+        city,
+        neighborhood: neighborhoods.length > 0 ? randomElement(neighborhoods) : undefined,
+        price: budget.max,
+        surface: randomElement([60, 80, 100, 120, 150, 180, 220, 300, 400, 500]),
+        bedrooms: randomElement([1, 2, 2, 3, 3, 3, 4, 4, 5, 6]),
+        bathrooms: randomElement([1, 1, 2, 2, 2, 3, 3, 4]),
+        amenities: randomElements(SYNTHETIC_AMENITIES, 2, 5),
+      };
+    }
+
+    // Add match score for some matched demands
+    if (demand.status === 'matched') {
+      demand.matchScore = Math.floor(Math.random() * 40) + 60; // 60-100
+      demand.matchedPropertyIds = [generateId(), generateId()];
+    }
+
+    generatedDemands.push(demand);
+  }
+
+  // Save to storage
+  const existingDemands = getDemands();
+  saveDemandsToStorage([...existingDemands, ...generatedDemands]);
+
+  console.log(`[CRM] Generated ${count} synthetic demands`);
+  return generatedDemands;
+}
+
+export function populateSyntheticData(leadCount = 50, demandCount = 40): { leads: Lead[]; demands: Demand[] } {
+  const leads = generateSyntheticLeads(leadCount);
+  const demands = generateSyntheticDemands(demandCount);
+
+  // Run matching on new demands
+  runMatchingEngine();
+
+  return { leads, demands };
+}
+
+export function clearAllSyntheticData(): { leadsDeleted: number; demandsDeleted: number } {
+  const leadsDeleted = deleteAllLeads(true);
+  const demandsDeleted = deleteAllDemands();
+  return { leadsDeleted, demandsDeleted };
+}
+
+// ============================================================================
 // INITIALIZATION
 // ============================================================================
 
