@@ -1112,6 +1112,17 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState<'leads' | 'demands' | null>(null);
   const [showDataMenu, setShowDataMenu] = useState(false);
 
+  // Matches State
+  const [allMatches, setAllMatches] = useState<CRM.EnrichedMatch[]>([]);
+  const [matchStats, setMatchStats] = useState<CRM.MatchStats | null>(null);
+  const [matchStatusFilter, setMatchStatusFilter] = useState<CRM.DemandMatch['status'] | 'all'>('all');
+  const [matchTypeFilter, setMatchTypeFilter] = useState<CRM.DemandMatch['matchType'] | 'all'>('all');
+  const [selectedMatchIds, setSelectedMatchIds] = useState<Set<string>>(new Set());
+  const [isAutoMatchEnabled, setIsAutoMatchEnabled] = useState(true);
+  const [autoMatchInterval, setAutoMatchIntervalState] = useState(15);
+  const [lastMatchRun, setLastMatchRun] = useState<string | null>(null);
+  const [matchSearchQuery, setMatchSearchQuery] = useState('');
+
   // Settings State
   const [settingsTab, setSettingsTab] = useState<'profile' | 'notifications' | 'crm' | 'theme' | 'about'>('profile');
   const [profileSettings, setProfileSettings] = useState({
@@ -1257,6 +1268,51 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     refreshDemands();
   }, [refreshDemands]);
 
+  // Load matches
+  const refreshMatches = useCallback(() => {
+    const filters: { status?: CRM.DemandMatch['status']; matchType?: CRM.DemandMatch['matchType'] } = {};
+    if (matchStatusFilter !== 'all') filters.status = matchStatusFilter;
+    if (matchTypeFilter !== 'all') filters.matchType = matchTypeFilter;
+
+    const enrichedMatches = CRM.getEnrichedMatches(filters);
+    setAllMatches(enrichedMatches);
+    setMatchStats(CRM.getMatchStats());
+    setLastMatchRun(CRM.getLastMatchRun());
+  }, [matchStatusFilter, matchTypeFilter]);
+
+  useEffect(() => {
+    refreshMatches();
+  }, [refreshMatches]);
+
+  // Auto-matching setup
+  useEffect(() => {
+    if (!isAutoMatchEnabled) {
+      CRM.stopAutoMatching();
+      return;
+    }
+
+    // Store properties for matching
+    localStorage.setItem('nourreska_properties', JSON.stringify(properties));
+
+    // Set interval and start
+    CRM.setAutoMatchInterval(autoMatchInterval);
+    CRM.startAutoMatching();
+
+    // Subscribe to auto-match results
+    const unsubscribe = CRM.onAutoMatchComplete((result) => {
+      console.log(`[Auto-Match] Completed: ${result.newMatches} new matches`);
+      refreshMatches();
+      refreshDemands();
+      if (result.newMatches > 0) {
+        // Could trigger a toast notification here
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [isAutoMatchEnabled, autoMatchInterval, properties, refreshMatches, refreshDemands]);
+
   // Run AI matching
   const runAIMatching = useCallback(async (demandId?: string) => {
     setIsRunningMatching(true);
@@ -1333,6 +1389,60 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     setShowBulkDeleteConfirm(null);
     refreshDemands();
   }, [selectedDemandIds, refreshDemands]);
+
+  // Match selection handlers
+  const toggleMatchSelection = useCallback((matchId: string) => {
+    setSelectedMatchIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(matchId)) {
+        newSet.delete(matchId);
+      } else {
+        newSet.add(matchId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const selectAllMatches = useCallback(() => {
+    const allIds = allMatches.map(m => m.id);
+    setSelectedMatchIds(new Set(allIds));
+  }, [allMatches]);
+
+  const deselectAllMatches = useCallback(() => {
+    setSelectedMatchIds(new Set());
+  }, []);
+
+  const bulkDeleteSelectedMatches = useCallback(() => {
+    const count = CRM.bulkDeleteMatches(Array.from(selectedMatchIds));
+    console.log(`[CRM] Bulk deleted ${count} matches`);
+    setSelectedMatchIds(new Set());
+    refreshMatches();
+  }, [selectedMatchIds, refreshMatches]);
+
+  const updateMatchStatusHandler = useCallback((matchId: string, status: CRM.DemandMatch['status']) => {
+    CRM.updateMatchStatus(matchId, status);
+    refreshMatches();
+  }, [refreshMatches]);
+
+  // Filtered matches with search
+  const filteredMatches = useMemo(() => {
+    if (!matchSearchQuery.trim()) return allMatches;
+    const query = matchSearchQuery.toLowerCase();
+    return allMatches.filter(m => {
+      const demandName = `${m.demand?.firstName || ''} ${m.demand?.lastName || ''}`.toLowerCase();
+      const matchReasons = m.matchReasons.join(' ').toLowerCase();
+      return demandName.includes(query) || matchReasons.includes(query);
+    });
+  }, [allMatches, matchSearchQuery]);
+
+  // Manual match run
+  const handleManualMatchRun = useCallback(() => {
+    localStorage.setItem('nourreska_properties', JSON.stringify(properties));
+    const result = CRM.runAutoMatch();
+    console.log(`[Manual Match] ${result.newMatches} new matches`);
+    refreshMatches();
+    refreshDemands();
+  }, [properties, refreshMatches, refreshDemands]);
 
   // Generate synthetic data
   const handleGenerateSyntheticData = useCallback(() => {
@@ -1490,6 +1600,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'crm', label: 'CRM', icon: Target, badge: true },
     { id: 'demands', label: 'Demandes', icon: ClipboardList },
+    { id: 'matches', label: 'Matches', icon: Link2, badge: matchStats?.pendingMatches > 0 },
     { id: 'properties', label: 'Propriétés', icon: Building2 },
     { id: 'users', label: 'Utilisateurs', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
@@ -3503,6 +3614,385 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                     </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+            )}
+
+            {/* ============ MATCHES VIEW ============ */}
+            {currentView === 'matches' && (
+              <div className="space-y-6">
+                {/* Header with Auto-Match Controls */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                      <Link2 className="text-brand-gold" size={28} />
+                      Centre de Matchs IA
+                    </h2>
+                    <p className="text-white/50 mt-1">
+                      Matchs automatiques entre demandes et propriétés
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Auto-match toggle */}
+                    <div className="flex items-center gap-3 px-4 py-2 bg-white/[0.03] border border-white/[0.08] rounded-xl">
+                      <span className="text-sm text-white/60">Auto-match</span>
+                      <button
+                        onClick={() => setIsAutoMatchEnabled(!isAutoMatchEnabled)}
+                        className={`relative w-12 h-6 rounded-full transition-all ${
+                          isAutoMatchEnabled ? 'bg-emerald-500' : 'bg-white/20'
+                        }`}
+                      >
+                        <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${
+                          isAutoMatchEnabled ? 'left-7' : 'left-1'
+                        }`} />
+                      </button>
+                      <span className={`text-sm font-medium ${isAutoMatchEnabled ? 'text-emerald-400' : 'text-white/40'}`}>
+                        {isAutoMatchEnabled ? 'ON' : 'OFF'}
+                      </span>
+                    </div>
+
+                    {/* Interval selector */}
+                    {isAutoMatchEnabled && (
+                      <select
+                        value={autoMatchInterval}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          setAutoMatchIntervalState(val);
+                          CRM.setAutoMatchInterval(val);
+                        }}
+                        className="px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white text-sm focus:border-brand-gold/50 outline-none"
+                      >
+                        <option value={5}>Toutes les 5 min</option>
+                        <option value={10}>Toutes les 10 min</option>
+                        <option value={15}>Toutes les 15 min</option>
+                        <option value={30}>Toutes les 30 min</option>
+                        <option value={60}>Toutes les heures</option>
+                      </select>
+                    )}
+
+                    {/* Manual run button */}
+                    <button
+                      onClick={handleManualMatchRun}
+                      className="flex items-center gap-2 px-4 py-2 bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-all"
+                    >
+                      <RefreshCw size={16} className={isRunningMatching ? 'animate-spin' : ''} />
+                      Lancer maintenant
+                    </button>
+                  </div>
+                </div>
+
+                {/* Last run info */}
+                {lastMatchRun && (
+                  <div className="flex items-center gap-2 text-sm text-white/40">
+                    <Clock size={14} />
+                    Dernière vérification: {new Date(lastMatchRun).toLocaleString('fr-FR')}
+                    {isAutoMatchEnabled && (
+                      <span className="ml-2 text-emerald-400">
+                        • Prochaine dans {autoMatchInterval} min
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Stats Cards */}
+                {matchStats && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {[
+                      { label: 'Total Matchs', value: matchStats.totalMatches, icon: Link2, color: 'from-brand-gold to-amber-500' },
+                      { label: 'En attente', value: matchStats.pendingMatches, icon: Clock, color: 'from-blue-500 to-cyan-400' },
+                      { label: 'Notifiés', value: matchStats.notifiedMatches, icon: Bell, color: 'from-purple-500 to-pink-400' },
+                      { label: 'Contactés', value: matchStats.contactedMatches, icon: MessageSquare, color: 'from-emerald-500 to-teal-400' },
+                      { label: 'Réussis', value: matchStats.successfulMatches, icon: Check, color: 'from-green-500 to-emerald-400' },
+                      { label: 'Score moyen', value: `${matchStats.avgMatchScore}%`, icon: Star, color: 'from-yellow-500 to-orange-400' },
+                    ].map((stat, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="relative overflow-hidden rounded-xl bg-white/[0.02] border border-white/[0.06] p-4"
+                      >
+                        <div className={`absolute top-0 right-0 w-16 h-16 bg-gradient-to-br ${stat.color} opacity-10 rounded-full blur-xl -translate-y-1/2 translate-x-1/2`} />
+                        <div className="relative">
+                          <stat.icon size={18} className="text-white/40 mb-2" />
+                          <p className="text-2xl font-bold text-white">{stat.value}</p>
+                          <p className="text-xs text-white/50">{stat.label}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Filters & Search */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex-1 min-w-[250px] relative">
+                    <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40" />
+                    <input
+                      type="text"
+                      value={matchSearchQuery}
+                      onChange={(e) => setMatchSearchQuery(e.target.value)}
+                      placeholder="Rechercher un match..."
+                      className="w-full pl-12 pr-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white placeholder-white/30 focus:border-brand-gold/50 outline-none transition-all"
+                    />
+                  </div>
+
+                  <select
+                    value={matchStatusFilter}
+                    onChange={(e) => setMatchStatusFilter(e.target.value as any)}
+                    className="px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:border-brand-gold/50 outline-none"
+                  >
+                    <option value="all">Tous les statuts</option>
+                    <option value="pending">En attente</option>
+                    <option value="notified">Notifiés</option>
+                    <option value="contacted">Contactés</option>
+                    <option value="successful">Réussis</option>
+                    <option value="rejected">Rejetés</option>
+                  </select>
+
+                  <select
+                    value={matchTypeFilter}
+                    onChange={(e) => setMatchTypeFilter(e.target.value as any)}
+                    className="px-4 py-3 bg-white/[0.03] border border-white/[0.08] rounded-xl text-white focus:border-brand-gold/50 outline-none"
+                  >
+                    <option value="all">Tous les types</option>
+                    <option value="demand_to_property">Demande → Propriété</option>
+                    <option value="demand_to_demand">Demande → Demande</option>
+                  </select>
+
+                  {/* Bulk actions */}
+                  {selectedMatchIds.size > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-white/60">{selectedMatchIds.size} sélectionné(s)</span>
+                      <button
+                        onClick={deselectAllMatches}
+                        className="px-3 py-2 text-sm text-white/60 hover:text-white transition-all"
+                      >
+                        Désélectionner
+                      </button>
+                      <button
+                        onClick={bulkDeleteSelectedMatches}
+                        className="flex items-center gap-2 px-3 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all"
+                      >
+                        <Trash2 size={14} />
+                        Supprimer
+                      </button>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={selectAllMatches}
+                    className="px-4 py-2 text-sm text-white/60 hover:text-white border border-white/10 rounded-lg hover:border-white/20 transition-all"
+                  >
+                    Tout sélectionner
+                  </button>
+
+                  <button
+                    onClick={refreshMatches}
+                    className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.08] text-white/60 hover:text-white hover:border-white/20 transition-all"
+                  >
+                    <RefreshCw size={18} />
+                  </button>
+                </div>
+
+                {/* Matches List */}
+                <div className="space-y-4">
+                  {filteredMatches.length === 0 ? (
+                    <div className="p-12 text-center bg-white/[0.02] border border-white/[0.06] rounded-2xl">
+                      <Link2 size={48} className="text-white/10 mx-auto mb-4" />
+                      <p className="text-white/40">Aucun match trouvé</p>
+                      <p className="text-xs text-white/30 mt-1">
+                        Les matchs apparaîtront automatiquement quand des demandes correspondent à des propriétés
+                      </p>
+                      <button
+                        onClick={handleManualMatchRun}
+                        className="mt-4 px-4 py-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-all"
+                      >
+                        Lancer une recherche de matchs
+                      </button>
+                    </div>
+                  ) : (
+                    filteredMatches.map((match) => {
+                      const statusConfig = {
+                        pending: { label: 'En attente', color: 'bg-blue-500/20 text-blue-400', icon: Clock },
+                        notified: { label: 'Notifié', color: 'bg-purple-500/20 text-purple-400', icon: Bell },
+                        contacted: { label: 'Contacté', color: 'bg-cyan-500/20 text-cyan-400', icon: MessageSquare },
+                        successful: { label: 'Réussi', color: 'bg-green-500/20 text-green-400', icon: Check },
+                        rejected: { label: 'Rejeté', color: 'bg-red-500/20 text-red-400', icon: X },
+                      };
+                      const config = statusConfig[match.status];
+                      const StatusIcon = config.icon;
+
+                      return (
+                        <motion.div
+                          key={match.id}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className={`relative p-5 bg-white/[0.02] border rounded-xl hover:border-brand-gold/30 transition-all group ${
+                            selectedMatchIds.has(match.id) ? 'border-brand-gold/50 bg-brand-gold/5' : 'border-white/[0.06]'
+                          }`}
+                        >
+                          {/* Selection checkbox */}
+                          <button
+                            onClick={() => toggleMatchSelection(match.id)}
+                            className={`absolute top-4 left-4 w-5 h-5 rounded border flex items-center justify-center transition-all z-10 ${
+                              selectedMatchIds.has(match.id)
+                                ? 'bg-brand-gold border-brand-gold text-black'
+                                : 'border-white/20 hover:border-white/40 opacity-0 group-hover:opacity-100'
+                            }`}
+                          >
+                            {selectedMatchIds.has(match.id) && <Check size={12} />}
+                          </button>
+
+                          <div className="pl-8">
+                            {/* Header */}
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex items-center gap-4">
+                                {/* Score badge */}
+                                <div className={`w-16 h-16 rounded-xl flex flex-col items-center justify-center ${
+                                  match.matchScore >= 80 ? 'bg-green-500/20 border border-green-500/30' :
+                                  match.matchScore >= 60 ? 'bg-yellow-500/20 border border-yellow-500/30' :
+                                  'bg-orange-500/20 border border-orange-500/30'
+                                }`}>
+                                  <span className={`text-2xl font-bold ${
+                                    match.matchScore >= 80 ? 'text-green-400' :
+                                    match.matchScore >= 60 ? 'text-yellow-400' :
+                                    'text-orange-400'
+                                  }`}>
+                                    {match.matchScore}%
+                                  </span>
+                                  <span className="text-[10px] text-white/40">Score</span>
+                                </div>
+
+                                <div>
+                                  <h3 className="text-lg font-semibold text-white">
+                                    {match.demand?.firstName} {match.demand?.lastName}
+                                  </h3>
+                                  <p className="text-sm text-white/50">
+                                    {match.matchType === 'demand_to_property' ? 'Recherche de bien' : 'Match vendeur/acheteur'}
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {match.demand?.phone && (
+                                      <span className="text-xs text-white/40 flex items-center gap-1">
+                                        <Phone size={10} /> {match.demand.phone}
+                                      </span>
+                                    )}
+                                    {match.demand?.email && (
+                                      <span className="text-xs text-white/40 flex items-center gap-1">
+                                        <Mail size={10} /> {match.demand.email}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${config.color} flex items-center gap-1.5`}>
+                                  <StatusIcon size={12} />
+                                  {config.label}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Match reasons */}
+                            <div className="flex flex-wrap gap-2 mb-4">
+                              {match.matchReasons.map((reason, i) => (
+                                <span
+                                  key={i}
+                                  className="px-3 py-1 text-xs bg-purple-500/10 text-purple-300 rounded-full border border-purple-500/20"
+                                >
+                                  {reason}
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* Matched entity details */}
+                            {match.matchedProperty && (
+                              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg mb-4">
+                                <div className="flex items-center gap-3">
+                                  <Building2 size={16} className="text-brand-gold" />
+                                  <div>
+                                    <p className="text-sm font-medium text-white">{match.matchedProperty.name}</p>
+                                    <p className="text-xs text-white/50">
+                                      {match.matchedProperty.city} • {match.matchedProperty.category === 'RENT' ? 'Location' : 'Vente'} •
+                                      {match.matchedProperty.price}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {match.matchedDemand && (
+                              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg mb-4">
+                                <div className="flex items-center gap-3">
+                                  <Users size={16} className="text-cyan-400" />
+                                  <div>
+                                    <p className="text-sm font-medium text-white">
+                                      {match.matchedDemand.firstName} {match.matchedDemand.lastName}
+                                    </p>
+                                    <p className="text-xs text-white/50">
+                                      {match.matchedDemand.type === 'property_sale' ? 'Vendeur' : 'Gestion locative'}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
+                              <span className="text-xs text-white/30">
+                                {new Date(match.createdAt).toLocaleString('fr-FR')}
+                              </span>
+
+                              <div className="flex items-center gap-2">
+                                {match.status === 'pending' && (
+                                  <>
+                                    <button
+                                      onClick={() => updateMatchStatusHandler(match.id, 'notified')}
+                                      className="px-3 py-1.5 text-xs bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-all"
+                                    >
+                                      Marquer notifié
+                                    </button>
+                                    <button
+                                      onClick={() => updateMatchStatusHandler(match.id, 'contacted')}
+                                      className="px-3 py-1.5 text-xs bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-all"
+                                    >
+                                      Marquer contacté
+                                    </button>
+                                  </>
+                                )}
+                                {(match.status === 'notified' || match.status === 'contacted') && (
+                                  <>
+                                    <button
+                                      onClick={() => updateMatchStatusHandler(match.id, 'successful')}
+                                      className="px-3 py-1.5 text-xs bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all"
+                                    >
+                                      ✓ Réussi
+                                    </button>
+                                    <button
+                                      onClick={() => updateMatchStatusHandler(match.id, 'rejected')}
+                                      className="px-3 py-1.5 text-xs bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all"
+                                    >
+                                      ✗ Rejeté
+                                    </button>
+                                  </>
+                                )}
+                                <button
+                                  onClick={() => {
+                                    CRM.deleteMatch(match.id);
+                                    refreshMatches();
+                                  }}
+                                  className="p-1.5 text-white/30 hover:text-red-400 transition-all"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             )}
 

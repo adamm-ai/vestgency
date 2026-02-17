@@ -1778,6 +1778,207 @@ export function updateMatchStatus(matchId: string, status: DemandMatch['status']
   return matches[index];
 }
 
+// Get all matches with optional filters
+export function getAllMatches(filters?: {
+  status?: DemandMatch['status'];
+  matchType?: DemandMatch['matchType'];
+  minScore?: number;
+}): DemandMatch[] {
+  let matches = getMatchesFromStorage();
+
+  if (filters?.status) {
+    matches = matches.filter(m => m.status === filters.status);
+  }
+  if (filters?.matchType) {
+    matches = matches.filter(m => m.matchType === filters.matchType);
+  }
+  if (filters?.minScore) {
+    matches = matches.filter(m => m.matchScore >= filters.minScore);
+  }
+
+  return matches.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+// Get match by ID
+export function getMatchById(matchId: string): DemandMatch | undefined {
+  return getMatchesFromStorage().find(m => m.id === matchId);
+}
+
+// Get enriched match with demand and property details
+export interface EnrichedMatch extends DemandMatch {
+  demand?: Demand;
+  matchedProperty?: PropertyData;
+  matchedDemand?: Demand;
+}
+
+export function getEnrichedMatches(filters?: {
+  status?: DemandMatch['status'];
+  matchType?: DemandMatch['matchType'];
+  minScore?: number;
+}): EnrichedMatch[] {
+  const matches = getAllMatches(filters);
+  const propertiesData = localStorage.getItem('nourreska_properties');
+  const properties: PropertyData[] = propertiesData ? JSON.parse(propertiesData) : [];
+
+  return matches.map(match => {
+    const demand = getDemandById(match.demandId);
+    let matchedProperty: PropertyData | undefined;
+    let matchedDemand: Demand | undefined;
+
+    if (match.matchType === 'demand_to_property') {
+      matchedProperty = properties.find(p => p.id === match.matchedEntityId);
+    } else {
+      matchedDemand = getDemandById(match.matchedEntityId);
+    }
+
+    return {
+      ...match,
+      demand,
+      matchedProperty,
+      matchedDemand,
+    };
+  });
+}
+
+// Match statistics
+export interface MatchStats {
+  totalMatches: number;
+  pendingMatches: number;
+  notifiedMatches: number;
+  contactedMatches: number;
+  successfulMatches: number;
+  rejectedMatches: number;
+  avgMatchScore: number;
+  highScoreMatches: number; // Score >= 80
+  matchesByType: Record<string, number>;
+  recentMatches: number; // Last 24 hours
+  lastMatchRun?: string;
+}
+
+export function getMatchStats(): MatchStats {
+  const matches = getMatchesFromStorage();
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const stats: MatchStats = {
+    totalMatches: matches.length,
+    pendingMatches: matches.filter(m => m.status === 'pending').length,
+    notifiedMatches: matches.filter(m => m.status === 'notified').length,
+    contactedMatches: matches.filter(m => m.status === 'contacted').length,
+    successfulMatches: matches.filter(m => m.status === 'successful').length,
+    rejectedMatches: matches.filter(m => m.status === 'rejected').length,
+    avgMatchScore: matches.length > 0
+      ? Math.round(matches.reduce((sum, m) => sum + m.matchScore, 0) / matches.length)
+      : 0,
+    highScoreMatches: matches.filter(m => m.matchScore >= 80).length,
+    matchesByType: {
+      demand_to_property: matches.filter(m => m.matchType === 'demand_to_property').length,
+      demand_to_demand: matches.filter(m => m.matchType === 'demand_to_demand').length,
+      property_to_demand: matches.filter(m => m.matchType === 'property_to_demand').length,
+    },
+    recentMatches: matches.filter(m => new Date(m.createdAt) >= oneDayAgo).length,
+    lastMatchRun: localStorage.getItem('nourreska_last_match_run') || undefined,
+  };
+
+  return stats;
+}
+
+// Delete a match
+export function deleteMatch(matchId: string): boolean {
+  const matches = getMatchesFromStorage();
+  const filtered = matches.filter(m => m.id !== matchId);
+
+  if (filtered.length === matches.length) return false;
+
+  saveMatchesToStorage(filtered);
+  return true;
+}
+
+// Bulk delete matches
+export function bulkDeleteMatches(matchIds: string[]): number {
+  const matches = getMatchesFromStorage();
+  const filtered = matches.filter(m => !matchIds.includes(m.id));
+  const deletedCount = matches.length - filtered.length;
+
+  saveMatchesToStorage(filtered);
+  return deletedCount;
+}
+
+// Auto-matching configuration
+const AUTO_MATCH_INTERVAL_KEY = 'nourreska_auto_match_interval';
+const LAST_MATCH_RUN_KEY = 'nourreska_last_match_run';
+
+let autoMatchTimer: ReturnType<typeof setInterval> | null = null;
+let autoMatchCallbacks: ((result: { newMatches: number; totalChecked: number }) => void)[] = [];
+
+export function setAutoMatchInterval(minutes: number): void {
+  localStorage.setItem(AUTO_MATCH_INTERVAL_KEY, minutes.toString());
+  restartAutoMatching();
+}
+
+export function getAutoMatchInterval(): number {
+  return parseInt(localStorage.getItem(AUTO_MATCH_INTERVAL_KEY) || '15', 10);
+}
+
+export function getLastMatchRun(): string | null {
+  return localStorage.getItem(LAST_MATCH_RUN_KEY);
+}
+
+export function onAutoMatchComplete(callback: (result: { newMatches: number; totalChecked: number }) => void): () => void {
+  autoMatchCallbacks.push(callback);
+  return () => {
+    autoMatchCallbacks = autoMatchCallbacks.filter(cb => cb !== callback);
+  };
+}
+
+export function runAutoMatch(): { newMatches: number; totalChecked: number } {
+  const result = runMatchingEngine();
+  const now = formatDate(new Date());
+  localStorage.setItem(LAST_MATCH_RUN_KEY, now);
+
+  // Notify all callbacks
+  autoMatchCallbacks.forEach(cb => cb(result));
+
+  console.log(`[CRM Auto-Match] Ran at ${now}: ${result.newMatches} new matches from ${result.totalChecked} demands`);
+  return result;
+}
+
+export function startAutoMatching(): void {
+  if (autoMatchTimer) {
+    clearInterval(autoMatchTimer);
+  }
+
+  const intervalMinutes = getAutoMatchInterval();
+  const intervalMs = intervalMinutes * 60 * 1000;
+
+  // Run immediately on start
+  runAutoMatch();
+
+  // Then run at intervals
+  autoMatchTimer = setInterval(() => {
+    runAutoMatch();
+  }, intervalMs);
+
+  console.log(`[CRM Auto-Match] Started with ${intervalMinutes} minute interval`);
+}
+
+export function stopAutoMatching(): void {
+  if (autoMatchTimer) {
+    clearInterval(autoMatchTimer);
+    autoMatchTimer = null;
+    console.log('[CRM Auto-Match] Stopped');
+  }
+}
+
+export function restartAutoMatching(): void {
+  stopAutoMatching();
+  startAutoMatching();
+}
+
+export function isAutoMatchingRunning(): boolean {
+  return autoMatchTimer !== null;
+}
+
 // ============================================================================
 // CHATBOT DEMAND CAPTURE
 // ============================================================================

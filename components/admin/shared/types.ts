@@ -41,7 +41,7 @@ export interface AdminProperty {
   datePublished: string;
 }
 
-export type AdminView = 'dashboard' | 'crm' | 'properties' | 'users' | 'analytics' | 'settings';
+export type AdminView = 'dashboard' | 'crm' | 'demands' | 'matches' | 'properties' | 'users' | 'analytics' | 'settings';
 
 // Settings types
 export interface ProfileSettings {
