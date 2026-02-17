@@ -1073,6 +1073,37 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Reset scroll position and clean up modals on view change
+  useEffect(() => {
+    // Reset scroll position
+    const contentArea = document.querySelector('[data-scroll-area]');
+    if (contentArea) {
+      contentArea.scrollTop = 0;
+    }
+    // Also reset window scroll
+    window.scrollTo(0, 0);
+
+    // Clean up modal states
+    setShowPropertyModal(false);
+    setSelectedProperty(null);
+    setShowAddLeadModal(false);
+    setShowAddDemandModal(false);
+    setSelectedLead(null);
+    setSelectedDemand(null);
+    setShowNotifications(false);
+    setShowDataMenu(false);
+
+    // Clean up selections
+    setSelectedLeadIds(new Set());
+    setSelectedDemandIds(new Set());
+    setSelectedMatchIds(new Set());
+
+    // Close mobile menu
+    if (isMobile) {
+      setMobileMenuOpen(false);
+    }
+  }, [currentView, isMobile]);
+
   // CRM State
   const [leads, setLeads] = useState<CRM.Lead[]>([]);
   const [crmStats, setCrmStats] = useState<CRM.CRMStats | null>(null);
@@ -1578,25 +1609,26 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   // Unread notifications count
   const unreadCount = useMemo(() => notifications.filter(n => !n.read).length, [notifications]);
 
-  // Filter properties
-  const filteredProperties = properties.filter(p => {
+  // Filter properties - memoized for performance
+  const filteredProperties = useMemo(() => properties.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          p.location.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = filterCategory === 'ALL' || p.category === filterCategory;
     return matchesSearch && matchesCategory;
-  });
+  }), [properties, searchQuery, filterCategory]);
 
-  // Stats
-  const stats = {
+  // Stats - memoized for performance
+  const stats = useMemo(() => ({
     totalProperties: properties.length,
     forSale: properties.filter(p => p.category === 'SALE').length,
     forRent: properties.filter(p => p.category === 'RENT').length,
     avgPrice: properties.length > 0
       ? Math.round(properties.reduce((sum, p) => sum + (p.priceNumeric || 0), 0) / properties.length)
       : 0
-  };
+  }), [properties]);
 
-  const menuItems = [
+  // Menu items - memoized for performance
+  const menuItems = useMemo(() => [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
     { id: 'crm', label: 'CRM', icon: Target, badge: true },
     { id: 'demands', label: 'Demandes', icon: ClipboardList },
@@ -1605,10 +1637,10 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     { id: 'users', label: 'Utilisateurs', icon: Users },
     { id: 'analytics', label: 'Analytics', icon: TrendingUp },
     { id: 'settings', label: 'Paramètres', icon: Settings },
-  ];
+  ], [matchStats?.pendingMatches]);
 
   // Bottom navigation items for mobile (subset of menu items)
-  const bottomNavItems = menuItems.slice(0, 5);
+  const bottomNavItems = useMemo(() => menuItems.slice(0, 5), [menuItems]);
 
   return (
     <motion.div
@@ -1775,7 +1807,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                           notifications.slice(0, 10).map(notif => (
                             <button
                               key={notif.id}
-                              onClick={() => {
+                              onClick={async () => {
                                 CRM.markNotificationAsRead(notif.id);
                                 if (notif.leadId) {
                                   const lead = CRM.getLeadById(notif.leadId);
@@ -1784,7 +1816,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                                     setCurrentView('crm');
                                   }
                                 }
-                                refreshCRM();
+                                await refreshCRM();
                                 setShowNotifications(false);
                               }}
                               className={`w-full p-4 text-left hover:bg-white/[0.03] transition-colors border-b border-white/[0.04] ${
@@ -1797,7 +1829,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                                   <p className="text-sm font-medium text-white truncate">{notif.title}</p>
                                   <p className="text-xs text-white/50 truncate">{notif.message}</p>
                                   <p className="text-[10px] text-white/30 mt-1">
-                                    {new Date(notif.createdAt).toLocaleString('fr-FR')}
+                                    {new Date(notif.timestamp).toLocaleString('fr-FR')}
                                   </p>
                                 </div>
                               </div>
@@ -1833,7 +1865,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
           </header>
 
           {/* Content */}
-          <div className="flex-1 overflow-auto p-4 md:p-6">
+          <div data-scroll-area className="flex-1 overflow-auto p-4 md:p-6">
             {currentView === 'dashboard' && (
               <div className="space-y-6">
                 {/* Stats Cards - Clickable */}
@@ -1889,7 +1921,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                           urgency: 'medium',
                         });
                       }
-                      refreshCRM();
+                      await refreshCRM();
                       setCurrentView('crm');
                     }}
                     className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-brand-gold to-amber-500 text-black font-bold rounded-xl hover:shadow-lg hover:shadow-brand-gold/25 transition-all"
@@ -5275,7 +5307,10 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
             {bottomNavItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setCurrentView(item.id as AdminView)}
+                onClick={() => {
+                  setCurrentView(item.id as AdminView);
+                  setMobileMenuOpen(false);
+                }}
                 className={`flex flex-col items-center justify-center gap-1 py-2 px-3 rounded-xl transition-all ${
                   currentView === item.id
                     ? 'text-brand-gold'
