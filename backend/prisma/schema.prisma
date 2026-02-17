@@ -150,22 +150,36 @@ model Property {
   id            String           @id @default(uuid())
   externalId    String?          @unique @map("external_id")
   name          String
-  type          String?
+  type          String           @default("Appartement")
   category      PropertyCategory
-  price         String?
-  priceNumeric  BigInt?          @map("price_numeric")
-  location      String?
-  city          String?
-  beds          Int?
-  areaNumeric   Int?             @map("area_numeric")
+  price         String           @default("Prix sur demande")
+  priceNumeric  BigInt           @default(0) @map("price_numeric")
+  location      String           @default("Casablanca")
+  city          String           @default("Casablanca")
+  beds          Int              @default(0)
+  baths         Int              @default(0)
+  area          String           @default("")
+  areaNumeric   Int              @default(0) @map("area_numeric")
   image         String?
+  images        Json             @default("[]")
+  features      Json             @default("[]")
+  smartTags     Json             @default("[]") @map("smart_tags")
+  description   String?          @db.Text
   url           String?
+  source        String           @default("mubawab")
   datePublished DateTime?        @map("date_published")
+  dateScraped   DateTime?        @map("date_scraped")
   isActive      Boolean          @default(true) @map("is_active")
+  isFeatured    Boolean          @default(false) @map("is_featured")
+  viewCount     Int              @default(0) @map("view_count")
   createdAt     DateTime         @default(now()) @map("created_at")
   updatedAt     DateTime         @updatedAt @map("updated_at")
 
   @@index([category])
   @@index([city])
+  @@index([type])
+  @@index([priceNumeric])
+  @@index([isActive])
+  @@index([isFeatured])
   @@map("properties")
 }

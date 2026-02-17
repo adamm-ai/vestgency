@@ -1,6 +1,7 @@
-# Render Blueprint for Vestate AI
-# ================================
+# Render Blueprint for At Home Real Estate Agency
+# ================================================
 # Deploy: Dashboard -> New -> Blueprint -> Connect repo
+# Database: PostgreSQL with 38 scraped properties from Mubawab
 
 services:
   # ============================================
@@ -25,13 +26,13 @@ services:
   # Backend API (Node.js + Express + Prisma)
   # ============================================
   - type: web
-    name: vestate-api
+    name: athome-api
     runtime: node
     region: frankfurt
     plan: free
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build
-    startCommand: npx prisma db push && npm start
+    startCommand: npx prisma db push && npm run db:seed && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -41,16 +42,16 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: ADMIN_EMAIL
-        value: admin@vestate.ai
+        value: admin@athome.com
       - key: ADMIN_PASSWORD
-        value: VestateAdmin2024!
+        value: AtHome2026!
       - key: DATABASE_URL
         fromDatabase:
-          name: vestate-db
+          name: athome-db
           property: connectionString
       - key: FRONTEND_URL
         fromService:
-          name: vestate-frontend
+          name: athome-frontend
           type: web
           property: host
 
@@ -58,7 +59,7 @@ services:
   # Frontend (React + Vite Static Site)
   # ============================================
   - type: web
-    name: vestate-frontend
+    name: athome-frontend
     runtime: static
     region: frankfurt
     buildCommand: npm install && npm run build
@@ -76,9 +77,9 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_APP_NAME
-        value: Vestate AI
+        value: At Home Real Estate
       - key: VITE_API_URL
-        value: https://vestate-api-fisw.onrender.com
+        value: https://athome-api.onrender.com
       - key: VITE_RAG_API_URL
         value: https://athome-rag.onrender.com
 
@@ -86,9 +87,9 @@ services:
 # PostgreSQL Database
 # ============================================
 databases:
-  - name: vestate-db
+  - name: athome-db
     plan: free
     region: frankfurt
-    databaseName: vestate
-    user: vestate_user
+    databaseName: athome
+    user: athome_user
     ipAllowList: []
