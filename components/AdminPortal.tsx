@@ -1331,12 +1331,8 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
 
     // Subscribe to auto-match results
     const unsubscribe = CRM.onAutoMatchComplete((result) => {
-      console.log(`[Auto-Match] Completed: ${result.newMatches} new matches`);
       refreshMatches();
       refreshDemands();
-      if (result.newMatches > 0) {
-        // Could trigger a toast notification here
-      }
     });
 
     return () => {
@@ -1350,8 +1346,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
     try {
       // Store properties for matching
       localStorage.setItem('nourreska_properties', JSON.stringify(properties));
-      const result = CRM.runMatchingEngine(demandId);
-      console.log('[Matching]', result);
+      CRM.runMatchingEngine(demandId);
       refreshDemands();
       if (demandId) {
         setDemandMatches(CRM.getMatchesForDemand(demandId));
@@ -1385,7 +1380,6 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
 
   const bulkDeleteSelectedLeads = useCallback(() => {
     const count = CRM.bulkDeleteLeads(Array.from(selectedLeadIds), true);
-    console.log(`[CRM] Bulk deleted ${count} leads`);
     setSelectedLeadIds(new Set());
     setShowBulkDeleteConfirm(null);
     refreshCRM();
@@ -1415,7 +1409,6 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
 
   const bulkDeleteSelectedDemands = useCallback(() => {
     const count = CRM.bulkDeleteDemands(Array.from(selectedDemandIds));
-    console.log(`[CRM] Bulk deleted ${count} demands`);
     setSelectedDemandIds(new Set());
     setShowBulkDeleteConfirm(null);
     refreshDemands();
@@ -1444,8 +1437,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   }, []);
 
   const bulkDeleteSelectedMatches = useCallback(() => {
-    const count = CRM.bulkDeleteMatches(Array.from(selectedMatchIds));
-    console.log(`[CRM] Bulk deleted ${count} matches`);
+    CRM.bulkDeleteMatches(Array.from(selectedMatchIds));
     setSelectedMatchIds(new Set());
     refreshMatches();
   }, [selectedMatchIds, refreshMatches]);
@@ -1469,8 +1461,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   // Manual match run
   const handleManualMatchRun = useCallback(() => {
     localStorage.setItem('nourreska_properties', JSON.stringify(properties));
-    const result = CRM.runAutoMatch();
-    console.log(`[Manual Match] ${result.newMatches} new matches`);
+    CRM.runAutoMatch();
     refreshMatches();
     refreshDemands();
   }, [properties, refreshMatches, refreshDemands]);
@@ -1479,8 +1470,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   const handleGenerateSyntheticData = useCallback(() => {
     setIsGeneratingData(true);
     try {
-      const result = CRM.populateSyntheticData(60, 50); // 60 leads, 50 demands
-      console.log(`[CRM] Generated ${result.leads.length} leads and ${result.demands.length} demands`);
+      CRM.populateSyntheticData(60, 50);
       refreshCRM();
       refreshDemands();
     } finally {
@@ -1491,7 +1481,6 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
   // Clear all data
   const handleClearAllData = useCallback(() => {
     const result = CRM.clearAllSyntheticData();
-    console.log(`[CRM] Cleared ${result.leadsDeleted} leads and ${result.demandsDeleted} demands`);
     setSelectedLeadIds(new Set());
     setSelectedDemandIds(new Set());
     refreshCRM();
@@ -2930,8 +2919,7 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                             };
 
                             try {
-                              const result = await leadsAPI.create(leadData);
-                              console.log('[CRM] Lead created via API:', result.lead.id);
+                              await leadsAPI.create(leadData);
                               refreshCRM();
                               setShowAddLeadModal(false);
                               setNewLeadForm({
@@ -2959,7 +2947,6 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                                     budgetMax: newLeadForm.budgetMax ? parseInt(newLeadForm.budgetMax) * 1000000 : undefined,
                                     urgency: newLeadForm.urgency as CRM.LeadUrgency,
                                   });
-                                  console.log('[CRM] Lead created via localStorage (offline mode):', newLead.id);
                                   setLeadCreationError('');
                                   refreshCRM();
                                   setShowAddLeadModal(false);
@@ -4715,7 +4702,6 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                               onSubmit={(e) => {
                                 e.preventDefault();
                                 // For now, just close the modal (API would handle actual save)
-                                console.log('[Properties] Save property:', selectedProperty || 'new property');
                                 setShowPropertyModal(false);
                               }}
                               className="space-y-4"
@@ -4842,7 +4828,6 @@ const AdminDashboard: React.FC<{ user: AdminUser; onLogout: () => void; onClose:
                             </button>
                             <button
                               onClick={() => {
-                                console.log('[Properties] Delete property:', deletePropertyId);
                                 // Would call API to delete
                                 setDeletePropertyId(null);
                               }}
