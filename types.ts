@@ -167,12 +167,31 @@ export interface BlogPost {
   category: string;
 }
 
+export interface ChatProperty {
+  id: string;
+  name: string;
+  type: string;
+  category: 'SALE' | 'RENT';
+  location: string;
+  city: string;
+  price: string;
+  priceNumeric?: number;
+  beds?: number;
+  baths?: number;
+  area: string;
+  areaNumeric?: number;
+  image: string;
+  features: string[];
+  score?: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   text: string;
   timestamp: Date;
   isStreaming?: boolean;
+  properties?: ChatProperty[];
 }
 
 export enum SectionId {

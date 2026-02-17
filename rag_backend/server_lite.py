@@ -704,7 +704,7 @@ async def get_filters():
 
 @app.post("/api/chat", tags=["Chatbot"])
 async def chat(message: str = "", conversation_id: str = "default", stream: bool = False):
-    """Chatbot using OpenAI with conversation memory and urgency detection."""
+    """Chatbot using OpenAI with conversation memory, urgency detection, and property suggestions."""
     global conversations
 
     logger.info(f"Chat: conv={conversation_id}, msg_len={len(message)}")
@@ -714,6 +714,7 @@ async def chat(message: str = "", conversation_id: str = "default", stream: bool
             "success": False,
             "response": "Chatbot non disponible. Clé OpenAI manquante.",
             "conversation_id": conversation_id,
+            "properties": [],
             "analysis": {"urgency": "medium", "reason": "default"}
         }
 
@@ -729,25 +730,68 @@ async def chat(message: str = "", conversation_id: str = "default", stream: bool
             "content": message
         })
 
-        # Search for relevant properties
-        relevant = semantic_search(message, 5)
-        context = json.dumps(relevant, ensure_ascii=False) if relevant else "Aucun bien trouvé."
+        # Detect if this is a property search query
+        search_keywords = ['cherche', 'recherche', 'villa', 'appartement', 'maison', 'bureau',
+                          'louer', 'acheter', 'vendre', 'location', 'achat', 'vente',
+                          'casablanca', 'rabat', 'marrakech', 'anfa', 'californie', 'bouskoura',
+                          'piscine', 'jardin', 'chambres', 'prix', 'budget', 'm²', 'terrain']
 
-        system_prompt = f"""Tu es NOUR, l'assistante immobilière d'élite de Nourreska.
-Tu parles français principalement et tu es experte du marché immobilier marocain.
-Voici les biens pertinents pour la requête du client:
+        is_property_search = any(kw in message.lower() for kw in search_keywords)
+
+        # Search for relevant properties
+        relevant = semantic_search(message, 5) if is_property_search else []
+
+        # Format properties for display (clean structure for frontend)
+        suggested_properties = []
+        for prop in relevant[:3]:  # Top 3 most relevant
+            suggested_properties.append({
+                "id": prop.get("id"),
+                "name": prop.get("name", "Propriété"),
+                "type": prop.get("type", "Bien"),
+                "category": prop.get("category", "SALE"),
+                "location": prop.get("location", ""),
+                "city": prop.get("city", ""),
+                "price": prop.get("price", "Prix sur demande"),
+                "priceNumeric": prop.get("priceNumeric"),
+                "beds": prop.get("beds"),
+                "baths": prop.get("baths"),
+                "area": prop.get("area", ""),
+                "areaNumeric": prop.get("areaNumeric"),
+                "image": prop.get("image", ""),
+                "features": prop.get("features", [])[:5],  # Top 5 features
+                "score": prop.get("_score", 0)
+            })
+
+        # Build context for AI
+        if relevant:
+            props_summary = "\n".join([
+                f"- {p.get('name')}: {p.get('type')} à {p.get('location')}, {p.get('price')}, {p.get('beds')} ch, {p.get('area')}"
+                for p in relevant[:3]
+            ])
+            context = f"Voici les meilleures correspondances:\n{props_summary}"
+        else:
+            context = "Aucun bien spécifique trouvé pour cette requête."
+
+        system_prompt = f"""Tu es NOUR, l'assistante immobilière premium de Nourreska.
+Tu parles français avec élégance et tu es experte du marché immobilier marocain haut de gamme.
+
 {context}
 
-Réponds de manière professionnelle et aide le client à trouver le bien idéal."""
+RÈGLES IMPORTANTES:
+1. Sois concise mais chaleureuse (max 3-4 phrases)
+2. Si des propriétés sont suggérées, mentionne leurs points forts clés
+3. Pose une question de suivi pour affiner la recherche
+4. Ne liste PAS les propriétés en détail - elles seront affichées en cartes visuelles
+5. Concentre-toi sur la conversation et le conseil personnalisé"""
 
-        # Build messages with conversation history (last 6 messages for context)
+        # Build messages with conversation history
         messages = [{"role": "system", "content": system_prompt}]
         messages.extend(conversations[conversation_id][-6:])
 
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
             messages=messages,
-            max_tokens=500
+            max_tokens=300
         )
 
         assistant_response = response.choices[0].message.content
@@ -767,6 +811,7 @@ Réponds de manière professionnelle et aide le client à trouver le bien idéal
             "success": True,
             "response": assistant_response,
             "conversation_id": conversation_id,
+            "properties": suggested_properties,  # Structured property data for cards
             "analysis": urgency_analysis,
             "message_count": len(conversations[conversation_id])
         }
@@ -776,6 +821,7 @@ Réponds de manière professionnelle et aide le client à trouver le bien idéal
             "success": False,
             "response": f"Erreur: {str(e)}",
             "conversation_id": conversation_id,
+            "properties": [],
             "analysis": {"urgency": "medium", "reason": "error"}
         }
 

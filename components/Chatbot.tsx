@@ -11,9 +11,10 @@ import DOMPurify from 'dompurify';
 import {
   X, Send, Sparkles, Loader2, Brain,
   Home, MapPin, TrendingUp, RotateCcw,
-  Maximize2, Minimize2, MessageCircle
+  Maximize2, Minimize2, MessageCircle,
+  Bed, Bath, Ruler, ExternalLink, ChevronRight
 } from 'lucide-react';
-import { ChatMessage } from '../types';
+import { ChatMessage, ChatProperty } from '../types';
 import * as CRM from '../services/crmService';
 
 // ============================================================================
@@ -67,6 +68,156 @@ const QUICK_ACTIONS = [
 ];
 
 // ============================================================================
+// PROPERTY CARD COMPONENT
+// ============================================================================
+
+interface PropertyCardProps {
+  property: ChatProperty;
+  onSelect: (id: string) => void;
+}
+
+const PropertyCard: React.FC<PropertyCardProps> = memo(({ property, onSelect }) => {
+  const formatPrice = (price: string, category: string) => {
+    if (price === 'Prix sur demande') return price;
+    return category === 'RENT' ? `${price}/mois` : price;
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => onSelect(property.id)}
+      className="group cursor-pointer bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.08] hover:border-brand-gold/30 rounded-2xl overflow-hidden transition-all duration-300"
+    >
+      {/* Image */}
+      <div className="relative h-28 overflow-hidden">
+        {property.image ? (
+          <img
+            src={property.image}
+            alt={property.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 flex items-center justify-center">
+            <Home size={24} className="text-brand-gold/50" />
+          </div>
+        )}
+
+        {/* Category badge */}
+        <div className={`absolute top-2 left-2 px-2 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider ${
+          property.category === 'RENT'
+            ? 'bg-cyan-500/90 text-white'
+            : 'bg-brand-gold/90 text-black'
+        }`}>
+          {property.category === 'RENT' ? 'Location' : 'Vente'}
+        </div>
+
+        {/* Click indicator */}
+        <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <ExternalLink size={12} className="text-white" />
+        </div>
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+
+        {/* Price */}
+        <div className="absolute bottom-2 left-2 right-2">
+          <p className="text-white font-bold text-sm drop-shadow-lg truncate">
+            {formatPrice(property.price, property.category)}
+          </p>
+        </div>
+      </div>
+
+      {/* Details */}
+      <div className="p-3">
+        {/* Name & Location */}
+        <h4 className="text-white/90 font-medium text-xs truncate mb-1">
+          {property.name}
+        </h4>
+        <div className="flex items-center gap-1 text-white/40 text-[10px] mb-2">
+          <MapPin size={10} />
+          <span className="truncate">{property.location || property.city}</span>
+        </div>
+
+        {/* Specs */}
+        <div className="flex items-center gap-3 text-white/50 text-[10px]">
+          {property.beds && (
+            <div className="flex items-center gap-1">
+              <Bed size={10} />
+              <span>{property.beds}</span>
+            </div>
+          )}
+          {property.baths && (
+            <div className="flex items-center gap-1">
+              <Bath size={10} />
+              <span>{property.baths}</span>
+            </div>
+          )}
+          {property.area && (
+            <div className="flex items-center gap-1">
+              <Ruler size={10} />
+              <span>{property.area}</span>
+            </div>
+          )}
+        </div>
+
+        {/* View button */}
+        <div className="mt-2 pt-2 border-t border-white/[0.06] flex items-center justify-between">
+          <span className="text-brand-gold text-[10px] font-medium">Voir détails</span>
+          <ChevronRight size={12} className="text-brand-gold group-hover:translate-x-0.5 transition-transform" />
+        </div>
+      </div>
+    </motion.div>
+  );
+});
+
+PropertyCard.displayName = 'PropertyCard';
+
+// ============================================================================
+// PROPERTY CARDS GRID
+// ============================================================================
+
+interface PropertyCardsProps {
+  properties: ChatProperty[];
+  onSelectProperty: (id: string) => void;
+}
+
+const PropertyCards: React.FC<PropertyCardsProps> = memo(({ properties, onSelectProperty }) => {
+  if (!properties || properties.length === 0) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="mt-3"
+    >
+      <p className="text-[9px] text-white/30 uppercase tracking-widest mb-2 flex items-center gap-2">
+        <Sparkles size={10} className="text-brand-gold" />
+        Propriétés suggérées
+      </p>
+      <div className={`grid gap-2 ${
+        properties.length === 1 ? 'grid-cols-1' :
+        properties.length === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-3'
+      }`}>
+        {properties.map((property) => (
+          <PropertyCard
+            key={property.id}
+            property={property}
+            onSelect={onSelectProperty}
+          />
+        ))}
+      </div>
+    </motion.div>
+  );
+});
+
+PropertyCards.displayName = 'PropertyCards';
+
+// ============================================================================
 // CHATBOT COMPONENT
 // ============================================================================
 
@@ -96,6 +247,13 @@ const Chatbot: React.FC = () => {
   const [leadId, setLeadId] = useState<string | null>(null);
   const [propertiesViewed, setPropertiesViewed] = useState<string[]>([]);
   const [aiDetectedUrgency, setAiDetectedUrgency] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
+
+  // Navigate to property page
+  const handlePropertySelect = useCallback((propertyId: string) => {
+    // Close chatbot and navigate to property
+    setIsOpen(false);
+    window.location.href = `/property/${propertyId}`;
+  }, []);
 
   // Extract contact info and demand data from user message
   const extractInfoFromMessage = useCallback((text: string) => {
@@ -483,6 +641,7 @@ const Chatbot: React.FC = () => {
 
       const data = await response.json();
       const responseText = data.response || "Erreur de traitement.";
+      const suggestedProperties: ChatProperty[] = data.properties || [];
 
       // Extract AI-detected urgency from response
       if (data.analysis?.urgency) {
@@ -490,11 +649,18 @@ const Chatbot: React.FC = () => {
         console.log(`[CRM] AI detected urgency: ${data.analysis.urgency} - ${data.analysis.reason || ''}`);
       }
 
+      // Log property suggestions for CRM tracking
+      if (suggestedProperties.length > 0) {
+        console.log(`[Chatbot] Suggested ${suggestedProperties.length} properties`);
+        const propertyIds = suggestedProperties.map(p => p.id);
+        setPropertiesViewed(prev => [...new Set([...prev, ...propertyIds])]);
+      }
+
       setState(prev => ({
         ...prev,
         messages: prev.messages.map(msg =>
           msg.id === modelMsgId
-            ? { ...msg, text: responseText, isStreaming: false }
+            ? { ...msg, text: responseText, isStreaming: false, properties: suggestedProperties }
             : msg
         ),
         isLoading: false
@@ -760,31 +926,43 @@ const Chatbot: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     key={msg.id}
-                    className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
                   >
-                    {/* Bot indicator */}
-                    {msg.role === 'model' && (
-                      <div className="w-6 h-6 rounded-lg bg-brand-gold/10 flex items-center justify-center mr-3 flex-shrink-0 mt-1">
-                        <Sparkles size={12} className="text-brand-gold" />
+                    <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full`}>
+                      {/* Bot indicator */}
+                      {msg.role === 'model' && (
+                        <div className="w-6 h-6 rounded-lg bg-brand-gold/10 flex items-center justify-center mr-3 flex-shrink-0 mt-1">
+                          <Sparkles size={12} className="text-brand-gold" />
+                        </div>
+                      )}
+
+                      <div
+                        className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
+                          msg.role === 'user'
+                            ? 'bg-brand-gold text-black font-medium rounded-2xl rounded-br-md'
+                            : 'bg-white/[0.04] text-white/80 border border-white/[0.06] rounded-2xl rounded-bl-md'
+                        }`}
+                      >
+                        <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text) }} />
+                        {msg.isStreaming && (
+                          <span className="inline-flex items-center gap-1 ml-2">
+                            <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" />
+                            <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                            <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Property Cards for bot messages */}
+                    {msg.role === 'model' && msg.properties && msg.properties.length > 0 && (
+                      <div className="w-full pl-9">
+                        <PropertyCards
+                          properties={msg.properties}
+                          onSelectProperty={handlePropertySelect}
+                        />
                       </div>
                     )}
-
-                    <div
-                      className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
-                        msg.role === 'user'
-                          ? 'bg-brand-gold text-black font-medium rounded-2xl rounded-br-md'
-                          : 'bg-white/[0.04] text-white/80 border border-white/[0.06] rounded-2xl rounded-bl-md'
-                      }`}
-                    >
-                      <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text) }} />
-                      {msg.isStreaming && (
-                        <span className="inline-flex items-center gap-1 ml-2">
-                          <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" />
-                          <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
-                          <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
-                        </span>
-                      )}
-                    </div>
                   </motion.div>
                 ))}
                 <div ref={messagesEndRef} />
