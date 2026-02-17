@@ -1062,6 +1062,7 @@ export function convertChatToLead(
     transactionType?: PropertyCategory;
     budgetMin?: number;
     budgetMax?: number;
+    urgency?: LeadUrgency; // AI-detected urgency from conversation
   }
 ): Lead {
   return createLead({
@@ -1070,6 +1071,7 @@ export function convertChatToLead(
     chatSessionId: sessionId,
     chatMessages: messages,
     status: 'new',
+    urgency: extractedData.urgency, // Pass AI-detected urgency
   });
 }
 
@@ -1227,10 +1229,13 @@ export function exportLeadsToCSV(): string {
 export function downloadLeadsCSV(): void {
   const csv = exportLeadsToCSV();
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
+  link.href = url;
   link.download = `nourreska_leads_${new Date().toISOString().split('T')[0]}.csv`;
   link.click();
+  // Revoke the blob URL to free memory
+  setTimeout(() => URL.revokeObjectURL(url), 100);
 }
 
 // ============================================================================
@@ -1671,7 +1676,12 @@ export function runMatchingEngine(demandId?: string): { newMatches: number; tota
 
   // Get properties from localStorage or a global state
   const propertiesData = localStorage.getItem('nourreska_properties');
-  const properties: PropertyData[] = propertiesData ? JSON.parse(propertiesData) : [];
+  let properties: PropertyData[] = [];
+  try {
+    properties = propertiesData ? JSON.parse(propertiesData) : [];
+  } catch (error) {
+    console.error('[CRM] Error parsing properties data:', error);
+  }
 
   if (demandId) {
     // Match specific demand
@@ -1818,7 +1828,12 @@ export function getEnrichedMatches(filters?: {
 }): EnrichedMatch[] {
   const matches = getAllMatches(filters);
   const propertiesData = localStorage.getItem('nourreska_properties');
-  const properties: PropertyData[] = propertiesData ? JSON.parse(propertiesData) : [];
+  let properties: PropertyData[] = [];
+  try {
+    properties = propertiesData ? JSON.parse(propertiesData) : [];
+  } catch (error) {
+    console.error('[CRM] Error parsing properties data:', error);
+  }
 
   return matches.map(match => {
     const demand = getDemandById(match.demandId);
@@ -2228,7 +2243,7 @@ export function generateSyntheticLeads(count: number): Lead[] {
           'Disponible uniquement le weekend',
           'Préfère les contacts par WhatsApp',
         ]),
-        author: 'Agent',
+        createdBy: 'Agent',
         createdAt: new Date(createdAt + 60000).toISOString(),
       }];
     }
@@ -2352,6 +2367,16 @@ export function initializeCRM(): void {
   }
   if (!localStorage.getItem(STORAGE_KEYS.DEMAND_MATCHES)) {
     saveMatchesToStorage([]);
+  }
+
+  // Start auto-matching with default 15-minute interval
+  startAutoMatching();
+
+  // Cleanup on page unload
+  if (typeof window !== 'undefined') {
+    window.addEventListener('beforeunload', () => {
+      stopAutoMatching();
+    });
   }
 
   console.log('[CRM] Nourreska CRM initialized with Demands & Matching Engine');

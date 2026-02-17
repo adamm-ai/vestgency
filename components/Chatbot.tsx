@@ -95,6 +95,7 @@ const Chatbot: React.FC = () => {
   const [demandCreated, setDemandCreated] = useState(false);
   const [leadId, setLeadId] = useState<string | null>(null);
   const [propertiesViewed, setPropertiesViewed] = useState<string[]>([]);
+  const [aiDetectedUrgency, setAiDetectedUrgency] = useState<'low' | 'medium' | 'high' | 'critical'>('medium');
 
   // Extract contact info and demand data from user message
   const extractInfoFromMessage = useCallback((text: string) => {
@@ -197,55 +198,68 @@ const Chatbot: React.FC = () => {
       timestamp: m.timestamp.toISOString(),
     }));
 
-    const lead = CRM.convertChatToLead(state.conversationId, crmMessages, {
-      firstName: extractedData.firstName,
-      lastName: extractedData.lastName,
-      email: extractedData.email,
-      phone: extractedData.phone,
-      city: extractedData.city,
-      transactionType: extractedData.transactionType,
-      budgetMin: extractedData.budgetMin,
-      budgetMax: extractedData.budgetMax,
-    });
+    try {
+      const lead = CRM.convertChatToLead(state.conversationId, crmMessages, {
+        firstName: extractedData.firstName,
+        lastName: extractedData.lastName,
+        email: extractedData.email,
+        phone: extractedData.phone,
+        city: extractedData.city,
+        transactionType: extractedData.transactionType,
+        budgetMin: extractedData.budgetMin,
+        budgetMax: extractedData.budgetMax,
+        urgency: aiDetectedUrgency, // AI-detected urgency from conversation
+      });
 
-    if (lead) {
-      setLeadId(lead.id);
+      if (lead && lead.id) {
+        setLeadId(lead.id);
+        setLeadCreated(true);
+        console.log('[CRM] Lead created from chatbot conversation');
+      }
+    } catch (error) {
+      console.error('[CRM] Error creating lead from chatbot:', error);
     }
-    setLeadCreated(true);
-    console.log('[CRM] Lead created from chatbot conversation');
   }, [extractedData, leadCreated, state.messages, state.conversationId]);
 
   // Add activity to existing lead
   const addLeadActivity = useCallback((type: CRM.ActivityType, title: string, description?: string) => {
     if (!leadId) return;
-    CRM.addActivity(leadId, type, title, description);
+    try {
+      CRM.addActivity(leadId, type, title, description);
+    } catch (error) {
+      console.error('[CRM] Error adding activity to lead:', error);
+    }
   }, [leadId]);
 
   // Detect and log property interest from bot response
   const detectPropertyInterest = useCallback((botResponse: string) => {
-    // Detect if bot mentioned specific properties
-    const propertyMentions = botResponse.match(/(?:référence|réf|id|code)[\s:]+([A-Z0-9-]+)/gi);
-    if (propertyMentions && propertyMentions.length > 0) {
-      const propertyIds = propertyMentions.map(m => m.replace(/.*[\s:]+/, '').trim());
-      setPropertiesViewed(prev => [...new Set([...prev, ...propertyIds])]);
+    try {
+      // Detect if bot mentioned specific properties
+      const propertyMentions = botResponse.match(/(?:référence|réf|id|code)[\s:]+([A-Z0-9-]+)/gi);
+      if (propertyMentions && propertyMentions.length > 0) {
+        const propertyIds = propertyMentions.map(m => m.replace(/.*[\s:]+/, '').trim());
+        setPropertiesViewed(prev => [...new Set([...prev, ...propertyIds])]);
 
-      // Log activity if lead exists
-      if (leadId) {
-        addLeadActivity('note', 'Propriétés consultées via chatbot', `Réfs: ${propertyIds.join(', ')}`);
-      }
-    }
-
-    // Detect if bot suggested scheduling a visit
-    if (botResponse.toLowerCase().includes('visite') || botResponse.toLowerCase().includes('rendez-vous')) {
-      if (leadId) {
-        // Update lead status to visit_scheduled interest
-        const leads = CRM.getLeads();
-        const lead = leads.find(l => l.id === leadId);
-        if (lead && lead.status === 'new') {
-          CRM.updateLead(leadId, { status: 'contacted' });
-          addLeadActivity('status_change', 'Statut mis à jour', 'Intérêt pour une visite détecté');
+        // Log activity if lead exists
+        if (leadId) {
+          addLeadActivity('note_added', 'Propriétés consultées via chatbot', `Réfs: ${propertyIds.join(', ')}`);
         }
       }
+
+      // Detect if bot suggested scheduling a visit
+      if (botResponse.toLowerCase().includes('visite') || botResponse.toLowerCase().includes('rendez-vous')) {
+        if (leadId) {
+          // Update lead status to visit_scheduled interest
+          const leads = CRM.getLeads();
+          const lead = leads.find(l => l.id === leadId);
+          if (lead && lead.status === 'new') {
+            CRM.updateLead(leadId, { status: 'contacted' });
+            addLeadActivity('status_changed', 'Statut mis à jour', 'Intérêt pour une visite détecté');
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[CRM] Error detecting property interest:', error);
     }
   }, [leadId, addLeadActivity]);
 
@@ -253,37 +267,41 @@ const Chatbot: React.FC = () => {
   const updateLeadEngagement = useCallback(() => {
     if (!leadId) return;
 
-    const leads = CRM.getLeads();
-    const lead = leads.find(l => l.id === leadId);
-    if (!lead) return;
+    try {
+      const leads = CRM.getLeads();
+      const lead = leads.find(l => l.id === leadId);
+      if (!lead) return;
 
-    // Calculate engagement score based on conversation
-    let engagementBonus = 0;
-    const messageCount = state.messages.filter(m => m.role === 'user').length;
+      // Calculate engagement score based on conversation
+      let engagementBonus = 0;
+      const messageCount = state.messages.filter(m => m.role === 'user').length;
 
-    // More messages = more engagement
-    if (messageCount >= 5) engagementBonus += 10;
-    if (messageCount >= 10) engagementBonus += 10;
+      // More messages = more engagement
+      if (messageCount >= 5) engagementBonus += 10;
+      if (messageCount >= 10) engagementBonus += 10;
 
-    // Budget info = higher intent
-    if (extractedData.budgetMin || extractedData.budgetMax) engagementBonus += 15;
+      // Budget info = higher intent
+      if (extractedData.budgetMin || extractedData.budgetMax) engagementBonus += 15;
 
-    // Property type specified = clearer intent
-    if (extractedData.propertyTypes && extractedData.propertyTypes.length > 0) engagementBonus += 10;
+      // Property type specified = clearer intent
+      if (extractedData.propertyTypes && extractedData.propertyTypes.length > 0) engagementBonus += 10;
 
-    // City specified = location intent
-    if (extractedData.city) engagementBonus += 5;
+      // City specified = location intent
+      if (extractedData.city) engagementBonus += 5;
 
-    // Properties viewed = active interest
-    if (propertiesViewed.length > 0) engagementBonus += propertiesViewed.length * 5;
+      // Properties viewed = active interest
+      if (propertiesViewed.length > 0) engagementBonus += propertiesViewed.length * 5;
 
-    // Update lead score if bonus is significant
-    if (engagementBonus > 0) {
-      const newScore = Math.min(100, lead.score + engagementBonus);
-      if (newScore !== lead.score) {
-        CRM.updateLead(leadId, { score: newScore });
-        console.log(`[CRM] Lead score updated: ${lead.score} -> ${newScore}`);
+      // Update lead score if bonus is significant
+      if (engagementBonus > 0) {
+        const newScore = Math.min(100, lead.score + engagementBonus);
+        if (newScore !== lead.score) {
+          CRM.updateLead(leadId, { score: newScore });
+          console.log(`[CRM] Lead score updated: ${lead.score} -> ${newScore}`);
+        }
       }
+    } catch (error) {
+      console.error('[CRM] Error updating lead engagement:', error);
     }
   }, [leadId, state.messages, extractedData, propertiesViewed]);
 
@@ -301,7 +319,7 @@ const Chatbot: React.FC = () => {
       phone: extractedData.phone || '',
       source: 'chatbot',
       chatSessionId: state.conversationId,
-      urgency: 'medium',
+      urgency: aiDetectedUrgency, // AI-detected urgency from conversation analysis
     };
 
     // Build search criteria for property seekers
@@ -331,9 +349,15 @@ const Chatbot: React.FC = () => {
       };
     }
 
-    CRM.createDemand(demandData);
-    setDemandCreated(true);
-    console.log('[CRM] Demand created from chatbot:', extractedData.demandType);
+    try {
+      const demand = CRM.createDemand(demandData);
+      if (demand && demand.id) {
+        setDemandCreated(true);
+        console.log('[CRM] Demand created from chatbot:', extractedData.demandType);
+      }
+    } catch (error) {
+      console.error('[CRM] Error creating demand from chatbot:', error);
+    }
   }, [extractedData, demandCreated, state.conversationId]);
 
   // Check connection
@@ -520,6 +544,12 @@ const Chatbot: React.FC = () => {
         const data = await response.json();
         const responseText = data.response || "Erreur de traitement.";
 
+        // Extract AI-detected urgency from response
+        if (data.analysis?.urgency) {
+          setAiDetectedUrgency(data.analysis.urgency);
+          console.log(`[CRM] AI detected urgency: ${data.analysis.urgency} - ${data.analysis.reason || ''}`);
+        }
+
         setState(prev => ({
           ...prev,
           messages: prev.messages.map(msg =>
@@ -552,9 +582,27 @@ const Chatbot: React.FC = () => {
   const handleSend = () => sendMessage(input);
 
   const handleClear = async () => {
+    // Get final urgency analysis before clearing
+    try {
+      const clearResponse = await fetch(`${RAG_API_URL}/api/chat/clear?conversation_id=${state.conversationId}`, {
+        method: 'POST'
+      });
+      const clearData = await clearResponse.json();
+
+      // Use final urgency for lead/demand creation
+      if (clearData.final_analysis?.urgency) {
+        setAiDetectedUrgency(clearData.final_analysis.urgency);
+      }
+    } catch { /* ignore */ }
+
     // Create lead before clearing if we have contact info
     if ((extractedData.email || extractedData.phone) && !leadCreated) {
       convertToCRMLead();
+    }
+
+    // Create demand if we have demand type
+    if (extractedData.demandType && (extractedData.email || extractedData.phone) && !demandCreated) {
+      convertToCRMDemand();
     }
 
     // Log final engagement before clearing
@@ -562,18 +610,13 @@ const Chatbot: React.FC = () => {
       updateLeadEngagement();
     }
 
-    try {
-      await fetch(`${RAG_API_URL}/api/chat/clear?conversation_id=${state.conversationId}`, {
-        method: 'POST'
-      });
-    } catch { /* ignore */ }
-
     // Reset CRM tracking
     setExtractedData({});
     setLeadCreated(false);
     setDemandCreated(false);
     setLeadId(null);
     setPropertiesViewed([]);
+    setAiDetectedUrgency('medium'); // Reset to default
 
     setState(prev => ({
       ...prev,

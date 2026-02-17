@@ -17,7 +17,7 @@ import {
   Settings, Plus, Search, Edit3, Trash2, X, Check,
   TrendingUp, DollarSign, MapPin, Calendar, Download,
   ChevronLeft, ChevronRight, ChevronDown, RefreshCw, Bell, Moon, Sun, Menu,
-  Save, Target, Mail, AlertCircle,
+  Save, Target, Mail, AlertCircle, Filter,
   Clock, Star, UserPlus, Activity, Archive,
   ExternalLink, MoreVertical, Award, Zap, Eye, EyeOff,
   FileText, ClipboardList, Sparkles, Link2, MessageSquare, Phone
