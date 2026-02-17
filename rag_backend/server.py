@@ -444,8 +444,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Nourreska RAG API",
-    description="Semantic property search using pre-computed FAISS index",
-    version="2.0.0-production",
+    description="Semantic property search with conversation memory",
+    version="2.1.0-memory",
     default_response_class=ORJSONResponse,
     lifespan=lifespan
 )
@@ -468,7 +468,7 @@ async def health_check():
     """Health check endpoint."""
     return HealthResponse(
         status="healthy",
-        version="2.0.0-production",
+        version="2.1.0-memory",
         index_loaded=is_ready,
         total_properties=len(properties),
         embedding_model="openai/text-embedding-3-small",

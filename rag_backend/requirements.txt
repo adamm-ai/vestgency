@@ -2,6 +2,7 @@
 # ====================================
 # Uses pre-computed FAISS index + OpenAI embeddings for queries
 # Memory: ~100MB (vs 1GB+ with Sentence Transformers)
+# Version: 2.1.0-memory (with conversation tracking)
 
 # FastAPI Server
 fastapi>=0.100.0
