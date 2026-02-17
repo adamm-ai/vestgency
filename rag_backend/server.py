@@ -81,6 +81,12 @@ class QuickSearchResponse(BaseModel):
     processing_time_ms: float
 
 
+class ChatRequest(BaseModel):
+    message: str = ""
+    conversation_id: str = "default"
+    stream: bool = False
+
+
 class HealthResponse(BaseModel):
     status: str
     version: str
@@ -561,9 +567,14 @@ async def get_stats():
 # ============================================================================
 
 @app.post("/api/chat", tags=["Chatbot"])
-async def chat(message: str = "", conversation_id: str = "default", stream: bool = False):
+async def chat(request: ChatRequest):
     """Chatbot using OpenAI with conversation memory and urgency detection."""
     global conversations
+
+    message = request.message
+    conversation_id = request.conversation_id
+
+    logger.info(f"Chat request: conversation_id={conversation_id}, message_len={len(message)}")
 
     if not openai_client:
         return {
@@ -577,6 +588,7 @@ async def chat(message: str = "", conversation_id: str = "default", stream: bool
         # Initialize conversation history if needed
         if conversation_id not in conversations:
             conversations[conversation_id] = []
+            logger.info(f"New conversation started: {conversation_id}")
 
         # Add user message to history
         conversations[conversation_id].append({
