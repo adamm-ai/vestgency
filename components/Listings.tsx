@@ -584,56 +584,84 @@ const Listings: React.FC = () => {
   // Debounced search for performance
   const debouncedSearch = useDebounce(searchQuery, 300);
 
+  // Track previous filter values to detect changes
+  const prevFiltersRef = useRef({ activeTab, activeType, debouncedSearch });
+
   // Preload data on mount
   useEffect(() => {
     preloadData();
     preloadRAGService();
   }, []);
 
-  // Load properties
-  const loadProperties = useCallback(async () => {
-    setLoading(true);
-    try {
-      const filters: PropertyFilters = {
-        category: activeTab,
-        page,
-        limit: 12,
-        search: debouncedSearch || undefined
-      };
+  // Load properties - single unified effect to prevent double API calls
+  useEffect(() => {
+    // Skip API loading if RAG search is active (properties set directly from RAG)
+    if (isRAGSearch) return;
 
-      if (activeType !== 'Tous') {
-        filters.type = activeType;
-      }
+    const prevFilters = prevFiltersRef.current;
+    const filtersChanged =
+      prevFilters.activeTab !== activeTab ||
+      prevFilters.activeType !== activeType ||
+      prevFilters.debouncedSearch !== debouncedSearch;
 
-      const response = await getProperties(filters);
+    // Update ref
+    prevFiltersRef.current = { activeTab, activeType, debouncedSearch };
 
-      if (response.success) {
-        setProperties(response.data);
-        setTotalPages(response.pagination.totalPages);
-        setTotal(response.pagination.total);
-      }
-    } catch (error) {
-      console.error('Error loading properties:', error);
-    } finally {
-      setLoading(false);
+    // If filters changed, reset to page 1 and load
+    // If only page changed, just load with current page
+    const targetPage = filtersChanged ? 1 : page;
+
+    // Update page state if filters changed (but don't trigger another load)
+    if (filtersChanged && page !== 1) {
+      setPage(1);
+      return; // The setPage will trigger this effect again with page=1
     }
-  }, [activeTab, activeType, page, debouncedSearch]);
 
-  useEffect(() => {
+    const loadProperties = async () => {
+      setLoading(true);
+      try {
+        const filters: PropertyFilters = {
+          category: activeTab,
+          page: targetPage,
+          limit: 12,
+          search: debouncedSearch || undefined
+        };
+
+        if (activeType !== 'Tous') {
+          filters.type = activeType;
+        }
+
+        const response = await getProperties(filters);
+
+        if (response.success) {
+          setProperties(response.data);
+          setTotalPages(response.pagination.totalPages);
+          setTotal(response.pagination.total);
+        }
+      } catch (error) {
+        // Silent fail for production
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadProperties();
-  }, [loadProperties]);
-
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [activeTab, activeType, debouncedSearch]);
+  }, [activeTab, activeType, page, debouncedSearch, isRAGSearch]);
 
   // Handlers
   const handleTabChange = useCallback((tab: ListingCategory) => {
+    // Clear RAG search when changing tabs
+    setIsRAGSearch(false);
+    setRagResults(null);
+    setSearchExplanation('');
     setActiveTab(tab);
   }, []);
 
   const handleTypeChange = useCallback((type: string) => {
+    // Clear RAG search when changing type
+    setIsRAGSearch(false);
+    setRagResults(null);
+    setSearchExplanation('');
     setActiveType(type);
   }, []);
 
@@ -657,7 +685,7 @@ const Listings: React.FC = () => {
     setPage(1);
 
     if (ragResponse && ragResponse.results.length > 0) {
-      // Use RAG results
+      // Use RAG results - set directly, skip useEffect loading
       setIsRAGSearch(true);
       setRagResults(ragResponse);
       setProperties(ragResponse.results as Property[]);
@@ -666,13 +694,13 @@ const Listings: React.FC = () => {
       setSearchExplanation(ragResponse.explanation || '');
       setLoading(false);
     } else {
-      // Fall back to regular search
+      // Fall back to regular search - useEffect will handle loading via searchQuery change
       setIsRAGSearch(false);
       setRagResults(null);
       setSearchExplanation('');
-      loadProperties();
+      // No need to call loadProperties - useEffect triggers on searchQuery/debouncedSearch change
     }
-  }, [loadProperties]);
+  }, []);
 
   // Handle quick select from suggestions
   const handleQuickSelect = useCallback((result: SearchResult) => {
@@ -709,8 +737,8 @@ const Listings: React.FC = () => {
     setRagResults(null);
     setSearchExplanation('');
     setSearchQuery('');
-    loadProperties();
-  }, [loadProperties]);
+    // No need to call loadProperties - useEffect triggers on searchQuery change
+  }, []);
 
   return (
     <section id={SectionId.LISTINGS} className="py-16 sm:py-20 md:py-24 relative bg-[#FAFAF9] dark:bg-[#050608] overflow-hidden transition-colors duration-300">
