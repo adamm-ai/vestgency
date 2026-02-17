@@ -469,113 +469,55 @@ const Chatbot: React.FC = () => {
     }));
 
     try {
+      // Use non-streaming request for reliability
       const response = await fetch(`${RAG_API_URL}/api/chat`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'text/event-stream'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageText,
           conversation_id: state.conversationId,
-          stream: true
+          stream: false
         })
       });
 
       if (!response.ok) throw new Error('Failed');
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let fullResponse = '';
+      const data = await response.json();
+      const responseText = data.response || "Erreur de traitement.";
 
-      if (reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                if (data.type === 'content') {
-                  fullResponse += data.content;
-                  setState(prev => ({
-                    ...prev,
-                    messages: prev.messages.map(msg =>
-                      msg.id === modelMsgId ? { ...msg, text: fullResponse } : msg
-                    )
-                  }));
-                }
-              } catch { /* ignore */ }
-            }
-          }
-        }
+      // Extract AI-detected urgency from response
+      if (data.analysis?.urgency) {
+        setAiDetectedUrgency(data.analysis.urgency);
+        console.log(`[CRM] AI detected urgency: ${data.analysis.urgency} - ${data.analysis.reason || ''}`);
       }
 
       setState(prev => ({
         ...prev,
         messages: prev.messages.map(msg =>
-          msg.id === modelMsgId ? { ...msg, isStreaming: false } : msg
+          msg.id === modelMsgId
+            ? { ...msg, text: responseText, isStreaming: false }
+            : msg
         ),
         isLoading: false
       }));
 
       // CRM: Detect property interest and update engagement
-      if (fullResponse) {
-        detectPropertyInterest(fullResponse);
+      if (responseText && responseText !== "Erreur de traitement.") {
+        detectPropertyInterest(responseText);
         updateLeadEngagement();
       }
 
-    } catch {
-      try {
-        const response = await fetch(`${RAG_API_URL}/api/chat`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            message: messageText,
-            conversation_id: state.conversationId,
-            stream: false
-          })
-        });
-
-        const data = await response.json();
-        const responseText = data.response || "Erreur de traitement.";
-
-        // Extract AI-detected urgency from response
-        if (data.analysis?.urgency) {
-          setAiDetectedUrgency(data.analysis.urgency);
-          console.log(`[CRM] AI detected urgency: ${data.analysis.urgency} - ${data.analysis.reason || ''}`);
-        }
-
-        setState(prev => ({
-          ...prev,
-          messages: prev.messages.map(msg =>
-            msg.id === modelMsgId
-              ? { ...msg, text: responseText, isStreaming: false }
-              : msg
-          ),
-          isLoading: false
-        }));
-
-        // CRM: Detect property interest and update engagement
-        if (responseText && responseText !== "Erreur de traitement.") {
-          detectPropertyInterest(responseText);
-          updateLeadEngagement();
-        }
-      } catch {
-        setState(prev => ({
-          ...prev,
-          messages: prev.messages.map(msg =>
-            msg.id === modelMsgId
-              ? { ...msg, text: "Connexion perdue. Réessayez.", isStreaming: false }
-              : msg
-          ),
-          isLoading: false
-        }));
-      }
+    } catch (error) {
+      console.error('[Chatbot] Error:', error);
+      setState(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.id === modelMsgId
+            ? { ...msg, text: "Connexion perdue. Réessayez.", isStreaming: false }
+            : msg
+        ),
+        isLoading: false
+      }));
     }
   }, [state.isLoading, state.conversationId, detectPropertyInterest, updateLeadEngagement, extractInfoFromMessage]);
 
