@@ -122,7 +122,7 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
   // Get all images (use images array if available, fallback to single image)
   const allImages = useMemo(() => {
     if (property.images && property.images.length > 0) {
-      return property.images; // All images from database
+      return property.images;
     }
     return [property.image];
   }, [property.images, property.image]);
@@ -201,15 +201,17 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
     }
   }, [currentImageIndex]);
 
+  // Format price for display
+  const displayPrice = property.price || (property.priceNumeric ? `${property.priceNumeric.toLocaleString('fr-FR')} DH` : 'Prix sur demande');
+  const isRent = property.category === 'RENT';
+
   return (
     <div
       className="card-2026 relative overflow-hidden h-full flex flex-col group hover-lift cursor-pointer"
       onClick={handleClick}
     >
-      {/* Image Carousel Area */}
-      <div className="relative h-56 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 pointer-events-none" />
-
+      {/* Image Area */}
+      <div className="relative h-48 overflow-hidden rounded-t-[24px]">
         {/* Scrollable Image Container */}
         <div
           ref={scrollContainerRef}
@@ -228,169 +230,137 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
           ))}
         </div>
 
+        {/* Category Badge - Top Left */}
+        <div className="absolute top-3 left-3 z-20">
+          <span className={`px-3 py-1.5 rounded-full text-white text-[11px] font-bold uppercase tracking-wide shadow-lg ${
+            isRent
+              ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
+              : 'bg-gradient-to-r from-brand-primary to-cyan-400'
+          }`}>
+            {isRent ? 'Location' : 'Vente'}
+          </span>
+        </div>
+
+        {/* Like Button - Top Right */}
+        <button
+          onClick={handleLike}
+          className={`absolute top-3 right-3 z-20 w-9 h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-90 ${
+            isLiked ? 'bg-red-500 text-white' : 'bg-black/40 text-white hover:bg-black/60'
+          }`}
+          aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        >
+          <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+        </button>
+
         {/* Navigation Arrows (only show if multiple images) */}
         {allImages.length > 1 && (
           <>
             <button
               onClick={handlePrevImage}
-              className="absolute left-1.5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity duration-200"
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity"
               aria-label="Image précédente"
             >
-              <ChevronLeft size={18} />
+              <ChevronLeft size={16} />
             </button>
             <button
               onClick={handleNextImage}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity duration-200"
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 opacity-70 transition-opacity"
               aria-label="Image suivante"
             >
-              <ChevronRight size={18} />
+              <ChevronRight size={16} />
             </button>
           </>
         )}
 
-        {/* Dot Indicators (only show if multiple images, max 7 visible) */}
+        {/* Dot Indicators */}
         {allImages.length > 1 && (
-          <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-20 flex gap-1 items-center">
-            {allImages.length <= 7 ? (
-              // Show all dots if 7 or fewer images
-              allImages.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => handleDotClick(e, index)}
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                    index === currentImageIndex
-                      ? 'bg-white w-3'
-                      : 'bg-white/50 hover:bg-white/70'
-                  }`}
-                />
-              ))
-            ) : (
-              // Show sliding window of dots for many images
-              <>
-                {currentImageIndex > 0 && (
-                  <span className="text-white/70 text-[8px]">‹</span>
-                )}
-                {Array.from({ length: Math.min(5, allImages.length) }, (_, i) => {
-                  // Calculate which indices to show (sliding window)
-                  let startIdx = Math.max(0, Math.min(currentImageIndex - 2, allImages.length - 5));
-                  let idx = startIdx + i;
-                  return (
-                    <button
-                      key={idx}
-                      onClick={(e) => handleDotClick(e, idx)}
-                      className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                        idx === currentImageIndex
-                          ? 'bg-white w-3'
-                          : 'bg-white/50 hover:bg-white/70'
-                      }`}
-                    />
-                  );
-                })}
-                {currentImageIndex < allImages.length - 1 && (
-                  <span className="text-white/70 text-[8px]">›</span>
-                )}
-              </>
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5 items-center">
+            {allImages.slice(0, 5).map((_, index) => (
+              <button
+                key={index}
+                onClick={(e) => handleDotClick(e, index)}
+                className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+                  index === currentImageIndex
+                    ? 'bg-white w-4'
+                    : 'bg-white/50 hover:bg-white/70'
+                }`}
+              />
+            ))}
+            {allImages.length > 5 && (
+              <span className="text-white/70 text-[10px] ml-1">+{allImages.length - 5}</span>
             )}
           </div>
         )}
-
-        {/* Image Counter */}
-        {allImages.length > 1 && (
-          <div className="absolute top-12 right-3 z-20 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-medium">
-            {currentImageIndex + 1}/{allImages.length}
-          </div>
-        )}
-
-        {/* Tags - 2026 Glass */}
-        <div className="absolute top-3 left-3 z-20 flex gap-2">
-          <span className="liquid-glass px-3 py-1.5 rounded-full text-brand-charcoal dark:text-white text-[10px] font-bold uppercase tracking-wider">
-            {property.type}
-          </span>
-          <span className={`px-3 py-1.5 rounded-full text-white text-[10px] font-bold uppercase tracking-wider shadow-lg ${
-            property.category === 'RENT' ? 'bg-gradient-to-r from-emerald-500 to-emerald-400' : 'bg-gradient-to-r from-brand-primary to-cyan-400'
-          }`}>
-            {property.category === 'RENT' ? 'Location' : 'Vente'}
-          </span>
-        </div>
-
-        {/* Smart Tags */}
-        {property.smartTags && property.smartTags.length > 0 && (
-          <div className="absolute top-3 right-3 z-20 flex flex-col gap-1">
-            {property.smartTags.slice(0, 2).map((tag, i) => (
-              <span key={i} className="px-2 py-0.5 rounded-full bg-brand-gold/90 text-black text-[9px] font-bold uppercase flex items-center gap-1">
-                <Sparkles size={8} />
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Like Button */}
-        {!property.smartTags?.length && (
-          <button
-            onClick={handleLike}
-            className={`absolute top-3 right-3 z-20 w-10 h-10 min-w-[44px] min-h-[44px] rounded-full backdrop-blur-sm flex items-center justify-center transition-all duration-200 active:scale-90 ${
-              isLiked ? 'bg-red-500 text-white' : 'bg-white/20 text-white hover:bg-white/30 active:bg-white/40'
-            }`}
-            aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-          >
-            <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
-          </button>
-        )}
-
-        {/* Price & Location */}
-        <div className="absolute bottom-3 left-3 right-3 z-20">
-          <div className="flex items-end justify-between">
-            <div className="flex items-center gap-1 text-white/80 text-[11px] font-medium">
-              <MapPin size={10} className="text-brand-gold" />
-              <span className="truncate max-w-[120px]">{property.location}</span>
-            </div>
-            <span className="text-lg font-display font-bold text-white drop-shadow-lg">
-              {property.price}
-            </span>
-          </div>
-        </div>
       </div>
 
-      {/* Content */}
+      {/* Content Area */}
       <div className="p-4 flex-1 flex flex-col">
-        <h3 className="text-sm font-semibold text-brand-charcoal dark:text-white mb-1.5 leading-tight line-clamp-2 group-hover:text-brand-gold transition-colors">
-          {property.name}
-        </h3>
+        {/* Price - Prominent */}
+        <div className="flex items-baseline justify-between mb-2">
+          <span className="text-xl font-display font-bold text-brand-gold">
+            {displayPrice}
+          </span>
+          {isRent && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">/mois</span>
+          )}
+        </div>
 
-        {/* Features */}
-        {property.features.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
+        {/* Property Type & Name */}
+        <div className="mb-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-brand-primary/80 dark:text-brand-primary">
+            {property.type}
+          </span>
+          <h3 className="text-sm font-semibold text-brand-charcoal dark:text-white leading-tight line-clamp-2 group-hover:text-brand-gold transition-colors mt-0.5">
+            {property.name}
+          </h3>
+        </div>
+
+        {/* Location */}
+        <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 mb-3">
+          <MapPin size={12} className="text-brand-gold shrink-0" />
+          <span className="text-xs truncate">
+            {property.location}{property.city ? `, ${property.city}` : ''}
+          </span>
+        </div>
+
+        {/* Stats - Beds, Baths, Area */}
+        <div className="flex items-center gap-4 pt-3 border-t border-black/[0.06] dark:border-white/[0.08] mt-auto">
+          {property.beds !== undefined && property.beds > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Bed size={14} className="text-brand-gold" />
+              <span className="text-xs font-medium text-brand-charcoal dark:text-white">
+                {property.beds} <span className="text-gray-500 dark:text-gray-400 font-normal">ch.</span>
+              </span>
+            </div>
+          )}
+          {property.baths !== undefined && property.baths > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Bath size={14} className="text-brand-gold" />
+              <span className="text-xs font-medium text-brand-charcoal dark:text-white">
+                {property.baths} <span className="text-gray-500 dark:text-gray-400 font-normal">sdb.</span>
+              </span>
+            </div>
+          )}
+          {(property.area || property.areaNumeric) && (
+            <div className="flex items-center gap-1.5">
+              <Maximize size={14} className="text-brand-gold" />
+              <span className="text-xs font-medium text-brand-charcoal dark:text-white">
+                {property.area || `${property.areaNumeric} m²`}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Features Tags */}
+        {property.features && property.features.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-3">
             {property.features.slice(0, 3).map((feature, i) => (
-              <span key={i} className="px-2 py-0.5 rounded bg-brand-gold/10 text-brand-gold text-[9px] font-semibold uppercase">
+              <span key={i} className="px-2 py-1 rounded-md bg-brand-gold/10 text-brand-gold text-[9px] font-semibold uppercase">
                 {feature}
               </span>
             ))}
           </div>
         )}
-
-        {/* Stats */}
-        <div className="flex items-center gap-3 pt-3 border-t border-black/[0.04] dark:border-white/[0.06] mt-auto text-gray-500 dark:text-gray-400">
-          {property.beds && property.beds > 0 && (
-            <div className="flex items-center gap-1">
-              <Bed size={12} className="text-brand-gold/70" />
-              <span className="text-[10px] font-semibold">{property.beds}</span>
-            </div>
-          )}
-          {property.baths && property.baths > 0 && (
-            <div className="flex items-center gap-1">
-              <Bath size={12} className="text-brand-gold/70" />
-              <span className="text-[10px] font-semibold">{property.baths}</span>
-            </div>
-          )}
-          {property.area && (
-            <div className="flex items-center gap-1">
-              <Maximize size={12} className="text-brand-gold/70" />
-              <span className="text-[10px] font-semibold">{property.area}</span>
-            </div>
-          )}
-          <span className="ml-auto text-[9px] text-gray-400">{property.id}</span>
-        </div>
       </div>
     </div>
   );

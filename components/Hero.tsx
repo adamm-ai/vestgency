@@ -1,12 +1,12 @@
 import React, { memo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { SectionId } from '../types';
-import { Search, ArrowRight, ChevronDown } from 'lucide-react';
+import { Search, ArrowRight, ChevronDown, MapPin, Home, Building2, Key } from 'lucide-react';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
 // Animation variants
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 30 },
   visible: { opacity: 1, y: 0 }
 };
 
@@ -15,13 +15,16 @@ const fadeInUpReduced = {
   visible: { opacity: 1, y: 0 }
 };
 
-// Static data - extracted to avoid re-creation on render
-const QUICK_FILTER_TAGS = ['Vente', 'Location', 'Neuf', 'Luxe'] as const;
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.95 },
+  visible: { opacity: 1, scale: 1 }
+};
 
+// Static data
 const HERO_STATS = [
-  { value: '822+', label: 'Biens disponibles' },
-  { value: '15+', label: 'Années d\'expertise' },
-  { value: '98%', label: 'Clients satisfaits' },
+  { value: '500+', label: 'Biens Exclusifs', icon: Home },
+  { value: '15+', label: 'Ans d\'Expertise', icon: Building2 },
+  { value: '98%', label: 'Clients Satisfaits', icon: Key },
 ] as const;
 
 const Hero: React.FC = () => {
@@ -34,165 +37,206 @@ const Hero: React.FC = () => {
     });
   }, [prefersReducedMotion]);
 
+  const scrollToContact = useCallback(() => {
+    document.getElementById(SectionId.CONTACT)?.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth'
+    });
+  }, [prefersReducedMotion]);
+
   return (
     <section
       id={SectionId.HOME}
-      className="relative min-h-[100dvh] w-full flex flex-col overflow-hidden bg-black"
+      className="relative min-h-[100dvh] w-full flex flex-col overflow-hidden"
     >
       {/* ========================================
-          BACKGROUND LAYERS
+          BACKGROUND - Premium Real Estate Image
           ======================================== */}
-
-      {/* Background Image */}
       <div className="absolute inset-0">
+        {/* High-quality luxury real estate image */}
         <img
-          src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?q=80&w=2400&auto=format&fit=crop"
-          alt="Luxury Real Estate Morocco"
+          src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2400&auto=format&fit=crop"
+          alt="Luxury Villa Morocco"
           className="w-full h-full object-cover"
           loading="eager"
           fetchPriority="high"
         />
-        {/* Gradient overlays */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40" />
+
+        {/* Premium gradient overlays for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/90" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-black/40" />
+
+        {/* Subtle blue tint overlay for brand consistency */}
+        <div className="absolute inset-0 bg-brand-primary/5 mix-blend-overlay" />
       </div>
 
       {/* Ambient Glow Effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-brand-gold/20 rounded-full blur-[180px]" />
-        <div className="absolute bottom-[20%] right-[5%] w-[350px] h-[350px] bg-blue-500/15 rounded-full blur-[150px]" />
+        <div className="absolute top-[5%] left-[10%] w-[500px] h-[500px] bg-brand-gold/15 rounded-full blur-[200px]" />
+        <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] bg-brand-primary/20 rounded-full blur-[180px]" />
       </div>
 
       {/* ========================================
-          MAIN CONTENT - Centered & Clean
+          MAIN CONTENT
           ======================================== */}
+      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 sm:pt-28 md:pt-32 pb-32">
+        <div className="w-full max-w-5xl mx-auto">
 
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 pt-20 sm:pt-24 md:pt-28 pb-20 sm:pb-28 md:pb-32">
-        <div className="w-full max-w-4xl mx-auto text-center">
-
-          {/* Badge */}
+          {/* Top Badge */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={animationVariants}
-            transition={{ duration: 0.5 }}
-            className="mb-6 sm:mb-8"
+            transition={{ duration: 0.6 }}
+            className="flex justify-center mb-8"
           >
-            <div className="inline-flex items-center gap-2 sm:gap-2.5 px-3 sm:px-4 py-2 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.1]">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative rounded-full h-2 w-2 bg-green-400"></span>
+            <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/[0.08] backdrop-blur-xl border border-white/[0.12] shadow-lg">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative rounded-full h-2.5 w-2.5 bg-emerald-400"></span>
               </span>
-              <span className="text-xs text-white/90 font-medium tracking-wide">
-                Agence N°1 à Casablanca
+              <span className="text-sm text-white/90 font-medium tracking-wide">
+                Agence Immobilière N°1 à Casablanca
               </span>
             </div>
           </motion.div>
 
           {/* Main Title */}
-          <motion.h1
-            initial="hidden"
-            animate="visible"
-            variants={animationVariants}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="mb-6"
-          >
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display text-white tracking-tight leading-[1.1]">
-              Trouvez le bien
-            </span>
-            <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display tracking-tight leading-[1.1] bg-gradient-to-r from-brand-gold via-brand-primary-light to-brand-gold bg-clip-text text-transparent">
-              de vos rêves
-            </span>
-          </motion.h1>
-
-          {/* Subtitle */}
-          <motion.p
-            initial="hidden"
-            animate="visible"
-            variants={animationVariants}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-sm sm:text-base md:text-lg lg:text-xl text-white/60 max-w-xl mx-auto mb-8 sm:mb-10 font-light leading-relaxed px-2 sm:px-0"
-          >
-            Vente, location et gestion de biens d'exception à Casablanca et dans tout le Maroc
-          </motion.p>
-
-          {/* Search Bar */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={animationVariants}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="w-full max-w-2xl mx-auto mb-6 sm:mb-8 px-2 sm:px-0"
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-center mb-8"
           >
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white tracking-tight leading-[1.1] mb-4">
+              Votre Bien Idéal
+              <br />
+              <span className="bg-gradient-to-r from-brand-gold via-brand-primary-light to-brand-gold bg-clip-text text-transparent">
+                Vous Attend
+              </span>
+            </h1>
+            <p className="text-base sm:text-lg md:text-xl text-white/70 max-w-2xl mx-auto font-light leading-relaxed">
+              Vente, location et gestion locative de biens d'exception au Maroc.
+              <br className="hidden sm:block" />
+              Une expertise de confiance depuis plus de 15 ans.
+            </p>
+          </motion.div>
+
+          {/* Search Section */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={prefersReducedMotion ? fadeInUpReduced : scaleIn}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="max-w-3xl mx-auto mb-10"
+          >
+            {/* Main Search Bar */}
             <div className="relative group">
-              {/* Glow */}
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-gold/40 via-brand-primary-light/30 to-brand-gold/40 rounded-xl sm:rounded-2xl blur-xl opacity-50 group-hover:opacity-80 transition-opacity duration-500" />
+              {/* Glow Effect */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-brand-gold/30 via-brand-primary/20 to-brand-gold/30 rounded-2xl blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
 
               {/* Search Container */}
-              <div className="relative flex items-center bg-white/[0.06] backdrop-blur-2xl rounded-xl sm:rounded-2xl border border-white/[0.1] p-1 sm:p-1.5">
-                <div className="flex-1 flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3">
-                  <Search size={18} className="text-white/40 shrink-0 sm:w-5 sm:h-5" />
+              <div className="relative flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 bg-white/[0.08] backdrop-blur-2xl rounded-2xl border border-white/[0.15] p-2 sm:p-2">
+
+                {/* Location Input */}
+                <div className="flex-1 flex items-center gap-3 px-4 py-3 sm:py-4">
+                  <MapPin size={20} className="text-brand-gold shrink-0" />
                   <input
                     type="text"
-                    placeholder="Quartier, type de bien, budget..."
-                    className="w-full bg-transparent border-none outline-none text-white placeholder-white/40 text-base"
+                    placeholder="Ville, quartier ou adresse..."
+                    className="w-full bg-transparent border-none outline-none text-white placeholder-white/50 text-base font-medium"
                     onFocus={scrollToListings}
                   />
                 </div>
+
+                {/* Divider (desktop only) */}
+                <div className="hidden sm:block w-px h-10 bg-white/10" />
+
+                {/* Property Type Selector */}
+                <div className="flex items-center gap-2 px-4 py-3 sm:py-4">
+                  <Home size={18} className="text-white/50" />
+                  <select
+                    className="bg-transparent text-white/80 text-sm font-medium outline-none cursor-pointer appearance-none pr-6"
+                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.5)' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right center' }}
+                  >
+                    <option value="" className="bg-gray-900">Tous types</option>
+                    <option value="appartement" className="bg-gray-900">Appartement</option>
+                    <option value="villa" className="bg-gray-900">Villa</option>
+                    <option value="bureau" className="bg-gray-900">Bureau</option>
+                    <option value="terrain" className="bg-gray-900">Terrain</option>
+                  </select>
+                </div>
+
+                {/* Search Button */}
                 <button
                   onClick={scrollToListings}
-                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3.5 min-h-[44px] min-w-[44px] bg-gradient-to-r from-brand-gold to-brand-primary-light text-black font-bold text-sm rounded-xl hover:shadow-lg hover:shadow-brand-gold/30 active:scale-95 transition-all duration-300"
+                  className="flex items-center justify-center gap-2 px-6 sm:px-8 py-4 bg-gradient-to-r from-brand-gold to-brand-primary text-black font-bold text-sm rounded-xl hover:shadow-xl hover:shadow-brand-gold/30 active:scale-[0.98] transition-all duration-300"
                 >
-                  <span className="hidden sm:inline">Rechercher</span>
-                  <ArrowRight size={18} />
+                  <Search size={18} />
+                  <span>Rechercher</span>
                 </button>
               </div>
             </div>
+
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap justify-center gap-3 mt-6">
+              <button
+                onClick={scrollToListings}
+                className="px-5 py-2.5 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1] text-white/80 text-sm font-medium hover:bg-white/[0.12] hover:text-white hover:border-brand-gold/30 active:scale-95 transition-all duration-300"
+              >
+                🏠 Acheter
+              </button>
+              <button
+                onClick={scrollToListings}
+                className="px-5 py-2.5 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1] text-white/80 text-sm font-medium hover:bg-white/[0.12] hover:text-white hover:border-brand-gold/30 active:scale-95 transition-all duration-300"
+              >
+                🔑 Louer
+              </button>
+              <button
+                onClick={scrollToContact}
+                className="px-5 py-2.5 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1] text-white/80 text-sm font-medium hover:bg-white/[0.12] hover:text-white hover:border-brand-gold/30 active:scale-95 transition-all duration-300"
+              >
+                📊 Estimer
+              </button>
+              <button
+                onClick={scrollToContact}
+                className="px-5 py-2.5 rounded-full bg-white/[0.08] backdrop-blur-sm border border-white/[0.1] text-white/80 text-sm font-medium hover:bg-white/[0.12] hover:text-white hover:border-brand-gold/30 active:scale-95 transition-all duration-300"
+              >
+                🏢 Gestion Locative
+              </button>
+            </div>
           </motion.div>
 
-          {/* Quick Filters */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={animationVariants}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-wrap justify-center gap-2 sm:gap-3"
-          >
-            {QUICK_FILTER_TAGS.map((tag) => (
-              <button
-                key={tag}
-                onClick={scrollToListings}
-                className="px-5 sm:px-6 py-3 sm:py-2.5 min-h-[44px] rounded-full bg-white/[0.05] backdrop-blur-sm border border-white/[0.08] text-white/70 text-sm font-medium hover:bg-white/[0.1] hover:text-white hover:border-brand-gold/30 active:scale-95 transition-all duration-300"
-              >
-                {tag}
-              </button>
-            ))}
-          </motion.div>
         </div>
       </div>
 
       {/* ========================================
-          STATS BAR - Bottom Fixed
+          STATS BAR - Bottom
           ======================================== */}
-
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
-        className="relative z-10 w-full border-t border-white/[0.06]"
+        transition={{ duration: 0.7, delay: 0.4 }}
+        className="relative z-10 w-full"
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-          <div className="flex items-center justify-center gap-6 sm:gap-12 md:gap-20">
-            {HERO_STATS.map((stat, i) => (
-              <div key={i} className="text-center">
-                <div className="text-2xl sm:text-3xl font-display font-bold text-white mb-1">
-                  {stat.value}
+        {/* Glass container */}
+        <div className="mx-4 sm:mx-6 lg:mx-auto max-w-4xl mb-6 sm:mb-8">
+          <div className="liquid-glass-2 rounded-2xl px-6 py-5 sm:px-8 sm:py-6">
+            <div className="flex items-center justify-around gap-4 sm:gap-8">
+              {HERO_STATS.map((stat, i) => (
+                <div key={i} className="text-center group">
+                  <div className="flex items-center justify-center gap-2 mb-1">
+                    <stat.icon size={20} className="text-brand-gold hidden sm:block" />
+                    <span className="text-2xl sm:text-3xl lg:text-4xl font-display font-bold text-white group-hover:text-brand-gold transition-colors">
+                      {stat.value}
+                    </span>
+                  </div>
+                  <span className="text-[10px] sm:text-xs text-white/60 font-medium uppercase tracking-wider">
+                    {stat.label}
+                  </span>
                 </div>
-                <div className="text-xs sm:text-sm text-white/50 font-medium">
-                  {stat.label}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </motion.div>
@@ -200,15 +244,14 @@ const Hero: React.FC = () => {
       {/* ========================================
           SCROLL INDICATOR
           ======================================== */}
-
       <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-20">
         <button
           onClick={scrollToListings}
-          className="flex flex-col items-center justify-center gap-1.5 sm:gap-2 min-w-[44px] min-h-[44px] p-2 text-white/40 hover:text-white/70 active:text-white/90 transition-colors"
+          className="flex flex-col items-center justify-center gap-2 p-3 text-white/50 hover:text-white/80 transition-colors group"
           aria-label="Voir les biens"
         >
-          <span className="text-[10px] sm:text-xs font-medium tracking-wider uppercase">Découvrir</span>
-          <ChevronDown size={18} className={prefersReducedMotion ? '' : 'animate-bounce'} />
+          <span className="text-[10px] font-semibold tracking-[0.2em] uppercase">Découvrir</span>
+          <ChevronDown size={20} className={`${prefersReducedMotion ? '' : 'animate-bounce'} group-hover:text-brand-gold transition-colors`} />
         </button>
       </div>
     </section>

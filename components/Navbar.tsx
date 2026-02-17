@@ -90,14 +90,17 @@ const Navbar: React.FC = () => {
         <div
           className={`
             pointer-events-auto
-            dynamic-island
-            ${isScrolled ? 'dynamic-island-compact dynamic-island-breathing' : 'dynamic-island-expanded'}
             flex items-center justify-between
             transition-all duration-[600ms] ease-[cubic-bezier(0.4,0,0.2,1)]
             ${isScrolled
-              ? 'px-4 md:px-5 py-2.5 md:py-3 min-w-[280px] md:min-w-[420px] max-w-[95%] md:max-w-[460px]'
-              : 'px-5 md:px-8 py-3.5 md:py-4 w-[95%] md:w-auto md:min-w-[680px] lg:min-w-[800px]'}
+              ? 'px-4 md:px-5 py-2.5 md:py-3 min-w-[280px] md:min-w-[420px] max-w-[95%] md:max-w-[460px] rounded-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]'
+              : 'px-5 md:px-8 py-3.5 md:py-4 w-[95%] md:w-auto md:min-w-[680px] lg:min-w-[800px] rounded-[28px] bg-white/[0.03] backdrop-blur-3xl border border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]'}
           `}
+          style={{
+            background: isScrolled
+              ? 'linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(10,10,15,0.9) 100%)'
+              : 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 50%, rgba(41,171,226,0.03) 100%)'
+          }}
         >
           {/* Left Side - Logo */}
           <a
