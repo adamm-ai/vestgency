@@ -177,74 +177,95 @@ const Navbar: React.FC = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu - Full screen overlay with smooth animations */}
+      {/* Mobile Menu - iOS-style full screen overlay */}
       {isMobileMenuOpen && (
         <div
-          className={`fixed inset-0 z-40 bg-black md:hidden transition-all duration-300 ease-out ${
-            isMenuAnimating ? 'opacity-100' : 'opacity-0'
-          }`}
+          className={`
+            fixed inset-0 z-40 md:hidden
+            transition-all duration-400 ease-[cubic-bezier(0.32,0.72,0,1)]
+            ${isMenuAnimating ? 'opacity-100' : 'opacity-0'}
+          `}
           aria-modal="true"
           role="dialog"
           aria-label="Menu de navigation mobile"
         >
-          {/* Full screen container with safe area padding */}
-          <div className="flex flex-col h-full h-[100dvh] pt-20 pb-safe px-6 sm:px-8">
+          {/* iOS-style blur background */}
+          <div className={`
+            absolute inset-0
+            bg-black/95 dark:bg-black/98
+            backdrop-blur-3xl
+            transition-all duration-400
+            ${isMenuAnimating ? 'backdrop-blur-3xl' : 'backdrop-blur-none'}
+          `} />
 
-            {/* Navigation Links - Centered with staggered animation */}
-            <nav className="flex-1 flex flex-col justify-center gap-1 sm:gap-2 -mt-8">
+          {/* Full screen container with safe area padding */}
+          <div className="relative flex flex-col h-full h-[100dvh] pt-20 pb-safe px-6 sm:px-8">
+
+            {/* Pull indicator - iOS style */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2">
+              <div className="w-9 h-1 rounded-full bg-white/20" />
+            </div>
+
+            {/* Navigation Links - iOS large title style */}
+            <nav className="flex-1 flex flex-col justify-center gap-2 -mt-4">
               {NAV_LINKS.map((link, index) => (
                 <button
                   key={link.id}
                   onClick={() => scrollTo(link.id)}
                   className={`
-                    py-4 sm:py-5 px-2
-                    text-[2rem] sm:text-4xl font-display font-medium
-                    text-white/90 hover:text-brand-gold active:text-brand-gold
-                    transition-all duration-300 ease-out
+                    relative py-4 px-4
+                    text-[34px] font-bold tracking-tight
+                    text-white
                     text-left
-                    min-h-[56px] sm:min-h-[64px]
-                    rounded-lg
-                    active:bg-white/5
-                    transform ${isMenuAnimating ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'}
+                    min-h-[60px]
+                    rounded-2xl
+                    transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                    active:bg-white/10 active:scale-[0.98]
+                    group
+                    transform ${isMenuAnimating ? 'translate-x-0 opacity-100' : '-translate-x-8 opacity-0'}
                   `}
                   style={{
-                    transitionDelay: isMenuAnimating ? `${index * 75}ms` : '0ms'
+                    transitionDelay: isMenuAnimating ? `${index * 60 + 100}ms` : '0ms'
                   }}
                 >
-                  {link.label}
+                  <span className="relative z-10 group-hover:text-brand-gold transition-colors duration-200">
+                    {link.label}
+                  </span>
+                  {/* Hover/active indicator */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-brand-gold rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </button>
               ))}
             </nav>
 
-            {/* Bottom CTA - Touch-friendly with safe area */}
+            {/* Bottom CTA - iOS-style prominent button */}
             <div
               className={`
-                pb-6 sm:pb-8
-                transform transition-all duration-300 ease-out
-                ${isMenuAnimating ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}
+                pb-6
+                transform transition-all duration-400 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                ${isMenuAnimating ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}
               `}
               style={{
-                transitionDelay: isMenuAnimating ? `${NAV_LINKS.length * 75 + 50}ms` : '0ms'
+                transitionDelay: isMenuAnimating ? `${NAV_LINKS.length * 60 + 200}ms` : '0ms'
               }}
             >
               <button
                 onClick={() => scrollTo(SectionId.CONTACT)}
                 className="
-                  w-full py-4 sm:py-5
-                  bg-white text-black
-                  text-lg sm:text-xl font-semibold
-                  rounded-full
+                  w-full py-[18px]
+                  bg-brand-gold text-black
+                  text-[17px] font-semibold tracking-[-0.2px]
+                  rounded-2xl
                   min-h-[56px]
-                  active:bg-white/90 active:scale-[0.98]
-                  transition-all duration-150
-                  shadow-lg shadow-white/10
+                  shadow-xl shadow-brand-gold/30
+                  transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                  active:scale-[0.97] active:shadow-lg
                 "
               >
                 Estimer mon bien
               </button>
 
-              {/* Additional spacing for devices with home indicator */}
-              <div className="h-safe-area-inset-bottom" />
+              {/* Safe area spacer */}
+              <div style={{ height: 'env(safe-area-inset-bottom, 0px)' }} />
             </div>
           </div>
         </div>

@@ -11,6 +11,7 @@ import {
 import PropertyModal from './PropertyModal';
 import IntelligentSearch from './IntelligentSearch';
 import { useReducedMotion } from '../hooks/useReducedMotion';
+import { ListingsGridSkeleton, FilterButtonsSkeleton } from './SkeletonLoader';
 
 // ============================================================================
 // HOOKS
@@ -207,7 +208,16 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
 
   return (
     <div
-      className="card-2026 relative overflow-hidden h-full flex flex-col group hover-lift cursor-pointer touch-manipulation"
+      className="relative overflow-hidden h-full flex flex-col group cursor-pointer touch-manipulation
+                 bg-white dark:bg-[#1c1c1e]/90
+                 rounded-[20px] sm:rounded-[24px]
+                 shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.08)]
+                 dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_8px_24px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.05)]
+                 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                 hover:shadow-[0_8px_16px_rgba(0,0,0,0.08),0_16px_40px_rgba(0,0,0,0.12)]
+                 dark:hover:shadow-[0_8px_16px_rgba(0,0,0,0.3),0_16px_40px_rgba(0,0,0,0.5)]
+                 hover:-translate-y-1 hover:scale-[1.01]
+                 active:scale-[0.98] active:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
       onClick={handleClick}
     >
       {/* Image Area - Taller on mobile for better visual impact */}
@@ -230,133 +240,203 @@ const ListingCard = memo(({ property, onView }: ListingCardProps) => {
           ))}
         </div>
 
-        {/* Category Badge - Top Left - Larger on mobile for visibility */}
-        <div className="absolute top-3 left-3 sm:top-3 sm:left-3 z-20">
-          <span className={`px-3.5 py-2 sm:px-3 sm:py-1.5 rounded-full text-white text-xs sm:text-[11px] font-bold uppercase tracking-wide shadow-lg ${
-            isRent
-              ? 'bg-gradient-to-r from-emerald-500 to-emerald-400'
-              : 'bg-gradient-to-r from-brand-primary to-cyan-400'
-          }`}>
+        {/* Category Badge - iOS-style pill with blur */}
+        <div className="absolute top-3 left-3 z-20">
+          <span className={`
+            px-3 py-1.5 sm:px-2.5 sm:py-1
+            rounded-full text-white text-[11px] sm:text-[10px] font-semibold
+            uppercase tracking-wider
+            backdrop-blur-xl
+            shadow-lg
+            transition-transform duration-200 active:scale-95
+            ${isRent
+              ? 'bg-emerald-500/90'
+              : 'bg-brand-primary/90'
+            }
+          `}>
             {isRent ? 'Location' : 'Vente'}
           </span>
         </div>
 
-        {/* Like Button - Top Right - Touch-friendly size on mobile (min 44x44) */}
+        {/* Like Button - iOS-style with haptic feedback */}
         <button
           onClick={handleLike}
-          className={`absolute top-2 right-2 sm:top-3 sm:right-3 z-20 w-11 h-11 sm:w-9 sm:h-9 rounded-full backdrop-blur-md flex items-center justify-center transition-all duration-200 active:scale-90 ${
-            isLiked ? 'bg-red-500 text-white' : 'bg-black/40 text-white hover:bg-black/60'
-          }`}
+          className={`
+            absolute top-2.5 right-2.5 z-20
+            w-10 h-10 sm:w-9 sm:h-9
+            rounded-full backdrop-blur-xl
+            flex items-center justify-center
+            transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            active:scale-75
+            ${isLiked
+              ? 'bg-[#FF3B30] text-white shadow-lg shadow-red-500/30'
+              : 'bg-black/30 text-white hover:bg-black/50'
+            }
+          `}
           aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
         >
-          <Heart size={18} className="sm:w-4 sm:h-4" fill={isLiked ? 'currentColor' : 'none'} />
+          <Heart
+            size={17}
+            className={`sm:w-4 sm:h-4 transition-transform duration-300 ${isLiked ? 'scale-110' : ''}`}
+            fill={isLiked ? 'currentColor' : 'none'}
+            strokeWidth={isLiked ? 0 : 2}
+          />
         </button>
 
-        {/* Navigation Arrows (only show if multiple images) - Touch-friendly on mobile */}
+        {/* Navigation Arrows - iOS-style with blur background */}
         {allImages.length > 1 && (
           <>
             <button
               onClick={handlePrevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation"
+              className="
+                absolute left-2 top-1/2 -translate-y-1/2 z-20
+                w-9 h-9 sm:w-8 sm:h-8
+                rounded-full
+                bg-white/20 dark:bg-black/30
+                backdrop-blur-xl
+                text-white
+                flex items-center justify-center
+                opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+                transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                active:scale-90 active:bg-white/30
+                shadow-lg shadow-black/10
+              "
               aria-label="Image précédente"
             >
-              <ChevronLeft size={20} className="sm:w-4 sm:h-4" />
+              <ChevronLeft size={18} strokeWidth={2.5} />
             </button>
             <button
               onClick={handleNextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-black/50 hover:bg-black/70 active:bg-black/80 text-white flex items-center justify-center opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity touch-manipulation"
+              className="
+                absolute right-2 top-1/2 -translate-y-1/2 z-20
+                w-9 h-9 sm:w-8 sm:h-8
+                rounded-full
+                bg-white/20 dark:bg-black/30
+                backdrop-blur-xl
+                text-white
+                flex items-center justify-center
+                opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+                transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                active:scale-90 active:bg-white/30
+                shadow-lg shadow-black/10
+              "
               aria-label="Image suivante"
             >
-              <ChevronRight size={20} className="sm:w-4 sm:h-4" />
+              <ChevronRight size={18} strokeWidth={2.5} />
             </button>
           </>
         )}
 
-        {/* Dot Indicators - Larger touch targets on mobile */}
+        {/* Dot Indicators - iOS-style page control */}
         {allImages.length > 1 && (
-          <div className="absolute bottom-3 sm:bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-2 sm:gap-1.5 items-center px-2 py-1.5 sm:p-0 rounded-full bg-black/20 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none">
+          <div className="
+            absolute bottom-3 left-1/2 -translate-x-1/2 z-20
+            flex gap-1.5 items-center
+            px-2.5 py-1.5
+            rounded-full
+            bg-black/20 backdrop-blur-xl
+          ">
             {allImages.slice(0, 5).map((_, index) => (
               <button
                 key={index}
                 onClick={(e) => handleDotClick(e, index)}
-                className={`rounded-full transition-all duration-200 touch-manipulation ${
-                  index === currentImageIndex
-                    ? 'bg-white w-5 h-2 sm:w-4 sm:h-1.5'
-                    : 'bg-white/50 hover:bg-white/70 w-2 h-2 sm:w-1.5 sm:h-1.5'
-                }`}
-                style={{ minWidth: '8px', minHeight: '8px' }}
+                className={`
+                  rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                  ${index === currentImageIndex
+                    ? 'bg-white w-5 h-[6px]'
+                    : 'bg-white/40 hover:bg-white/60 w-[6px] h-[6px]'
+                  }
+                `}
               />
             ))}
             {allImages.length > 5 && (
-              <span className="text-white/80 text-xs sm:text-[10px] ml-1 font-medium">+{allImages.length - 5}</span>
+              <span className="text-white/70 text-[10px] ml-0.5 font-medium tabular-nums">
+                +{allImages.length - 5}
+              </span>
             )}
           </div>
         )}
       </div>
 
-      {/* Content Area - Enhanced padding and spacing for mobile */}
-      <div className="p-4 sm:p-4 flex-1 flex flex-col">
-        {/* Price - Prominent and larger on mobile */}
-        <div className="flex items-baseline justify-between mb-2 sm:mb-2">
-          <span className="text-2xl sm:text-xl font-display font-bold text-brand-gold">
+      {/* Content Area - iOS-style typography and 8pt spacing */}
+      <div className="p-4 flex-1 flex flex-col">
+        {/* Price - iOS large title style */}
+        <div className="flex items-baseline justify-between mb-1">
+          <span className="text-[22px] sm:text-xl font-bold tracking-tight text-brand-gold">
             {displayPrice}
           </span>
           {isRent && (
-            <span className="text-sm sm:text-xs text-gray-500 dark:text-gray-400 font-medium">/mois</span>
+            <span className="text-[13px] text-gray-400 dark:text-gray-500 font-medium">/mois</span>
           )}
         </div>
 
-        {/* Property Type Badge - More prominent on mobile */}
-        <div className="mb-2 sm:mb-2">
-          <span className="inline-block px-2.5 py-1 sm:px-0 sm:py-0 rounded-md sm:rounded-none bg-brand-primary/10 sm:bg-transparent text-xs sm:text-[10px] font-semibold uppercase tracking-wider text-brand-primary dark:text-brand-primary">
-            {property.type}
-          </span>
-          <h3 className="text-base sm:text-sm font-semibold text-brand-charcoal dark:text-white leading-snug sm:leading-tight line-clamp-2 group-hover:text-brand-gold transition-colors mt-1.5 sm:mt-0.5">
-            {property.name}
-          </h3>
-        </div>
+        {/* Property Type - iOS caption style */}
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-primary/80 dark:text-brand-primary mb-1">
+          {property.type}
+        </span>
 
-        {/* Location - Better readability on mobile */}
-        <div className="flex items-center gap-2 sm:gap-1.5 text-gray-600 dark:text-gray-400 mb-3 sm:mb-3">
-          <MapPin size={14} className="sm:w-3 sm:h-3 text-brand-gold shrink-0" />
-          <span className="text-sm sm:text-xs truncate">
+        {/* Title - iOS headline style */}
+        <h3 className="text-[15px] sm:text-[14px] font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2 mb-2 tracking-[-0.2px]">
+          {property.name}
+        </h3>
+
+        {/* Location - iOS subheadline with icon */}
+        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 mb-3">
+          <MapPin size={13} className="text-brand-gold shrink-0" strokeWidth={2} />
+          <span className="text-[13px] truncate tracking-[-0.1px]">
             {property.location}{property.city ? `, ${property.city}` : ''}
           </span>
         </div>
 
-        {/* Stats - Beds, Baths, Area - Larger and clearer on mobile */}
-        <div className="flex items-center gap-5 sm:gap-4 pt-3 sm:pt-3 border-t border-black/[0.06] dark:border-white/[0.08] mt-auto">
+        {/* Stats - iOS-style with subtle separator */}
+        <div className="flex items-center gap-4 pt-3 border-t border-gray-100 dark:border-white/[0.06] mt-auto">
           {property.beds !== undefined && property.beds > 0 && (
-            <div className="flex items-center gap-2 sm:gap-1.5">
-              <Bed size={16} className="sm:w-3.5 sm:h-3.5 text-brand-gold" />
-              <span className="text-sm sm:text-xs font-semibold sm:font-medium text-brand-charcoal dark:text-white">
-                {property.beds} <span className="text-gray-500 dark:text-gray-400 font-normal">ch.</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-lg bg-brand-gold/10 flex items-center justify-center">
+                <Bed size={13} className="text-brand-gold" strokeWidth={2} />
+              </div>
+              <span className="text-[13px] font-semibold text-gray-900 dark:text-white tabular-nums">
+                {property.beds}
               </span>
             </div>
           )}
           {property.baths !== undefined && property.baths > 0 && (
-            <div className="flex items-center gap-2 sm:gap-1.5">
-              <Bath size={16} className="sm:w-3.5 sm:h-3.5 text-brand-gold" />
-              <span className="text-sm sm:text-xs font-semibold sm:font-medium text-brand-charcoal dark:text-white">
-                {property.baths} <span className="text-gray-500 dark:text-gray-400 font-normal">sdb.</span>
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-lg bg-brand-gold/10 flex items-center justify-center">
+                <Bath size={13} className="text-brand-gold" strokeWidth={2} />
+              </div>
+              <span className="text-[13px] font-semibold text-gray-900 dark:text-white tabular-nums">
+                {property.baths}
               </span>
             </div>
           )}
           {(property.area || property.areaNumeric) && (
-            <div className="flex items-center gap-2 sm:gap-1.5">
-              <Maximize size={16} className="sm:w-3.5 sm:h-3.5 text-brand-gold" />
-              <span className="text-sm sm:text-xs font-semibold sm:font-medium text-brand-charcoal dark:text-white">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 rounded-lg bg-brand-gold/10 flex items-center justify-center">
+                <Maximize size={13} className="text-brand-gold" strokeWidth={2} />
+              </div>
+              <span className="text-[13px] font-semibold text-gray-900 dark:text-white tabular-nums">
                 {property.area || `${property.areaNumeric} m²`}
               </span>
             </div>
           )}
         </div>
 
-        {/* Features Tags - Better touch targets on mobile */}
+        {/* Features Tags - iOS-style chips */}
         {property.features && property.features.length > 0 && (
-          <div className="flex flex-wrap gap-2 sm:gap-1.5 mt-3 sm:mt-3">
+          <div className="flex flex-wrap gap-1.5 mt-3">
             {property.features.slice(0, 3).map((feature, i) => (
-              <span key={i} className="px-2.5 py-1.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-md bg-brand-gold/10 text-brand-gold text-[10px] sm:text-[9px] font-semibold uppercase">
+              <span
+                key={i}
+                className="
+                  px-2 py-1
+                  rounded-lg
+                  bg-gray-100 dark:bg-white/[0.08]
+                  text-[10px] font-semibold
+                  text-gray-600 dark:text-gray-300
+                  uppercase tracking-wide
+                "
+              >
                 {feature}
               </span>
             ))}
@@ -389,18 +469,37 @@ interface TypeFilterProps {
 }
 
 const TypeFilter = memo(({ activeType, onTypeChange }: TypeFilterProps) => (
-  <div className="flex gap-2 sm:gap-3 overflow-x-auto pb-6 sm:pb-8 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-hide">
+  <div className="
+    flex gap-2
+    overflow-x-auto
+    pb-6 sm:pb-8
+    -mx-4 px-4 sm:mx-0 sm:px-0
+    scrollbar-hide
+    snap-x snap-mandatory
+  ">
     {PROPERTY_TYPES.map((type) => (
       <button
         key={type}
         onClick={() => onTypeChange(type)}
-        className={`flex items-center gap-2 sm:gap-2.5 px-4 sm:px-5 py-3 sm:py-2.5 min-h-[44px] rounded-xl text-xs uppercase tracking-wider whitespace-nowrap transition-all duration-300 active:scale-95 ${
-          activeType === type
-            ? 'btn-primary-2026 font-bold shadow-lg'
-            : 'liquid-glass text-brand-charcoal/70 dark:text-white/70 hover:border-brand-primary/40 active:border-brand-primary/40 hover:text-brand-charcoal dark:hover:text-white'
-        }`}
+        className={`
+          flex items-center gap-2
+          px-4 py-2.5
+          min-h-[44px]
+          rounded-full
+          text-[13px] font-semibold
+          whitespace-nowrap
+          snap-start
+          transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+          active:scale-95
+          ${activeType === type
+            ? 'bg-brand-gold text-white shadow-lg shadow-brand-gold/30'
+            : 'bg-gray-100/80 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-white/[0.12]'
+          }
+        `}
       >
-        {TYPE_ICONS[type] || <Home size={14} />}
+        <span className={activeType === type ? 'text-white' : 'text-gray-400 dark:text-gray-500'}>
+          {TYPE_ICONS[type] || <Home size={14} />}
+        </span>
         {type}
       </button>
     ))}
@@ -441,42 +540,69 @@ const Pagination = memo(({ page, totalPages, onPageChange }: PaginationProps) =>
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-10 sm:mt-14">
-      <button
-        onClick={() => onPageChange(Math.max(1, page - 1))}
-        disabled={page === 1}
-        className="liquid-glass p-3 min-w-[44px] min-h-[44px] rounded-xl disabled:opacity-30 hover:border-brand-primary/40 active:scale-95 transition-all duration-300"
-        aria-label="Page précédente"
-      >
-        <ChevronLeft size={20} />
-      </button>
+    <div className="flex flex-col items-center gap-4 mt-10 sm:mt-12">
+      {/* Pagination controls */}
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onPageChange(Math.max(1, page - 1))}
+          disabled={page === 1}
+          className="
+            w-11 h-11 rounded-xl
+            flex items-center justify-center
+            bg-gray-100/80 dark:bg-white/[0.08]
+            text-gray-600 dark:text-gray-300
+            disabled:opacity-30 disabled:cursor-not-allowed
+            transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            active:scale-90
+            hover:bg-gray-200/80 dark:hover:bg-white/[0.12]
+          "
+          aria-label="Page précédente"
+        >
+          <ChevronLeft size={20} strokeWidth={2.5} />
+        </button>
 
-      <div className="flex items-center gap-1.5 sm:gap-2">
-        {pages.map(pageNum => (
-          <button
-            key={pageNum}
-            onClick={() => onPageChange(pageNum)}
-            className={`w-10 h-10 sm:w-11 sm:h-11 min-w-[44px] min-h-[44px] rounded-xl text-sm font-bold transition-all duration-300 active:scale-95 ${
-              page === pageNum
-                ? 'btn-primary-2026'
-                : 'liquid-glass hover:border-brand-primary/40 active:border-brand-primary/40'
-            }`}
-          >
-            {pageNum}
-          </button>
-        ))}
+        <div className="flex items-center gap-1.5">
+          {pages.map(pageNum => (
+            <button
+              key={pageNum}
+              onClick={() => onPageChange(pageNum)}
+              className={`
+                w-11 h-11 rounded-xl
+                text-[15px] font-semibold tabular-nums
+                transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                active:scale-90
+                ${page === pageNum
+                  ? 'bg-brand-gold text-white shadow-lg shadow-brand-gold/30'
+                  : 'bg-gray-100/80 dark:bg-white/[0.08] text-gray-600 dark:text-gray-300 hover:bg-gray-200/80 dark:hover:bg-white/[0.12]'
+                }
+              `}
+            >
+              {pageNum}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+          disabled={page === totalPages}
+          className="
+            w-11 h-11 rounded-xl
+            flex items-center justify-center
+            bg-gray-100/80 dark:bg-white/[0.08]
+            text-gray-600 dark:text-gray-300
+            disabled:opacity-30 disabled:cursor-not-allowed
+            transition-all duration-200 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+            active:scale-90
+            hover:bg-gray-200/80 dark:hover:bg-white/[0.12]
+          "
+          aria-label="Page suivante"
+        >
+          <ChevronRight size={20} strokeWidth={2.5} />
+        </button>
       </div>
 
-      <button
-        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-        disabled={page === totalPages}
-        className="liquid-glass p-3 min-w-[44px] min-h-[44px] rounded-xl disabled:opacity-30 hover:border-brand-primary/40 active:scale-95 transition-all duration-300"
-        aria-label="Page suivante"
-      >
-        <ChevronRight size={20} />
-      </button>
-
-      <span className="w-full sm:w-auto text-center sm:ml-5 mt-2 sm:mt-0 text-sm text-gray-500 dark:text-gray-400 font-medium">
+      {/* Page indicator - iOS style */}
+      <span className="text-[13px] text-gray-400 dark:text-gray-500 font-medium tabular-nums">
         Page {page} sur {totalPages}
       </span>
     </div>
@@ -719,101 +845,89 @@ const Listings: React.FC = () => {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-gradient-radial from-white/[0.01] to-transparent rounded-full blur-[100px] pointer-events-none dark:block hidden" />
 
       <div className="container mx-auto px-4 md:px-6 relative z-10">
-        {/* Primary Category Tabs - VENTE / LOCATION - Prominent Toggle */}
-        <div className="mb-8 sm:mb-10">
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-0">
+        {/* Primary Category Tabs - iOS Segment Control Style */}
+        <div className="mb-8 sm:mb-10 flex justify-center">
+          <div className="
+            inline-flex p-1
+            bg-gray-100/80 dark:bg-white/[0.08]
+            rounded-2xl
+            backdrop-blur-xl
+          ">
             {/* Vente Tab */}
             <button
               onClick={() => handleTabChange('SALE')}
-              className={`relative group w-full sm:w-auto px-8 sm:px-12 py-4 sm:py-5 rounded-2xl sm:rounded-l-2xl sm:rounded-r-none transition-all duration-400 touch-manipulation ${
-                activeTab === 'SALE'
-                  ? 'bg-gradient-to-br from-brand-primary via-brand-primary to-cyan-500 text-white shadow-2xl shadow-brand-primary/40 scale-[1.02] z-10'
-                  : 'bg-white/60 dark:bg-white/5 text-brand-charcoal/60 dark:text-white/50 hover:bg-white dark:hover:bg-white/10 hover:text-brand-charcoal dark:hover:text-white border border-gray-200/50 dark:border-white/10'
-              }`}
+              className={`
+                relative flex items-center gap-2.5
+                px-6 sm:px-8 py-3.5 sm:py-4
+                rounded-xl
+                font-semibold text-[15px] sm:text-base
+                transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                active:scale-[0.97]
+                ${activeTab === 'SALE'
+                  ? 'bg-white dark:bg-brand-primary text-gray-900 dark:text-white shadow-lg shadow-black/5 dark:shadow-brand-primary/30'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }
+              `}
             >
-              <div className="flex flex-col items-center gap-1.5 sm:gap-2">
-                <Home size={24} className={`sm:w-7 sm:h-7 ${activeTab === 'SALE' ? 'text-white' : 'text-brand-primary'}`} />
-                <span className="text-base sm:text-lg font-display font-bold tracking-wide">Vente</span>
-                <span className={`text-[10px] sm:text-xs font-medium ${activeTab === 'SALE' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                  Biens a vendre
-                </span>
-              </div>
+              <Home size={18} className={activeTab === 'SALE' ? 'text-brand-primary dark:text-white' : ''} strokeWidth={2.2} />
+              <span>Vente</span>
               {activeTab === 'SALE' && (
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-brand-primary rotate-45 hidden sm:block" />
+                <span className="
+                  ml-1 px-2 py-0.5
+                  text-[10px] font-bold
+                  bg-brand-primary/10 dark:bg-white/20
+                  text-brand-primary dark:text-white
+                  rounded-full
+                ">
+                  {total}
+                </span>
               )}
             </button>
 
             {/* Location Tab */}
             <button
               onClick={() => handleTabChange('RENT')}
-              className={`relative group w-full sm:w-auto px-8 sm:px-12 py-4 sm:py-5 rounded-2xl sm:rounded-r-2xl sm:rounded-l-none transition-all duration-400 touch-manipulation ${
-                activeTab === 'RENT'
-                  ? 'bg-gradient-to-br from-emerald-500 via-emerald-500 to-teal-400 text-white shadow-2xl shadow-emerald-500/40 scale-[1.02] z-10'
-                  : 'bg-white/60 dark:bg-white/5 text-brand-charcoal/60 dark:text-white/50 hover:bg-white dark:hover:bg-white/10 hover:text-brand-charcoal dark:hover:text-white border border-gray-200/50 dark:border-white/10'
-              }`}
+              className={`
+                relative flex items-center gap-2.5
+                px-6 sm:px-8 py-3.5 sm:py-4
+                rounded-xl
+                font-semibold text-[15px] sm:text-base
+                transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+                active:scale-[0.97]
+                ${activeTab === 'RENT'
+                  ? 'bg-white dark:bg-emerald-500 text-gray-900 dark:text-white shadow-lg shadow-black/5 dark:shadow-emerald-500/30'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                }
+              `}
             >
-              <div className="flex flex-col items-center gap-1.5 sm:gap-2">
-                <Building2 size={24} className={`sm:w-7 sm:h-7 ${activeTab === 'RENT' ? 'text-white' : 'text-emerald-500'}`} />
-                <span className="text-base sm:text-lg font-display font-bold tracking-wide">Location</span>
-                <span className={`text-[10px] sm:text-xs font-medium ${activeTab === 'RENT' ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>
-                  Biens a louer
-                </span>
-              </div>
+              <Building2 size={18} className={activeTab === 'RENT' ? 'text-emerald-500 dark:text-white' : ''} strokeWidth={2.2} />
+              <span>Location</span>
               {activeTab === 'RENT' && (
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-emerald-500 rotate-45 hidden sm:block" />
+                <span className="
+                  ml-1 px-2 py-0.5
+                  text-[10px] font-bold
+                  bg-emerald-500/10 dark:bg-white/20
+                  text-emerald-600 dark:text-white
+                  rounded-full
+                ">
+                  {total}
+                </span>
               )}
             </button>
           </div>
         </div>
 
-        {/* Header with Category Context */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-6">
-          <div>
-            {/* Category Badge */}
-            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 ${
-              activeTab === 'SALE'
-                ? 'bg-brand-primary/10 text-brand-primary'
-                : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-            }`}>
-              {activeTab === 'SALE' ? <Home size={16} /> : <Building2 size={16} />}
-              <span className="text-xs font-bold uppercase tracking-wider">
-                {activeTab === 'SALE' ? 'Vente' : 'Location'}
-              </span>
-              <span className="text-xs font-medium opacity-70">
-                - {total} annonces
-              </span>
-            </div>
-
-            <h2 className="text-2xl md:text-4xl lg:text-5xl font-display text-brand-charcoal dark:text-white mb-2">
-              {activeTab === 'SALE' ? (
-                <>Biens a <span className="text-gradient-2026 italic font-serif">Vendre</span></>
-              ) : (
-                <>Biens en <span className="text-emerald-500 italic font-serif">Location</span></>
-              )}
-            </h2>
-            <p className="text-brand-charcoal/60 dark:text-white/60 text-sm md:text-base font-light max-w-lg">
-              {activeTab === 'SALE'
-                ? 'Decouvrez notre selection de proprietes a vendre a Casablanca et ses environs'
-                : 'Trouvez votre location ideale parmi nos appartements, villas et locaux commerciaux'
-              }
-            </p>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="flex gap-4">
-            <div className={`px-5 py-3 rounded-xl ${
-              activeTab === 'SALE'
-                ? 'bg-brand-primary/5 border border-brand-primary/20'
-                : 'bg-emerald-500/5 border border-emerald-500/20'
-            }`}>
-              <span className={`text-2xl font-bold ${
-                activeTab === 'SALE' ? 'text-brand-primary' : 'text-emerald-500'
-              }`}>{total}</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400 block">
-                {activeTab === 'SALE' ? 'A vendre' : 'A louer'}
-              </span>
-            </div>
-          </div>
+        {/* Header with Category Context - iOS Large Title Style */}
+        <div className="mb-8">
+          <h2 className="text-[28px] sm:text-[34px] md:text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-2">
+            {activeTab === 'SALE' ? 'Biens à Vendre' : 'Biens en Location'}
+          </h2>
+          <p className="text-[15px] text-gray-500 dark:text-gray-400 max-w-lg leading-relaxed">
+            {activeTab === 'SALE'
+              ? 'Découvrez notre sélection de propriétés à vendre à Casablanca et ses environs'
+              : 'Trouvez votre location idéale parmi nos appartements, villas et locaux commerciaux'
+            }
+          </p>
         </div>
 
         {/* Intelligent Search Bar */}
@@ -903,10 +1017,11 @@ const Listings: React.FC = () => {
         {/* Type Filters */}
         <TypeFilter activeType={activeType} onTypeChange={handleTypeChange} />
 
-        {/* Loading State */}
+        {/* Loading State - iOS-style Skeleton */}
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 size={40} className="animate-spin text-brand-gold" />
+          <div className="space-y-8">
+            <FilterButtonsSkeleton count={6} />
+            <ListingsGridSkeleton count={8} />
           </div>
         ) : (
           <>
