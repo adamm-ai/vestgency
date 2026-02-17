@@ -469,15 +469,14 @@ const Chatbot: React.FC = () => {
     }));
 
     try {
-      // Use non-streaming request for reliability
-      const response = await fetch(`${RAG_API_URL}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: messageText,
-          conversation_id: state.conversationId,
-          stream: false
-        })
+      // Use query parameters (server expects query params, not JSON body)
+      const params = new URLSearchParams({
+        message: messageText,
+        conversation_id: state.conversationId,
+        stream: 'false'
+      });
+      const response = await fetch(`${RAG_API_URL}/api/chat?${params.toString()}`, {
+        method: 'POST'
       });
 
       if (!response.ok) throw new Error('Failed');
