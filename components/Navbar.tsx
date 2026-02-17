@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, ShieldCheck, Moon, Sun, ArrowRight, Sparkles } from 'lucide-react';
+import { Menu, X, Moon, Sun } from 'lucide-react';
 import { SectionId } from '../types';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 
-// Static data - extracted to avoid re-creation on render
 const NAV_LINKS = [
   { label: 'Biens', id: SectionId.LISTINGS },
   { label: 'Services', id: SectionId.SERVICES },
@@ -40,12 +39,11 @@ const Navbar: React.FC = () => {
     });
   }, []);
 
-  // Optimized scroll handler
   useEffect(() => {
     const handleScroll = () => {
       if (!ticking.current) {
         requestAnimationFrame(() => {
-          setIsScrolled(window.scrollY > 80);
+          setIsScrolled(window.scrollY > 20);
           ticking.current = false;
         });
         ticking.current = true;
@@ -82,179 +80,106 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      {/* Dynamic Island Navigation */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4 md:pt-5 pointer-events-none"
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+          isScrolled
+            ? 'bg-black/80 backdrop-blur-xl border-b border-white/[0.08]'
+            : 'bg-transparent'
+        }`}
         aria-label="Navigation principale"
       >
-        <div
-          className={`
-            pointer-events-auto
-            flex items-center justify-between
-            transition-all duration-[600ms] ease-[cubic-bezier(0.4,0,0.2,1)]
-            ${isScrolled
-              ? 'px-4 md:px-5 py-2.5 md:py-3 min-w-[280px] md:min-w-[420px] max-w-[95%] md:max-w-[460px] rounded-full bg-black/80 backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.1)]'
-              : 'px-5 md:px-8 py-3.5 md:py-4 w-[95%] md:w-auto md:min-w-[680px] lg:min-w-[800px] rounded-[28px] bg-white/[0.03] backdrop-blur-3xl border border-white/[0.08] shadow-[0_8px_40px_rgba(0,0,0,0.3),inset_0_1px_0_rgba(255,255,255,0.08)]'}
-          `}
-          style={{
-            background: isScrolled
-              ? 'linear-gradient(135deg, rgba(0,0,0,0.85) 0%, rgba(10,10,15,0.9) 100%)'
-              : 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 50%, rgba(41,171,226,0.03) 100%)'
-          }}
-        >
-          {/* Left Side - Logo */}
-          <a
-            href="#home"
-            onClick={(e) => { e.preventDefault(); scrollTo(SectionId.HOME); }}
-            className="cursor-pointer flex items-center gap-2 sm:gap-2.5 group shrink-0 min-h-[44px] py-1 active:opacity-80 transition-opacity"
-            aria-label="At Home Real Estate Agency - Retour à l'accueil"
-          >
-            {/* Logo Image */}
-            <img
-              src="/logo-athome.png"
-              alt="At Home Real Estate Agency"
-              className={`
-                transition-all duration-500 ease-out object-contain
-                ${isScrolled ? 'h-8' : 'h-10 md:h-12'}
-                group-hover:scale-105
-              `}
-            />
-          </a>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
 
-          {/* Center - Navigation Links (Desktop) */}
-          <div className={`
-            hidden lg:flex items-center justify-center gap-0.5 transition-all duration-500
-            ${isScrolled ? 'opacity-0 w-0 overflow-hidden' : 'opacity-100 flex-1 mx-4'}
-          `}>
-            {NAV_LINKS.map((link) => (
-              <button
-                key={link.id}
-                onClick={() => scrollTo(link.id)}
-                className="px-4 py-2 text-[13px] font-medium text-white/70 hover:text-white rounded-full hover:bg-white/[0.08] transition-all duration-200"
-              >
-                {link.label}
-              </button>
-            ))}
-          </div>
+            {/* Logo */}
+            <a
+              href="#home"
+              onClick={(e) => { e.preventDefault(); scrollTo(SectionId.HOME); }}
+              className="flex items-center shrink-0"
+              aria-label="At Home - Accueil"
+            >
+              <img
+                src="/logo-athome.png"
+                alt="At Home"
+                className="h-8 sm:h-10 object-contain"
+              />
+            </a>
 
-          {/* Right Side - Actions */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Live Indicator - Shows in compact mode */}
-            <div className={`
-              flex items-center gap-2 transition-all duration-500 overflow-hidden
-              ${isScrolled ? 'w-auto opacity-100' : 'w-0 opacity-0'}
-            `}>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/[0.06]">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
-                </span>
-                <span className="text-[11px] text-white/80 font-medium hidden md:inline">En ligne</span>
-              </div>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-1">
+              {NAV_LINKS.map((link) => (
+                <button
+                  key={link.id}
+                  onClick={() => scrollTo(link.id)}
+                  className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white transition-colors"
+                >
+                  {link.label}
+                </button>
+              ))}
             </div>
 
-            {/* CTA Button - Desktop */}
-            <button
-              onClick={() => scrollTo(SectionId.CONTACT)}
-              className={`
-                hidden md:flex items-center justify-center gap-2
-                bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold
-                transition-all duration-500 ease-out min-h-[44px]
-                hover:shadow-lg hover:shadow-brand-gold/30 hover:scale-[1.02]
-                active:scale-[0.98]
-                ${isScrolled
-                  ? 'px-4 py-2.5 text-xs rounded-full min-w-[44px]'
-                  : 'px-5 py-3 text-sm rounded-xl'}
-              `}
-            >
-              <Sparkles size={isScrolled ? 14 : 16} />
-              <span className={`transition-all duration-300 ${isScrolled ? 'hidden' : 'inline'}`}>Estimer</span>
-            </button>
+            {/* Right Actions */}
+            <div className="flex items-center gap-3">
+              {/* Theme Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="w-10 h-10 flex items-center justify-center text-white/60 hover:text-white transition-colors"
+                aria-label={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
+              >
+                {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
+              </button>
 
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleTheme}
-              className={`
-                flex items-center justify-center
-                bg-white/[0.06] hover:bg-white/[0.12]
-                text-white/80 hover:text-brand-gold
-                border border-white/[0.08] hover:border-brand-gold/30
-                transition-all duration-300 active:scale-95
-                ${isScrolled ? 'w-10 h-10 min-w-[44px] min-h-[44px] rounded-full' : 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl'}
-              `}
-              aria-label={theme === 'dark' ? 'Mode clair' : 'Mode sombre'}
-            >
-              {theme === 'dark' ? <Moon size={18} /> : <Sun size={18} />}
-            </button>
+              {/* CTA Button - Desktop */}
+              <button
+                onClick={() => scrollTo(SectionId.CONTACT)}
+                className="hidden md:block px-5 py-2.5 bg-white text-black text-sm font-semibold rounded-full hover:bg-white/90 transition-colors"
+              >
+                Estimer mon bien
+              </button>
 
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`
-                lg:hidden flex items-center justify-center
-                bg-white/[0.06] hover:bg-white/[0.12]
-                text-white/80 hover:text-white
-                border border-white/[0.08]
-                transition-all duration-300 active:scale-95
-                ${isScrolled ? 'w-10 h-10 min-w-[44px] min-h-[44px] rounded-full' : 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl'}
-              `}
-              aria-label={isMobileMenuOpen ? 'Fermer' : 'Menu'}
-              aria-expanded={isMobileMenuOpen}
-            >
-              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
+              {/* Mobile Menu Toggle */}
+              <button
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden w-10 h-10 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+                aria-label={isMobileMenuOpen ? 'Fermer' : 'Menu'}
+                aria-expanded={isMobileMenuOpen}
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile Menu - Full Screen Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/98 backdrop-blur-2xl flex flex-col pt-24 pb-8 overflow-y-auto"
-          role="dialog"
-          aria-modal="true"
-        >
-          {/* Ambient glow */}
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-brand-gold/10 rounded-full blur-[150px] pointer-events-none" />
-
+      {/* Mobile Menu */}
+      <div
+        className={`fixed inset-0 z-40 bg-black transition-opacity duration-300 ${
+          isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="flex flex-col h-full pt-24 pb-8 px-6">
           {/* Navigation Links */}
-          <nav className="flex-1 flex flex-col items-center justify-center gap-2 px-6 sm:px-8">
-            {NAV_LINKS.map((link, i) => (
+          <nav className="flex-1 flex flex-col justify-center gap-2">
+            {NAV_LINKS.map((link) => (
               <button
                 key={link.id}
                 onClick={() => scrollTo(link.id)}
-                className="group w-full max-w-sm py-4 sm:py-5 text-center min-h-[56px] active:bg-white/[0.05] rounded-2xl transition-colors"
-                style={{ animationDelay: `${i * 50}ms` }}
+                className="py-4 text-3xl font-display text-white/90 hover:text-brand-gold transition-colors text-left"
               >
-                <span className="text-2xl sm:text-3xl font-display text-white/90 group-hover:text-brand-gold group-active:text-brand-gold transition-colors duration-300">
-                  {link.label}
-                </span>
+                {link.label}
               </button>
             ))}
           </nav>
 
           {/* Bottom CTA */}
-          <div className="px-6 sm:px-8 mt-auto safe-area-bottom">
-            <button
-              onClick={() => scrollTo(SectionId.CONTACT)}
-              className="w-full py-4 min-h-[56px] bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold text-base sm:text-lg rounded-2xl shadow-lg shadow-brand-gold/25 active:scale-[0.98] transition-transform"
-            >
-              Estimer mon bien
-            </button>
-
-            {/* Info */}
-            <div className="flex items-center justify-center gap-3 mt-5 sm:mt-6 pb-2">
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative rounded-full h-2 w-2 bg-green-400"></span>
-                </span>
-                <span className="text-xs text-white/50">Agence N°1 Casablanca</span>
-              </div>
-            </div>
-          </div>
+          <button
+            onClick={() => scrollTo(SectionId.CONTACT)}
+            className="w-full py-4 bg-white text-black text-lg font-semibold rounded-full"
+          >
+            Estimer mon bien
+          </button>
         </div>
-      )}
+      </div>
     </>
   );
 };
