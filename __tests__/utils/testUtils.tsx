@@ -294,7 +294,7 @@ export interface MockCRMStats {
 /**
  * Setup fetch mock for successful API response
  */
-export const mockFetchSuccess = <T>(data: T, status = 200) => {
+export const mockFetchSuccess = <T,>(data: T, status = 200): void => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
     ok: true,
     status,
@@ -307,7 +307,7 @@ export const mockFetchSuccess = <T>(data: T, status = 200) => {
 /**
  * Setup fetch mock for API error response
  */
-export const mockFetchError = (error: string, status = 400) => {
+export const mockFetchError = (error: string, status = 400): void => {
   (global.fetch as jest.Mock).mockResolvedValueOnce({
     ok: false,
     status,
@@ -320,7 +320,7 @@ export const mockFetchError = (error: string, status = 400) => {
 /**
  * Setup fetch mock for network error
  */
-export const mockFetchNetworkError = () => {
+export const mockFetchNetworkError = (): void => {
   (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network error'));
 };
 
@@ -332,13 +332,13 @@ export const mockFetchNetworkError = () => {
  * Wait for a specified amount of time
  */
 export const wait = (ms: number): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 /**
  * Wait for all pending promises to resolve
  */
 export const flushPromises = (): Promise<void> =>
-  new Promise((resolve) => setImmediate(resolve));
+  new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 // ============================================================================
 // LOCALSTORAGE MOCK HELPERS
@@ -347,7 +347,7 @@ export const flushPromises = (): Promise<void> =>
 /**
  * Setup localStorage with auth data
  */
-export const setupAuthStorage = (user: MockUser, token = 'test-token') => {
+export const setupAuthStorage = (user: MockUser, token = 'test-token'): void => {
   localStorage.setItem('vestate_token', token);
   localStorage.setItem('vestate_user', JSON.stringify(user));
 };
@@ -355,7 +355,7 @@ export const setupAuthStorage = (user: MockUser, token = 'test-token') => {
 /**
  * Clear auth data from localStorage
  */
-export const clearAuthStorage = () => {
+export const clearAuthStorage = (): void => {
   localStorage.removeItem('vestate_token');
   localStorage.removeItem('vestate_user');
 };

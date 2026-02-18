@@ -6,6 +6,9 @@ import { PrismaClient } from '@prisma/client';
 // Load environment variables
 dotenv.config();
 
+// Import security validation
+import { validateSecurityConfig } from './middleware/auth';
+
 // Import routes
 import authRoutes from './routes/auth';
 import usersRoutes from './routes/users';
@@ -63,7 +66,16 @@ app.use((req, res) => {
 
 // Start server
 const startServer = async () => {
-  // Start listening first (so health check passes)
+  // Validate security configuration BEFORE starting
+  try {
+    validateSecurityConfig();
+  } catch (error) {
+    console.error('[SECURITY] ❌ Configuration invalide - Arrêt du serveur');
+    console.error('[SECURITY]', error instanceof Error ? error.message : error);
+    process.exit(1);
+  }
+
+  // Start listening (so health check passes)
   app.listen(PORT, async () => {
     console.log(`[Server] Vestate API running on port ${PORT}`);
     console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);

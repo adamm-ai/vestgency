@@ -10,8 +10,10 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const client_1 = require("@prisma/client");
 // Load environment variables
 dotenv_1.default.config();
+// Import security validation
+const auth_1 = require("./middleware/auth");
 // Import routes
-const auth_1 = __importDefault(require("./routes/auth"));
+const auth_2 = __importDefault(require("./routes/auth"));
 const users_1 = __importDefault(require("./routes/users"));
 const leads_1 = __importDefault(require("./routes/leads"));
 const properties_1 = __importDefault(require("./routes/properties"));
@@ -38,7 +40,7 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 // API Routes
-app.use('/api/auth', auth_1.default);
+app.use('/api/auth', auth_2.default);
 app.use('/api/users', users_1.default);
 app.use('/api/leads', leads_1.default);
 app.use('/api/properties', properties_1.default);
@@ -58,7 +60,16 @@ app.use((req, res) => {
 });
 // Start server
 const startServer = async () => {
-    // Start listening first (so health check passes)
+    // Validate security configuration BEFORE starting
+    try {
+        (0, auth_1.validateSecurityConfig)();
+    }
+    catch (error) {
+        console.error('[SECURITY] ❌ Configuration invalide - Arrêt du serveur');
+        console.error('[SECURITY]', error instanceof Error ? error.message : error);
+        process.exit(1);
+    }
+    // Start listening (so health check passes)
     app.listen(PORT, async () => {
         console.log(`[Server] Vestate API running on port ${PORT}`);
         console.log(`[Server] Environment: ${process.env.NODE_ENV || 'development'}`);

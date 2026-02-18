@@ -54,9 +54,15 @@ interface PropertiesData {
 async function seedUsers() {
   console.log('\n📋 Seeding users...');
 
-  // Create admin user
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@athome.com';
-  const adminPassword = process.env.ADMIN_PASSWORD || 'AtHome2026!';
+  // Create admin user - REQUIRE environment variables
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    console.error('   ❌ ADMIN_EMAIL et ADMIN_PASSWORD doivent être configurés');
+    console.error('   → Configurez ces variables dans Render Dashboard ou .env');
+    throw new Error('Variables d\'environnement ADMIN_EMAIL/ADMIN_PASSWORD manquantes');
+  }
 
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail },
@@ -78,26 +84,32 @@ async function seedUsers() {
     console.log(`   → Admin exists: ${existingAdmin.email}`);
   }
 
-  // Create demo agent
-  const agentEmail = 'agent@athome.com';
-  const existingAgent = await prisma.user.findUnique({
-    where: { email: agentEmail },
-  });
+  // Create demo agent (optional - only if AGENT_EMAIL is provided)
+  const agentEmail = process.env.AGENT_EMAIL;
+  const agentPassword = process.env.AGENT_PASSWORD;
 
-  if (!existingAgent) {
-    const hashedPassword = await bcrypt.hash('Agent2026!', 12);
-    const agent = await prisma.user.create({
-      data: {
-        email: agentEmail,
-        password: hashedPassword,
-        fullName: 'Agent At Home',
-        role: 'AGENT',
-        isActive: true,
-      },
+  if (agentEmail && agentPassword) {
+    const existingAgent = await prisma.user.findUnique({
+      where: { email: agentEmail },
     });
-    console.log(`   ✓ Agent created: ${agent.email}`);
+
+    if (!existingAgent) {
+      const hashedPassword = await bcrypt.hash(agentPassword, 12);
+      const agent = await prisma.user.create({
+        data: {
+          email: agentEmail,
+          password: hashedPassword,
+          fullName: 'Agent At Home',
+          role: 'AGENT',
+          isActive: true,
+        },
+      });
+      console.log(`   ✓ Agent created: ${agent.email}`);
+    } else {
+      console.log(`   → Agent exists: ${existingAgent.email}`);
+    }
   } else {
-    console.log(`   → Agent exists: ${existingAgent.email}`);
+    console.log('   → Agent demo non créé (AGENT_EMAIL/AGENT_PASSWORD non configurés)');
   }
 }
 
