@@ -88,18 +88,18 @@ const PropertyCard: React.FC<PropertyCardProps> = memo(({ property, index, onSel
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.1, type: "spring", stiffness: 300, damping: 25 }}
-      whileHover={{ scale: 1.01, x: 4 }}
-      whileTap={{ scale: 0.99 }}
+      whileTap={{ scale: 0.97 }}
       onClick={() => onSelect(property.id)}
-      className="group cursor-pointer flex bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.06] hover:border-brand-gold/40 rounded-xl overflow-hidden transition-all duration-300 shadow-lg shadow-black/20 hover:shadow-brand-gold/10"
+      className="group cursor-pointer flex bg-white/[0.03] hover:bg-white/[0.06] active:bg-white/[0.08] border border-white/[0.08] hover:border-brand-gold/30 rounded-2xl overflow-hidden transition-all duration-200 shadow-lg shadow-black/25 touch-manipulation"
+      style={{ WebkitTapHighlightColor: 'transparent' }}
     >
       {/* Image - Left Side */}
-      <div className="relative w-24 h-20 flex-shrink-0 overflow-hidden">
+      <div className="relative w-[88px] md:w-24 h-[72px] md:h-20 flex-shrink-0 overflow-hidden">
         {property.image ? (
           <img
             src={property.image}
             alt={property.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
           />
         ) : (
@@ -108,55 +108,55 @@ const PropertyCard: React.FC<PropertyCardProps> = memo(({ property, index, onSel
           </div>
         )}
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent to-black/40" />
       </div>
 
       {/* Content - Right Side */}
-      <div className="flex-1 p-2.5 flex flex-col justify-between min-w-0">
+      <div className="flex-1 p-2.5 md:p-2.5 flex flex-col justify-between min-w-0">
         {/* Top Row: Type Badge + Price */}
         <div className="flex items-center justify-between gap-2">
-          <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide flex-shrink-0 ${
+          <span className={`px-1.5 py-0.5 rounded-md ios-caption-2 font-bold uppercase tracking-wide flex-shrink-0 ${
             property.category === 'RENT'
               ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
               : 'bg-brand-gold/20 text-brand-gold border border-brand-gold/30'
           }`}>
             {property.type || (property.category === 'RENT' ? 'Location' : 'Vente')}
           </span>
-          <span className="text-brand-gold font-bold text-xs truncate">
+          <span className="text-brand-gold font-bold ios-footnote truncate">
             {formatPrice(property.price, property.category)}
           </span>
         </div>
 
         {/* Middle: Location */}
-        <div className="flex items-center gap-1 text-white/50 text-[10px] my-1">
-          <MapPin size={9} className="flex-shrink-0" />
+        <div className="flex items-center gap-1 text-white/50 ios-caption my-1">
+          <MapPin size={10} className="flex-shrink-0" />
           <span className="truncate">{property.location || property.city || 'Casablanca'}</span>
         </div>
 
         {/* Bottom Row: Specs + Arrow */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white/40 text-[9px]">
+          <div className="flex items-center gap-2.5 text-white/45 ios-caption-2">
             {property.beds && (
-              <div className="flex items-center gap-0.5">
-                <Bed size={9} />
+              <div className="flex items-center gap-1">
+                <Bed size={11} />
                 <span>{property.beds}</span>
               </div>
             )}
             {property.baths && (
-              <div className="flex items-center gap-0.5">
-                <Bath size={9} />
+              <div className="flex items-center gap-1">
+                <Bath size={11} />
                 <span>{property.baths}</span>
               </div>
             )}
             {property.area && (
-              <div className="flex items-center gap-0.5">
-                <Ruler size={9} />
+              <div className="flex items-center gap-1">
+                <Ruler size={11} />
                 <span className="truncate max-w-[50px]">{property.area}</span>
               </div>
             )}
           </div>
-          <div className="w-5 h-5 rounded-full bg-brand-gold/10 flex items-center justify-center group-hover:bg-brand-gold/20 transition-colors">
-            <ChevronRight size={12} className="text-brand-gold group-hover:translate-x-0.5 transition-transform" />
+          <div className="w-6 h-6 rounded-full bg-brand-gold/10 flex items-center justify-center group-hover:bg-brand-gold/20 group-active:bg-brand-gold/25 transition-colors">
+            <ChevronRight size={14} className="text-brand-gold group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
       </div>
@@ -742,7 +742,7 @@ const Chatbot: React.FC = () => {
   return (
     <>
       {/* ================================================================== */}
-      {/* FLOATING TRIGGER - Minimal Glass Frame */}
+      {/* FLOATING TRIGGER - iOS-style Glass Pill */}
       {/* ================================================================== */}
       <AnimatePresence>
         {!isOpen && (
@@ -751,36 +751,37 @@ const Chatbot: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.9 }}
             transition={{ type: "spring", damping: 20, stiffness: 300 }}
-            className="fixed bottom-6 right-6 z-[100]"
+            className="fixed bottom-[calc(80px+env(safe-area-inset-bottom,0px))] md:bottom-6 right-4 md:right-6 z-[100]"
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="group relative"
+              className="group relative active:scale-95 transition-transform duration-150 touch-manipulation"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              {/* Glass Frame Container */}
-              <div className="relative flex items-center gap-3 px-5 py-3 rounded-2xl bg-white/[0.03] backdrop-blur-2xl border border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:bg-white/[0.06] hover:border-brand-gold/20 transition-all duration-500">
+              {/* Glass Frame Container - iOS-style */}
+              <div className="relative flex items-center gap-3 px-4 md:px-5 py-3 rounded-2xl bg-black/80 md:bg-white/[0.03] backdrop-blur-2xl border border-white/[0.1] md:border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:bg-white/[0.06] hover:border-brand-gold/20 transition-all duration-500">
 
                 {/* Glow Effect */}
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-brand-gold/0 via-brand-gold/5 to-brand-gold/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
                 {/* Icon */}
-                <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 flex items-center justify-center border border-brand-gold/20">
-                  <Brain size={20} className="text-brand-gold" />
+                <div className="relative w-11 h-11 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-brand-gold/20 to-brand-gold/5 flex items-center justify-center border border-brand-gold/20">
+                  <Brain size={22} className="md:w-5 md:h-5 text-brand-gold" />
                   {/* Status dot */}
-                  <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#0a0a0c] ${
+                  <div className={`absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-black md:border-[#0a0a0c] ${
                     state.isConnected ? 'bg-emerald-400' : 'bg-white/30'
                   }`} />
                 </div>
 
                 {/* Text */}
                 <div className="relative">
-                  <p className="text-sm font-medium text-white/90">NOUR</p>
-                  <p className="text-[10px] text-white/40 uppercase tracking-wider">Assistant IA</p>
+                  <p className="ios-subheadline font-semibold text-white/90">NOUR</p>
+                  <p className="ios-caption-2 text-white/40 uppercase tracking-wider">Assistant IA</p>
                 </div>
 
                 {/* Arrow indicator */}
-                <div className="relative ml-2">
-                  <MessageCircle size={16} className="text-white/30 group-hover:text-brand-gold transition-colors duration-300" />
+                <div className="relative ml-1 md:ml-2">
+                  <MessageCircle size={18} className="md:w-4 md:h-4 text-white/30 group-hover:text-brand-gold transition-colors duration-300" />
                 </div>
               </div>
             </button>
@@ -789,58 +790,63 @@ const Chatbot: React.FC = () => {
       </AnimatePresence>
 
       {/* ================================================================== */}
-      {/* CHAT WINDOW - Premium Glassmorphism */}
+      {/* CHAT WINDOW - iOS Messages-style Glassmorphism */}
       {/* ================================================================== */}
       <AnimatePresence>
         {isOpen && (
           <>
-            {/* Backdrop for mobile */}
+            {/* Backdrop for mobile - iOS-style blur */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] md:hidden"
+              transition={{ duration: 0.25, ease: [0.32, 0.72, 0, 1] }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-xl z-[100] md:hidden"
               onClick={() => setIsOpen(false)}
             />
 
-            {/* Chat Container */}
+            {/* Chat Container - iOS Sheet-style on mobile */}
             <motion.div
-              initial={{ opacity: 0, x: 100, scale: 0.95 }}
-              animate={{ opacity: 1, x: 0, scale: 1 }}
-              exit={{ opacity: 0, x: 100, scale: 0.95 }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              initial={{ opacity: 0, y: '100%', scale: 1 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: '100%', scale: 1 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300, mass: 0.8 }}
               className={`fixed z-[101] flex flex-col
-                w-full h-[100dvh] inset-0
-                md:inset-auto md:bottom-6 md:right-6 md:rounded-3xl
+                w-full h-[calc(100dvh-env(safe-area-inset-top,0px)-44px)] bottom-0 left-0 right-0
+                rounded-t-[28px]
+                md:inset-auto md:bottom-6 md:right-6 md:rounded-3xl md:h-auto
                 ${windowSize}
                 transition-all duration-500 ease-out
               `}
               style={{
-                background: 'linear-gradient(165deg, rgba(15, 15, 18, 0.95) 0%, rgba(8, 8, 10, 0.98) 100%)',
+                background: 'linear-gradient(165deg, rgba(18, 18, 22, 0.98) 0%, rgba(10, 10, 12, 0.99) 100%)',
               }}
             >
-              {/* Glass overlay */}
-              <div className="absolute inset-0 md:rounded-3xl overflow-hidden pointer-events-none">
-                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.08] via-transparent to-transparent" />
+              {/* iOS-style pull indicator for mobile */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 w-9 h-[5px] rounded-full bg-white/20 md:hidden z-20" />
+
+              {/* Glass overlay - enhanced for iOS feel */}
+              <div className="absolute inset-0 rounded-t-[28px] md:rounded-3xl overflow-hidden pointer-events-none">
+                <div className="absolute inset-0 bg-gradient-to-br from-white/[0.06] via-transparent to-transparent" />
                 <div className="absolute inset-0 backdrop-blur-3xl" />
-                <div className="absolute inset-[1px] md:rounded-[23px] border border-white/[0.08]" />
+                <div className="absolute inset-[1px] rounded-t-[27px] md:rounded-[23px] border border-white/[0.08]" />
               </div>
 
               {/* Ambient glow */}
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-gold/20 rounded-full blur-[80px] pointer-events-none" />
-              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-cyan-500/10 rounded-full blur-[60px] pointer-events-none" />
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand-gold/15 rounded-full blur-[100px] pointer-events-none" />
+              <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-cyan-500/8 rounded-full blur-[80px] pointer-events-none" />
 
               {/* ============================================ */}
-              {/* HEADER */}
+              {/* HEADER - iOS-style navigation bar */}
               {/* ============================================ */}
-              <div className="relative z-10 flex items-center justify-between p-5 border-b border-white/[0.06]">
-                <div className="flex items-center gap-4">
+              <div className="relative z-10 flex items-center justify-between px-4 md:px-5 pt-6 md:pt-5 pb-4 border-b border-white/[0.06]">
+                <div className="flex items-center gap-3 md:gap-4">
                   {/* Avatar */}
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-gold/30 to-brand-gold/10 flex items-center justify-center border border-brand-gold/20 shadow-lg shadow-brand-gold/10">
-                      <Brain size={24} className="text-brand-gold" />
+                    <div className="w-11 h-11 md:w-12 md:h-12 rounded-2xl bg-gradient-to-br from-brand-gold/30 to-brand-gold/10 flex items-center justify-center border border-brand-gold/20 shadow-lg shadow-brand-gold/10">
+                      <Brain size={22} className="md:w-6 md:h-6 text-brand-gold" />
                     </div>
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[#0f0f12] ${
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-3.5 md:h-3.5 rounded-full border-2 border-[#121216] ${
                       state.isConnected ? 'bg-emerald-400' : 'bg-white/40'
                     }`} />
                   </div>
@@ -848,25 +854,25 @@ const Chatbot: React.FC = () => {
                   {/* Info */}
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base font-semibold text-white tracking-tight">NOUR</h3>
-                      <span className="px-2 py-0.5 rounded-md bg-brand-gold/10 border border-brand-gold/20 text-brand-gold text-[9px] font-semibold uppercase tracking-wider">
+                      <h3 className="ios-headline text-white tracking-tight">NOUR</h3>
+                      <span className="px-1.5 py-0.5 rounded-md bg-brand-gold/10 border border-brand-gold/20 text-brand-gold ios-caption-2 font-semibold uppercase tracking-wider">
                         GPT-4
                       </span>
                     </div>
-                    <p className="text-[11px] text-white/40 mt-0.5">
-                      {state.isConnected ? 'En ligne • Prêt à vous aider' : 'Connexion en cours...'}
+                    <p className="ios-caption-2 text-white/40 mt-0.5">
+                      {state.isConnected ? 'En ligne' : 'Connexion...'}
                     </p>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-1">
+                {/* Actions - iOS-style touch targets */}
+                <div className="flex items-center gap-0.5">
                   <button
                     onClick={handleClear}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.06] transition-all duration-200"
+                    className="w-10 h-10 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white active:bg-white/[0.08] hover:bg-white/[0.06] transition-all duration-200 touch-manipulation"
                     title="Réinitialiser"
                   >
-                    <RotateCcw size={16} />
+                    <RotateCcw size={18} className="md:w-4 md:h-4" />
                   </button>
                   <button
                     onClick={() => setIsExpanded(!isExpanded)}
@@ -877,28 +883,28 @@ const Chatbot: React.FC = () => {
                   </button>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
+                    className="w-10 h-10 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-red-400 active:bg-red-500/15 hover:bg-red-500/10 transition-all duration-200 touch-manipulation"
                   >
-                    <X size={18} />
+                    <X size={20} className="md:w-[18px] md:h-[18px]" />
                   </button>
                 </div>
               </div>
 
               {/* ============================================ */}
-              {/* QUICK ACTIONS */}
+              {/* QUICK ACTIONS - iOS-style pill buttons */}
               {/* ============================================ */}
               {state.messages.length <= 1 && (
-                <div className="relative z-10 px-5 py-4 border-b border-white/[0.04]">
-                  <p className="text-[10px] text-white/30 uppercase tracking-widest mb-3">Suggestions</p>
+                <div className="relative z-10 px-4 md:px-5 py-4 border-b border-white/[0.04]">
+                  <p className="ios-caption-2 text-white/30 uppercase tracking-widest mb-3">Suggestions</p>
                   <div className="flex gap-2 flex-wrap">
                     {QUICK_ACTIONS.map((action, i) => (
                       <button
                         key={i}
                         onClick={() => sendMessage(action.query)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/[0.03] border border-white/[0.06] hover:bg-brand-gold/10 hover:border-brand-gold/20 transition-all duration-300 group"
+                        className="flex items-center gap-2 px-4 py-3 md:py-2.5 min-h-[44px] rounded-full bg-white/[0.04] border border-white/[0.08] hover:bg-brand-gold/10 hover:border-brand-gold/20 active:scale-[0.97] transition-all duration-200 group touch-manipulation"
                       >
-                        <action.icon size={14} className="text-white/40 group-hover:text-brand-gold transition-colors" />
-                        <span className="text-xs text-white/60 group-hover:text-white/90 transition-colors">{action.text}</span>
+                        <action.icon size={16} className="md:w-3.5 md:h-3.5 text-white/40 group-hover:text-brand-gold transition-colors" />
+                        <span className="ios-subheadline md:text-xs text-white/60 group-hover:text-white/90 transition-colors">{action.text}</span>
                       </button>
                     ))}
                   </div>
@@ -906,94 +912,119 @@ const Chatbot: React.FC = () => {
               )}
 
               {/* ============================================ */}
-              {/* MESSAGES */}
+              {/* MESSAGES - iOS iMessage-style bubbles */}
               {/* ============================================ */}
-              <div className="relative z-10 flex-1 overflow-y-auto p-5 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {state.messages.map((msg) => (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    key={msg.id}
-                    className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
-                  >
-                    <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} w-full`}>
-                      {/* Bot indicator */}
-                      {msg.role === 'model' && (
-                        <div className="w-6 h-6 rounded-lg bg-brand-gold/10 flex items-center justify-center mr-3 flex-shrink-0 mt-1">
-                          <Sparkles size={12} className="text-brand-gold" />
+              <div className="relative z-10 flex-1 overflow-y-auto px-4 md:px-5 py-4 space-y-3 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent momentum-scroll">
+                {state.messages.map((msg, index) => {
+                  const isUser = msg.role === 'user';
+                  const isFirstInGroup = index === 0 || state.messages[index - 1].role !== msg.role;
+                  const isLastInGroup = index === state.messages.length - 1 || state.messages[index + 1]?.role !== msg.role;
+
+                  return (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ type: "spring", damping: 25, stiffness: 400 }}
+                      key={msg.id}
+                      className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                    >
+                      <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} w-full`}>
+                        {/* Bot avatar - only show for first message in group */}
+                        {!isUser && isFirstInGroup && (
+                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-gold/20 to-brand-gold/10 flex items-center justify-center mr-2 flex-shrink-0 mt-auto mb-0.5 border border-brand-gold/20">
+                            <Sparkles size={13} className="text-brand-gold" />
+                          </div>
+                        )}
+                        {/* Spacer for non-first messages */}
+                        {!isUser && !isFirstInGroup && (
+                          <div className="w-7 mr-2 flex-shrink-0" />
+                        )}
+
+                        {/* Message bubble - iOS Messages style */}
+                        <div
+                          className={`max-w-[80%] md:max-w-[85%] px-4 py-2.5 ios-body leading-relaxed ${
+                            isUser
+                              ? `bg-brand-gold text-black font-medium shadow-lg shadow-brand-gold/20
+                                 ${isFirstInGroup && isLastInGroup ? 'rounded-[20px]' : ''}
+                                 ${isFirstInGroup && !isLastInGroup ? 'rounded-[20px] rounded-br-lg' : ''}
+                                 ${!isFirstInGroup && isLastInGroup ? 'rounded-[20px] rounded-tr-lg' : ''}
+                                 ${!isFirstInGroup && !isLastInGroup ? 'rounded-[20px] rounded-r-lg' : ''}`
+                              : `bg-white/[0.06] text-white/90 border border-white/[0.08]
+                                 ${isFirstInGroup && isLastInGroup ? 'rounded-[20px]' : ''}
+                                 ${isFirstInGroup && !isLastInGroup ? 'rounded-[20px] rounded-bl-lg' : ''}
+                                 ${!isFirstInGroup && isLastInGroup ? 'rounded-[20px] rounded-tl-lg' : ''}
+                                 ${!isFirstInGroup && !isLastInGroup ? 'rounded-[20px] rounded-l-lg' : ''}`
+                          }`}
+                        >
+                          <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text) }} />
+                          {msg.isStreaming && (
+                            <span className="inline-flex items-center gap-1 ml-2">
+                              <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" />
+                              <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                              <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Property Cards for bot messages */}
+                      {!isUser && msg.properties && msg.properties.length > 0 && (
+                        <div className="w-full pl-9 mt-2">
+                          <PropertyCards
+                            properties={msg.properties}
+                            onSelectProperty={handlePropertySelect}
+                          />
                         </div>
                       )}
-
-                      <div
-                        className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed ${
-                          msg.role === 'user'
-                            ? 'bg-brand-gold text-black font-medium rounded-2xl rounded-br-md'
-                            : 'bg-white/[0.04] text-white/80 border border-white/[0.06] rounded-2xl rounded-bl-md'
-                        }`}
-                      >
-                        <div dangerouslySetInnerHTML={{ __html: formatMessage(msg.text) }} />
-                        {msg.isStreaming && (
-                          <span className="inline-flex items-center gap-1 ml-2">
-                            <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" />
-                            <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
-                            <span className="w-1.5 h-1.5 bg-brand-gold rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Property Cards for bot messages */}
-                    {msg.role === 'model' && msg.properties && msg.properties.length > 0 && (
-                      <div className="w-full pl-9">
-                        <PropertyCards
-                          properties={msg.properties}
-                          onSelectProperty={handlePropertySelect}
-                        />
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-                <div ref={messagesEndRef} />
+                    </motion.div>
+                  );
+                })}
+                <div ref={messagesEndRef} className="h-1" />
               </div>
 
               {/* ============================================ */}
-              {/* INPUT */}
+              {/* INPUT - iOS Messages-style input bar */}
               {/* ============================================ */}
-              <div className="relative z-10 p-5 border-t border-white/[0.06]">
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 flex items-center bg-white/[0.04] rounded-2xl border border-white/[0.06] focus-within:border-brand-gold/30 focus-within:bg-white/[0.06] transition-all duration-300">
+              <div className="relative z-10 px-4 md:px-5 pt-3 pb-[calc(env(safe-area-inset-bottom,8px)+8px)] md:pb-5 border-t border-white/[0.06] bg-black/20 backdrop-blur-xl">
+                <div className="flex items-end gap-2 md:gap-3">
+                  <div className="flex-1 flex items-center bg-white/[0.06] rounded-[22px] border border-white/[0.08] focus-within:border-brand-gold/30 focus-within:bg-white/[0.08] transition-all duration-300">
                     <input
                       ref={inputRef}
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-                      placeholder="Votre message..."
-                      className="flex-1 bg-transparent px-5 py-4 text-sm text-white placeholder-white/30 outline-none"
+                      placeholder="Message..."
+                      autoCapitalize="sentences"
+                      autoCorrect="on"
+                      className="flex-1 bg-transparent px-4 md:px-5 py-3.5 md:py-4 ios-body text-white placeholder-white/35 outline-none touch-manipulation"
                       disabled={state.isLoading}
+                      enterKeyHint="send"
                     />
                   </div>
 
+                  {/* Send button - iOS-style circular */}
                   <button
                     onClick={handleSend}
                     disabled={state.isLoading || !input.trim()}
-                    className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 ${
+                    className={`w-11 h-11 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all duration-200 flex-shrink-0 touch-manipulation ${
                       input.trim() && !state.isLoading
-                        ? 'bg-brand-gold text-black hover:scale-105 shadow-lg shadow-brand-gold/20'
-                        : 'bg-white/[0.04] text-white/20 cursor-not-allowed'
+                        ? 'bg-brand-gold text-black active:scale-90 shadow-lg shadow-brand-gold/25'
+                        : 'bg-white/[0.06] text-white/25 cursor-not-allowed'
                     }`}
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     {state.isLoading ? (
                       <Loader2 size={20} className="animate-spin" />
                     ) : (
-                      <Send size={18} />
+                      <Send size={18} className="translate-x-[1px]" />
                     )}
                   </button>
                 </div>
 
-                {/* Footer badge */}
-                <p className="text-center text-[9px] text-white/20 mt-4 uppercase tracking-widest">
-                  Propulsé par OpenAI GPT-4 + FAISS RAG
+                {/* Footer badge - hidden on mobile for cleaner look */}
+                <p className="hidden md:block text-center ios-caption-2 text-white/15 mt-4 uppercase tracking-widest">
+                  OpenAI GPT-4 + FAISS RAG
                 </p>
               </div>
             </motion.div>

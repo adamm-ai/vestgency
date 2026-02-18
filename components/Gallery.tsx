@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useRef } from 'react';
 
 const images = [
   "https://images.unsplash.com/photo-1539020140153-e479b8c22e70?q=80&w=800&auto=format&fit=crop",
@@ -10,7 +10,13 @@ const images = [
 ];
 
 const GalleryImage = memo(({ src, index }: { src: string; index: number }) => (
-  <div className="relative w-[350px] h-[450px] flex-shrink-0 rounded-lg overflow-hidden group shadow-lg">
+  <div
+    className="relative w-[280px] h-[360px] md:w-[350px] md:h-[450px] flex-shrink-0 rounded-ios-xl overflow-hidden group cursor-pointer
+               transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]
+               active:scale-[0.98] snap-center
+               shadow-[0_2px_8px_rgba(0,0,0,0.04),0_8px_24px_rgba(0,0,0,0.08)]
+               dark:shadow-[0_2px_8px_rgba(0,0,0,0.2),0_8px_24px_rgba(0,0,0,0.4)]"
+  >
     <img
       src={src}
       alt={`Gallery ${index}`}
@@ -19,30 +25,49 @@ const GalleryImage = memo(({ src, index }: { src: string; index: number }) => (
       decoding="async"
     />
     <div className="absolute inset-0 bg-brand-charcoal/10 group-hover:bg-transparent transition-colors duration-500" />
-    <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-      <p className="text-white text-xs uppercase tracking-widest font-bold">Explore</p>
+    <div className="absolute bottom-0 left-0 w-full p-4 md:p-6 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 md:transition-opacity md:duration-300">
+      <p className="text-white ios-caption uppercase tracking-widest font-bold">Explore</p>
     </div>
+    {/* Touch feedback overlay */}
+    <div className="absolute inset-0 bg-black/0 active:bg-black/10 transition-colors duration-150 pointer-events-none md:hidden" />
   </div>
 ));
 
 GalleryImage.displayName = 'GalleryImage';
 
 const Gallery: React.FC = () => {
-  // Double the images for seamless loop
+  const scrollRef = useRef<HTMLDivElement>(null);
+  // Double the images for seamless loop on desktop
   const allImages = [...images, ...images, ...images, ...images];
 
   return (
-    <div className="py-24 bg-brand-cream border-t border-brand-charcoal/5 overflow-hidden">
-      <div className="container mx-auto px-6 mb-12 flex justify-between items-end">
+    <div className="py-16 md:py-24 bg-brand-cream border-t border-brand-charcoal/5 overflow-hidden">
+      <div className="container mx-auto px-4 md:px-6 mb-8 md:mb-12 flex justify-between items-end">
         <div>
-          <span className="text-brand-terracotta text-xs font-bold uppercase tracking-[0.3em] mb-2 block">Lifestyle</span>
-          <h3 className="text-3xl font-display text-brand-charcoal">Visual Journey</h3>
+          <span className="text-brand-terracotta ios-caption font-bold uppercase tracking-[0.3em] mb-2 block">Lifestyle</span>
+          <h3 className="ios-large-title md:text-3xl font-display text-brand-charcoal">Visual Journey</h3>
         </div>
-        <p className="hidden md:block text-xs uppercase tracking-widest text-gray-500">@OurikaValley</p>
+        <p className="hidden md:block ios-caption uppercase tracking-widest text-gray-500">@OurikaValley</p>
       </div>
 
-      {/* CSS-only Infinite Scroll Strip - much better performance than JS animation */}
-      <div className="relative w-full overflow-hidden py-4">
+      {/* Mobile: Swipeable horizontal scroll with snap */}
+      <div
+        ref={scrollRef}
+        className="md:hidden flex gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-hide
+                   -webkit-overflow-scrolling-touch scroll-smooth
+                   px-4 pb-4"
+        style={{
+          scrollPaddingLeft: '16px',
+          scrollPaddingRight: '16px',
+        }}
+      >
+        {images.map((src, index) => (
+          <GalleryImage key={index} src={src} index={index} />
+        ))}
+      </div>
+
+      {/* Desktop: CSS-only Infinite Scroll Strip */}
+      <div className="hidden md:block relative w-full overflow-hidden py-4">
         <div
           className="flex gap-6 animate-scroll-gallery"
           style={{
@@ -53,6 +78,16 @@ const Gallery: React.FC = () => {
             <GalleryImage key={index} src={src} index={index} />
           ))}
         </div>
+      </div>
+
+      {/* Mobile scroll indicator dots */}
+      <div className="md:hidden flex justify-center gap-2 mt-4 px-4">
+        {images.map((_, index) => (
+          <div
+            key={index}
+            className="w-1.5 h-1.5 rounded-full bg-brand-charcoal/20 transition-colors duration-200"
+          />
+        ))}
       </div>
 
       {/* CSS Animation Keyframes */}
@@ -71,6 +106,11 @@ const Gallery: React.FC = () => {
         }
         .animate-scroll-gallery:hover {
           animation-play-state: paused;
+        }
+
+        /* iOS-style momentum scrolling */
+        .-webkit-overflow-scrolling-touch {
+          -webkit-overflow-scrolling: touch;
         }
       `}</style>
     </div>

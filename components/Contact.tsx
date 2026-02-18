@@ -350,22 +350,22 @@ const Contact: React.FC = () => {
                   </p>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Project Type */}
+                <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+                  {/* Project Type - iOS Segmented Control Style */}
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-3 block font-semibold">
+                    <label className="ios-footnote uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-3 block font-semibold">
                       Type de projet
                     </label>
-                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-2.5">
+                    <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-2.5 p-1 sm:p-0 bg-black/[0.02] dark:bg-white/[0.03] sm:bg-transparent rounded-2xl sm:rounded-none">
                       {projectTypes.map((type) => (
                         <button
                           key={type.value}
                           type="button"
                           onClick={() => handleTypeChange(type.value)}
-                          className={`px-3 sm:px-5 py-3 sm:py-2.5 min-h-[48px] sm:min-h-[44px] rounded-xl text-sm font-medium transition-all duration-200 active:scale-95 touch-manipulation ${
+                          className={`px-3 sm:px-5 py-3.5 sm:py-2.5 min-h-[50px] sm:min-h-[44px] rounded-xl sm:rounded-xl ios-subheadline font-semibold transition-all duration-200 active:scale-[0.97] touch-manipulation ${
                             formState.type === type.value
-                              ? 'bg-brand-gold text-black'
-                              : 'bg-black/[0.03] dark:bg-white/[0.05] text-brand-charcoal/70 dark:text-white/60 hover:bg-black/[0.06] dark:hover:bg-white/[0.08]'
+                              ? 'bg-brand-gold text-black shadow-lg shadow-brand-gold/20'
+                              : 'bg-white/80 dark:bg-white/[0.06] text-brand-charcoal/70 dark:text-white/60 hover:bg-white dark:hover:bg-white/[0.1] sm:bg-black/[0.03] sm:dark:bg-white/[0.05]'
                           }`}
                         >
                           {type.label}
@@ -374,29 +374,34 @@ const Contact: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Name & Email */}
+                  {/* Name & Email - iOS-style inputs */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                      <label className="ios-footnote uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                         Nom complet
                       </label>
                       <input
                         type="text"
                         placeholder="Votre nom"
-                        className="w-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 sm:py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                        autoComplete="name"
+                        autoCapitalize="words"
+                        className="w-full bg-black/[0.04] dark:bg-white/[0.06] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:bg-black/[0.06] dark:focus:bg-white/[0.08] focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 touch-manipulation"
                         value={formState.name}
                         onChange={handleInputChange('name')}
                         required
                       />
                     </div>
                     <div>
-                      <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                      <label className="ios-footnote uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                         Email
                       </label>
                       <input
                         type="email"
                         placeholder="votre@email.com"
-                        className="w-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 sm:py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                        autoComplete="email"
+                        autoCapitalize="none"
+                        inputMode="email"
+                        className="w-full bg-black/[0.04] dark:bg-white/[0.06] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:bg-black/[0.06] dark:focus:bg-white/[0.08] focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 touch-manipulation"
                         value={formState.email}
                         onChange={handleInputChange('email')}
                         required
@@ -404,15 +409,17 @@ const Contact: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Phone */}
+                  {/* Phone - iOS keyboard optimization */}
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                    <label className="ios-footnote uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                       Téléphone
                     </label>
                     <input
                       type="tel"
                       placeholder="+212 6 00 00 00 00"
-                      className="w-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 sm:py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      className="w-full bg-black/[0.04] dark:bg-white/[0.06] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:bg-black/[0.06] dark:focus:bg-white/[0.08] focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 touch-manipulation"
                       value={formState.phone}
                       onChange={handleInputChange('phone')}
                     />
@@ -422,43 +429,46 @@ const Contact: React.FC = () => {
                   {/* CONDITIONAL FIELDS - Property Details (Sellers/Owners)           */}
                   {/* ================================================================= */}
                   {showPropertyFields && (
-                    <div className="p-3 sm:p-4 rounded-xl bg-brand-gold/5 dark:bg-brand-gold/10 border border-brand-gold/20 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Home size={16} className="text-brand-gold" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-brand-gold">
+                    <div className="p-4 sm:p-5 rounded-2xl bg-brand-gold/5 dark:bg-brand-gold/10 border border-brand-gold/15 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-8 h-8 rounded-xl bg-brand-gold/15 flex items-center justify-center">
+                          <Home size={16} className="text-brand-gold" />
+                        </div>
+                        <span className="ios-footnote font-bold uppercase tracking-widest text-brand-gold">
                           Détails de votre bien
                         </span>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Property Type */}
+                        {/* Property Type - iOS-style select */}
                         <div>
-                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                          <label className="ios-caption uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                             Type de bien
                           </label>
                           <div className="relative">
                             <select
                               value={formState.propertyType}
                               onChange={handleInputChange('propertyType')}
-                              className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200 appearance-none cursor-pointer"
+                              className="w-full bg-white dark:bg-white/[0.08] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 appearance-none cursor-pointer touch-manipulation"
                             >
                               {PROPERTY_TYPES.map(pt => (
                                 <option key={pt.value} value={pt.value}>{pt.label}</option>
                               ))}
                             </select>
-                            <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-charcoal/40 dark:text-white/40 pointer-events-none" />
+                            <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-charcoal/40 dark:text-white/40 pointer-events-none" />
                           </div>
                         </div>
 
                         {/* City */}
                         <div>
-                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                          <label className="ios-caption uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                             Ville
                           </label>
                           <input
                             type="text"
                             placeholder="Casablanca, Marrakech..."
-                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            autoCapitalize="words"
+                            className="w-full bg-white dark:bg-white/[0.08] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 touch-manipulation"
                             value={formState.propertyCity}
                             onChange={handleInputChange('propertyCity')}
                           />
@@ -467,14 +477,15 @@ const Contact: React.FC = () => {
                         {/* Price (only for vente/estimation) */}
                         {(formState.type === 'vente' || formState.type === 'estimation') && (
                           <div>
-                            <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                            <label className="ios-caption uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                               Prix estimé (DH)
                             </label>
                             <input
-                              type="number"
+                              type="text"
                               inputMode="numeric"
+                              pattern="[0-9]*"
                               placeholder="2 500 000"
-                              className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                              className="w-full bg-white dark:bg-white/[0.08] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 touch-manipulation"
                               value={formState.propertyPrice}
                               onChange={handleInputChange('propertyPrice')}
                             />
@@ -483,14 +494,15 @@ const Contact: React.FC = () => {
 
                         {/* Surface */}
                         <div>
-                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                          <label className="ios-caption uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                             Surface (m²)
                           </label>
                           <input
-                            type="number"
+                            type="text"
                             inputMode="numeric"
+                            pattern="[0-9]*"
                             placeholder="120"
-                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            className="w-full bg-white dark:bg-white/[0.08] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 touch-manipulation"
                             value={formState.propertySurface}
                             onChange={handleInputChange('propertySurface')}
                           />
@@ -503,10 +515,12 @@ const Contact: React.FC = () => {
                   {/* CONDITIONAL FIELDS - Search Criteria (Buyers/Renters)            */}
                   {/* ================================================================= */}
                   {showSearchFields && (
-                    <div className="p-3 sm:p-4 rounded-xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/20 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Building2 size={16} className="text-blue-500" />
-                        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-blue-500">
+                    <div className="p-4 sm:p-5 rounded-2xl bg-blue-500/5 dark:bg-blue-500/10 border border-blue-500/15 space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div className="flex items-center gap-2.5 mb-3">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500/15 flex items-center justify-center">
+                          <Building2 size={16} className="text-blue-500" />
+                        </div>
+                        <span className="ios-footnote font-bold uppercase tracking-widest text-blue-500">
                           Critères de recherche (optionnel)
                         </span>
                       </div>
@@ -514,13 +528,14 @@ const Contact: React.FC = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Search City */}
                         <div>
-                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                          <label className="ios-caption uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                             Ville souhaitée
                           </label>
                           <input
                             type="text"
                             placeholder="Casablanca, Rabat..."
-                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            autoCapitalize="words"
+                            className="w-full bg-white dark:bg-white/[0.08] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:ring-4 focus:ring-blue-500/15 outline-none transition-all duration-200 touch-manipulation"
                             value={formState.searchCity}
                             onChange={handleInputChange('searchCity')}
                           />
@@ -528,14 +543,15 @@ const Contact: React.FC = () => {
 
                         {/* Budget Max */}
                         <div>
-                          <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                          <label className="ios-caption uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                             Budget max (DH)
                           </label>
                           <input
-                            type="number"
+                            type="text"
                             inputMode="numeric"
+                            pattern="[0-9]*"
                             placeholder="3 000 000"
-                            className="w-full bg-white dark:bg-white/[0.05] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 min-h-[48px] text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200"
+                            className="w-full bg-white dark:bg-white/[0.08] border-0 rounded-2xl px-4 py-4 min-h-[52px] ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:ring-4 focus:ring-blue-500/15 outline-none transition-all duration-200 touch-manipulation"
                             value={formState.budgetMax}
                             onChange={handleInputChange('budgetMax')}
                           />
@@ -544,33 +560,35 @@ const Contact: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Message */}
+                  {/* Message - iOS-style textarea */}
                   <div>
-                    <label className="text-xs uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
+                    <label className="ios-footnote uppercase tracking-widest text-brand-charcoal/50 dark:text-white/40 mb-2 block font-semibold">
                       Votre message
                     </label>
                     <textarea
                       placeholder="Décrivez votre projet immobilier..."
                       rows={4}
-                      className="w-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/[0.06] rounded-xl px-4 py-3.5 text-base sm:text-sm text-brand-charcoal dark:text-white placeholder-brand-charcoal/40 dark:placeholder-white/30 focus:border-brand-gold/50 focus:ring-2 focus:ring-brand-gold/10 outline-none transition-all duration-200 resize-none"
+                      autoCapitalize="sentences"
+                      className="w-full bg-black/[0.04] dark:bg-white/[0.06] border-0 rounded-2xl px-4 py-4 ios-body text-brand-charcoal dark:text-white placeholder-brand-charcoal/35 dark:placeholder-white/30 focus:bg-black/[0.06] dark:focus:bg-white/[0.08] focus:ring-4 focus:ring-brand-gold/15 outline-none transition-all duration-200 resize-none touch-manipulation"
                       value={formState.message}
                       onChange={handleInputChange('message')}
                       required
                     />
                   </div>
 
-                  {/* Submit */}
+                  {/* Submit - iOS-style prominent button */}
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full py-4 min-h-[56px] sm:min-h-[52px] bg-gradient-to-r from-brand-gold to-cyan-400 text-black font-bold uppercase tracking-wider text-sm sm:text-base rounded-xl shadow-lg shadow-brand-gold/25 hover:shadow-brand-gold/40 hover:scale-[1.01] active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-70 touch-manipulation"
+                    className="w-full py-4.5 sm:py-4 min-h-[56px] bg-gradient-to-r from-brand-gold to-cyan-400 text-black ios-headline font-bold uppercase tracking-wider rounded-2xl shadow-lg shadow-brand-gold/30 hover:shadow-brand-gold/50 hover:scale-[1.01] active:scale-[0.97] transition-all duration-200 flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:scale-100 touch-manipulation"
+                    style={{ WebkitTapHighlightColor: 'transparent' }}
                   >
                     {isLoading ? (
-                      <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                      <div className="w-6 h-6 border-2 border-black/20 border-t-black rounded-full animate-spin" />
                     ) : (
                       <>
                         Envoyer ma demande
-                        <Send size={18} />
+                        <Send size={20} strokeWidth={2.5} />
                       </>
                     )}
                   </button>

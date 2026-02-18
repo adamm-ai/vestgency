@@ -8,7 +8,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import MobileBottomNav from './components/MobileBottomNav';
-import FloatingActionButton from './components/FloatingActionButton';
 
 // Lazy load non-critical components for faster initial render
 const Listings = lazy(() => import('./components/Listings'));
@@ -92,7 +91,6 @@ const HomePage: React.FC<{ onAdminClick: () => void }> = ({ onAdminClick }) => (
     <Suspense fallback={null}>
       <Chatbot />
     </Suspense>
-    <FloatingActionButton />
   </>
 );
 
