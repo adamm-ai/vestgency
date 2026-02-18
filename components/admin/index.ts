@@ -19,8 +19,8 @@ export * from './analytics';
 // CRM (placeholder)
 // export * from './crm';
 
-// Properties (placeholder)
-// export * from './properties';
+// Properties management
+export * from './properties';
 
-// Settings (placeholder)
-// export * from './settings';
+// Settings
+export * from './settings';
