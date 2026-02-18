@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useState, useEffect } from 'react';
+import React, { memo, useCallback, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Search, Heart, Building2, User } from 'lucide-react';
 import { SectionId } from '../types';
@@ -20,76 +20,93 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 const MobileBottomNav: React.FC = () => {
-  const [activeId, setActiveId] = useState('home');
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const navRef = useRef<HTMLElement>(null);
+  const activeIndicatorRef = useRef<HTMLDivElement>(null);
+  const lastScrollY = useRef(0);
+  const ticking = useRef(false);
+  const currentActiveId = useRef('home');
   const location = useLocation();
   const navigate = useNavigate();
 
   // Hide on admin route
   if (location.pathname === '/admin') return null;
 
-  // Track scroll direction to hide/show nav
-  useEffect(() => {
-    let ticking = false;
-
-    const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const currentScrollY = window.scrollY;
-
-          // Show when at top or scrolling up, hide when scrolling down significantly
-          if (currentScrollY < 100) {
-            setIsVisible(true);
-          } else if (currentScrollY > lastScrollY + 10) {
-            setIsVisible(false);
-          } else if (currentScrollY < lastScrollY - 5) {
-            setIsVisible(true);
-          }
-
-          setLastScrollY(currentScrollY);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY]);
-
-  // Track active section based on scroll
+  // Single optimized scroll handler using refs (no re-renders)
   useEffect(() => {
     const sections = NAV_ITEMS.map(item => item.target);
-    let ticking = false;
 
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const scrollPosition = window.scrollY + window.innerHeight / 3;
+      if (ticking.current) return;
 
-          for (let i = sections.length - 1; i >= 0; i--) {
-            const element = document.getElementById(sections[i]);
-            if (element && element.offsetTop <= scrollPosition) {
-              const navItem = NAV_ITEMS.find(item => item.target === sections[i]);
-              if (navItem) setActiveId(navItem.id);
-              break;
-            }
+      ticking.current = true;
+      requestAnimationFrame(() => {
+        const currentScrollY = window.scrollY;
+        const nav = navRef.current;
+
+        if (nav) {
+          // Show/hide nav based on scroll direction (CSS transform, no state)
+          if (currentScrollY < 100) {
+            nav.style.transform = 'translateY(0)';
+          } else if (currentScrollY > lastScrollY.current + 10) {
+            nav.style.transform = 'translateY(100%)';
+          } else if (currentScrollY < lastScrollY.current - 5) {
+            nav.style.transform = 'translateY(0)';
           }
-          ticking = false;
-        });
-        ticking = true;
-      }
+        }
+
+        // Update active section (DOM manipulation, no state)
+        const scrollPosition = currentScrollY + window.innerHeight / 3;
+        for (let i = sections.length - 1; i >= 0; i--) {
+          const element = document.getElementById(sections[i]);
+          if (element && element.offsetTop <= scrollPosition) {
+            const navItem = NAV_ITEMS.find(item => item.target === sections[i]);
+            if (navItem && navItem.id !== currentActiveId.current) {
+              currentActiveId.current = navItem.id;
+              updateActiveStyles(navItem.id);
+            }
+            break;
+          }
+        }
+
+        lastScrollY.current = currentScrollY;
+        ticking.current = false;
+      });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const handleNavClick = useCallback((item: NavItem) => {
-    setActiveId(item.id);
+  // Update active styles via DOM (no re-render)
+  const updateActiveStyles = useCallback((activeId: string) => {
+    const buttons = navRef.current?.querySelectorAll('[data-nav-id]');
+    buttons?.forEach(btn => {
+      const id = btn.getAttribute('data-nav-id');
+      const isActive = id === activeId;
+      const indicator = btn.querySelector('[data-indicator]') as HTMLElement;
+      const iconContainer = btn.querySelector('[data-icon]') as HTMLElement;
+      const label = btn.querySelector('[data-label]') as HTMLElement;
 
-    // Haptic feedback simulation via visual response
+      if (indicator) {
+        indicator.style.width = isActive ? '20px' : '0';
+        indicator.style.backgroundColor = isActive ? 'var(--brand-gold, #D4AF37)' : 'transparent';
+      }
+      if (iconContainer) {
+        iconContainer.style.backgroundColor = isActive ? 'rgba(212, 175, 55, 0.15)' : '';
+        iconContainer.style.color = isActive ? 'var(--brand-gold, #D4AF37)' : '';
+        iconContainer.style.transform = isActive ? 'scale(1.1)' : 'scale(1)';
+      }
+      if (label) {
+        label.style.color = isActive ? 'var(--brand-gold, #D4AF37)' : '';
+      }
+    });
+  }, []);
+
+  const handleNavClick = useCallback((item: NavItem) => {
+    currentActiveId.current = item.id;
+    updateActiveStyles(item.id);
+
+    // Haptic feedback
     if (navigator.vibrate) {
       navigator.vibrate(10);
     }
@@ -102,88 +119,62 @@ const MobileBottomNav: React.FC = () => {
         element.scrollIntoView({ behavior: 'smooth' });
       }
     }
-  }, [navigate]);
+  }, [navigate, updateActiveStyles]);
 
   return (
     <nav
-      className={`
-        md:hidden fixed bottom-0 left-0 right-0 z-50
-        transition-all duration-300 ease-out
-        ${isVisible ? 'translate-y-0' : 'translate-y-full'}
-      `}
+      ref={navRef}
+      className="md:hidden fixed bottom-0 left-0 right-0 z-50 will-change-transform"
       style={{
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
       aria-label="Navigation mobile"
     >
-      {/* Glassmorphism background */}
-      <div className="absolute inset-0 bg-white/80 dark:bg-black/80 backdrop-blur-2xl border-t border-black/[0.04] dark:border-white/[0.08]" />
-
-      {/* Subtle top glow */}
-      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent" />
+      {/* Optimized background - reduced blur for performance */}
+      <div className="absolute inset-0 bg-white/90 dark:bg-black/90 backdrop-blur-lg border-t border-black/[0.04] dark:border-white/[0.08]" />
 
       {/* Navigation items */}
       <div className="relative flex items-stretch justify-around px-2">
         {NAV_ITEMS.map((item) => {
-          const isActive = activeId === item.id;
+          const isActive = item.id === 'home'; // Initial state
 
           return (
             <button
               key={item.id}
+              data-nav-id={item.id}
               onClick={() => handleNavClick(item)}
-              className={`
-                relative flex flex-col items-center justify-center
-                py-2 px-3 min-w-[64px] min-h-[50px]
-                transition-all duration-200 ease-out
-                active:scale-90
-                group
-              `}
+              className="relative flex flex-col items-center justify-center py-2 px-3 min-w-[64px] min-h-[50px] active:scale-90 transition-transform duration-150"
               aria-label={item.label}
-              aria-current={isActive ? 'page' : undefined}
             >
               {/* Active indicator pill */}
               <div
-                className={`
-                  absolute top-1 left-1/2 -translate-x-1/2
-                  h-[3px] rounded-full
-                  transition-all duration-300 ease-out
-                  ${isActive
-                    ? 'w-5 bg-brand-gold'
-                    : 'w-0 bg-transparent'
-                  }
-                `}
+                data-indicator
+                className="absolute top-1 left-1/2 -translate-x-1/2 h-[3px] rounded-full transition-all duration-200"
+                style={{
+                  width: isActive ? '20px' : '0',
+                  backgroundColor: isActive ? 'var(--brand-gold, #D4AF37)' : 'transparent'
+                }}
               />
 
-              {/* Icon container with spring animation */}
+              {/* Icon container */}
               <div
-                className={`
-                  relative flex items-center justify-center
-                  w-10 h-8 rounded-2xl mb-0.5
-                  transition-all duration-300
-                  ${isActive
-                    ? 'bg-brand-gold/15 text-brand-gold scale-110'
-                    : 'text-gray-400 dark:text-gray-500 group-active:bg-gray-100 dark:group-active:bg-white/10'
-                  }
-                `}
+                data-icon
+                className="relative flex items-center justify-center w-10 h-8 rounded-2xl mb-0.5 transition-all duration-200 text-gray-400 dark:text-gray-500"
+                style={{
+                  backgroundColor: isActive ? 'rgba(212, 175, 55, 0.15)' : '',
+                  color: isActive ? 'var(--brand-gold, #D4AF37)' : '',
+                  transform: isActive ? 'scale(1.1)' : 'scale(1)'
+                }}
               >
                 {item.icon}
-
-                {/* Subtle glow on active */}
-                {isActive && (
-                  <div className="absolute inset-0 rounded-2xl bg-brand-gold/20 blur-md -z-10" />
-                )}
               </div>
 
               {/* Label */}
               <span
-                className={`
-                  text-[10px] font-semibold tracking-wide
-                  transition-colors duration-200
-                  ${isActive
-                    ? 'text-brand-gold'
-                    : 'text-gray-400 dark:text-gray-500'
-                  }
-                `}
+                data-label
+                className="text-[10px] font-semibold tracking-wide transition-colors duration-200 text-gray-400 dark:text-gray-500"
+                style={{ color: isActive ? 'var(--brand-gold, #D4AF37)' : '' }}
               >
                 {item.label}
               </span>
