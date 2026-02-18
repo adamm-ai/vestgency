@@ -49,12 +49,12 @@ const Hero: React.FC = () => {
             Immobilier de Prestige
           </motion.p>
 
-          {/* Title - iOS large title with refined mobile sizing */}
+          {/* Title - TT Commons Pro Bold matching logo typography */}
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1, ease: [0.34, 1.56, 0.64, 1] }}
-            className="text-[32px] min-[400px]:text-[38px] sm:text-5xl md:text-6xl lg:text-7xl font-display font-bold text-white leading-[1.1] tracking-[-0.02em] mb-4 sm:mb-5"
+            className="hero-title-bold text-[32px] min-[400px]:text-[38px] sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] tracking-[-0.02em] mb-4 sm:mb-5"
           >
             Votre Bien Idéal{' '}
             <span className="text-brand-gold block sm:inline mt-1 sm:mt-0">Vous Attend</span>

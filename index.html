@@ -11,7 +11,8 @@
     <link rel="apple-touch-icon" href="/logo-athome.png" />
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.cdnfonts.com/css/tt-commons-pro');
+      /* TT Commons Pro - All weights for logo-matching typography */
+      @import url('https://fonts.cdnfonts.com/css/tt-commons-pro?styles=133541,133543,133545,133547,133549,133551');
     </style>
     <script>
       tailwind.config = {
@@ -1102,6 +1103,15 @@
         font-size: 11px;
         font-weight: 400;
         letter-spacing: 0.1px;
+      }
+
+      /* Hero title - TT Commons Pro Bold (matching logo) */
+      .hero-title-bold {
+        font-family: "TT Commons Pro", -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-weight: 700 !important;
+        font-style: normal;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
 
       /* iOS-style navigation bar */
